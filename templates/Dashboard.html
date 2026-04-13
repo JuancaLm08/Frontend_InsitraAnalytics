@@ -1,0 +1,85 @@
+<!--
+
+* En este archivo html se define toda la estructura del apartado visual del Dashboard de Analytics.
+* Se definen los espacios (secciones) para cada uno de los cuatro paneles principales, y la barra  laterial 
+  (Sidebar) para la navegacion y seleccion de corredores.
+* Dentro de cada seccion se definen los espacios donde se mostraran las graficas y tablas asi como el nombre de
+  las variables de cada uno de los elementos visuales, tanto graficas y tablas, como aquellos elementos que se 
+  usan para el procesamiento (Fechas, Corredor, Autobuses).
+* Tambien aqui se define cuales son los archivos "css" y "js" con los que se hace referencia para cada una de
+  las secciones, ya sean css para apartados visuales como el tipo, color y tamaño de letra, y los archivos js
+  que permiten el mostrar el mapa y el procesamiento de datos de cada sección. 
+* IMPORTANTE: En ese archivo NO SE REALIZA NINGUN PROCESAMIENTO DE DATOS, solo se define la estructura y espacio
+  para mostrar los resultados de dicho procesamiento.
+
+-->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title id="titulo-general">Insitra Analytics: Inicio</title>
+    <link rel="icon" type="image/png" href="../static/images/insitra_logo_mini.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" /> <!-- Para trabajar con el mapa -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script> <!-- Para ver la animacion de carga -->
+        <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script> <!-- Para mostrar las graficas -->
+    
+    <!-- Elementos css generales de Analytics -->
+    <link rel="stylesheet" href="../static/css/estilo_Dashboard.css">      
+</head>
+<body>
+
+    <div class="dashboard">
+        <!------------------------------------------ SIDEBAR ----------------------------------------->
+        {% include 'Sidebar.html' %}
+        
+        <!------------------------------------------ CONTENIDO PRINCIPAL ----------------------------------------->
+        <main class="content">
+            <div class="top-logo-container">
+                <img src="../static/images/LoginTitle_white.png" class="logo-top-nav" alt="INSITRA">
+            </div>
+            
+            <!-- Titulo se actualiza segun la seccion activa -->
+            <h1 id="view-title">---</h1> 
+            <hr>
+
+            <!-- Actualizar la seccion actual -->
+            <button id="btn-refresh" class="btn-refresh"><span>🔄️</span>Actualizar Sección</button> 
+
+            <div id="view-content">
+                <!--------------------- SECCIÓN DE INICIO (id = 1) --------------------->
+                {% include 'Inicio.html' %} 
+                
+                <!--------------------- SECCIÓN DE TOTALES (id = 2) -------------------->
+                {% if 2 in permisos %}
+                    {% include 'Totales.html' %}
+                {% endif %}
+
+                <!-------------------- SECCIÓN DE UNIDADES (id = 3) -------------------->
+                {% if 3 in permisos %}
+                    {% include 'Unidades.html' %}
+                {% endif %}
+
+                <!---------------------- SECCIÓN DE RUTA (id = 4) ---------------------->
+                {% if 4 in permisos %}
+                    {% include 'Ruta.html' %}
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts JavaScript de cada parte del Dashboard y para trabajar con el mapa-->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <!-- JavaScript general de Analitycs -->
+    <script src="../static/js/js_Dashboard.js"></script>
+    
+</body>
+</html>

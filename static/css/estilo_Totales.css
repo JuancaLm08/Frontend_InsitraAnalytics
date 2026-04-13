@@ -1,0 +1,24 @@
+/* ------------------ CONFIGURACION CSS PARA LA SECCION TOTALES ------------------ */
+
+/* RESPONSIVE TOTALES */
+@media (max-width: 768px) {
+    .date-filter-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .charts-grid-totales {
+        grid-template-columns: 1fr;
+    }
+
+    .date-group label {
+        font-size: 0.9rem;
+    }
+}
+
+/* 6. ESTADO DE CARGA LOCAL */
+#section-totales .loading-blur {
+    filter: blur(4px);
+    pointer-events: none;
+    opacity: 0.7;
+}           

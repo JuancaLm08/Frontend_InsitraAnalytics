@@ -1,0 +1,113 @@
+/* ------------------ CONFIGURACION CSS PARA LA SECCION RUTA ------------------ */
+
+#ruta-content .section-subtitle {
+    margin: 10px 0 5px 0 !important; 
+    font-size: 24px; 
+}
+
+/* HEADER DE MAPA Y BOTONES */
+.map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-limpiar {
+    padding: 8px 17px;
+    background-color: var(--fondo-summary);
+    border: 1px solid var(--borde-principal);
+    color: var(--texto);
+    border-radius: 7px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.btn-limpiar:hover {
+    background-color: var(--hover-summary); 
+}
+
+/* MÉTRICAS RÁPIDAS SOBRE EL MAPA */
+.map-metrics {
+    display: flex;
+    gap: 30px;
+    padding: 5px 15px !important;
+}
+
+.map-metric-item label {
+    display: block;
+    font-size: 1rem;
+}
+
+.map-metric-item p {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--texto);
+}
+
+/* CONTENEDOR DEL MAPA */
+.map-container {
+    margin-top: 5px;
+    width: 100%;
+    height: 525px;
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+}
+
+#map-canvas {
+    background-color: #f8f9fa;
+}
+
+/* Ajuste para Leaflet */
+.leaflet-container {
+    height: 100% !important;
+    width: 100% !important;
+    z-index: 1; 
+    background: #1a1a1a;
+}
+
+/* MENSAJES INFORMATIVOS */
+.info-message-blue {
+    background-color: rgba(0, 170, 255, 0.1);
+    color: #00aaff;
+    padding: 15px 20px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.info-message-blue::before {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+#ruta-content .data-expander {
+    margin-top: 0px !important; 
+}
+
+/* RESPONSIVE RUTA */
+@media (max-width: 768px) {
+    .map-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .map-metrics {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .map-container {
+        height: 400px;
+    }
+}
+

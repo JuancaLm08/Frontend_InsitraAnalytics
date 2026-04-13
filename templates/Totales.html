@@ -1,0 +1,104 @@
+<!-- Elemenstos css de la Seccion Totales -->
+<title>Insitra Analytics: Totales</title> 
+
+<link rel="stylesheet" href="../static/css/estilo_Totales.css"> 
+
+<div id="section-totales">  
+    <!-- ANIMACION DE CARGA PARA TOTALES-->
+    <div id="loader-totales" class="section-loader" style="display: none;">
+        <div class="lottie-anim-canvas"></div>
+    </div>
+
+    <!-- APARTADO DE CONTEO DE PASAJEROS -->
+    <p class="section-subtitle"><b>Conteo de Pasajeros</b></p>
+
+    <!----- FILTROS DE FECHAS ----->
+    <div class="date-filter-container"> 
+        <div class="date-group">
+            <label for="fecha-inicio-totales">Fecha Inicio</label>
+            <input type="date" id="fecha-inicio-totales">
+        </div>
+        <div class="date-group">
+            <label for="fecha-final-totales">Fecha Final</label>
+            <input type="date" id="fecha-final-totales">
+        </div>
+    </div>
+    
+    <div id="no-data-banner-totales1" class="status-banner">No hay datos para los filtros seleccionados.</div>
+    <div id="totales-pasajeros-content" style="display: none;">
+        <!----- GRAFICA TOTAL DE ASCENSOS POR DÍA ----->
+        <div class="chart-box">
+            <h2>Total de ascensos por día.</h2>
+            <div id="chart-total-ascensos-dia" style="height: 300px;"></div>
+        </div>
+
+        <!----- GRAFICA Y TABLA PROMEDIO DE PASAJEROS POR UNIDAD Y DÍA ----->
+        <div class="chart-box">
+            <h2>Promedio por unidad por día.</h2>
+            <div id="chart-promedio-unidad-dia" style="height: 300px;"></div>
+            
+            <details class="data-expander">
+                <summary>Ver datos mostrados en la gráfica</summary>
+                <button class="btn-download" onclick="exportTableToCSV('tabla-promedio-unidad-dia')"> 
+                    <svg class="download-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </button>
+                <div class="table-container">
+                    <table id="tabla-promedio-unidad-dia">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <br>
+                <div class="total-row">
+                    <p>Total de pasajeros:</p><h3 id="total-pasajeros-totales">--</h3>
+                </div>
+            </details>
+        </div>
+    </div>
+    
+    <hr>
+    <!-- APARTADO DE KILOMETRAJE -->
+    <p class="section-subtitle"><b>Kilometraje</b></p>
+    <div id="no-data-banner-totales2" class="status-banner">No hay datos para los filtros seleccionados.</div>
+    <div id="totales-kilometraje-content" style="display: none;">
+        <!----- GRAFICA KILOMETRAJE POR DIA ----->
+        <div class="chart-box">
+            <h2>Kilometraje por día.</h2>
+            <div id="chart-kilometraje-dia" style="height: 300px;"></div>
+        </div>
+
+        <!----- GRAFICA Y TABLA PROMEDIO POR UNIDAD POR DIA KILOMETRAJE ----->
+        <div class="chart-box">
+            <h2>Promedio por unidad por día.</h2>
+            <div id="chart-promedio-kilometraje-dia" style="height: 300px;"></div>
+            
+            <details class="data-expander">
+                <summary>Ver datos mostrados en la gráfica</summary>
+                <button class="btn-download" onclick="exportTableToCSV('tabla-kilometraje-promedio-unidad-dia')"> 
+                    <svg class="download-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg> 
+                </button>
+                <div class="table-container">
+                    <table id="tabla-kilometraje-promedio-unidad-dia">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <br>
+                <div class="total-row">
+                    <p>Total de kilometros:</p><h3 id="total-kilometros-totales">0</h3>
+                </div>
+            </details>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript de la Seccion Totales -->
+<script src="../static/js/js_Totales.js"></script>

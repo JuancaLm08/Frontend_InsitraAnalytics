@@ -1,0 +1,92 @@
+<!-- Elemenstos css de Sidebar -->
+<link rel="stylesheet" href="../static/css/estilo_SideBar.css">
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+        <div class="sidebar-header">
+            <img src="../static/images/LoginTitle_white.png" class="logo logo-full" alt="INSITRA">
+            <button class="toggle-btn" onclick="toggleSidebar()">
+                <span class="icon-open">≪</span>
+                <span class="icon-closed">☰</span>
+            </button>
+        </div>
+
+        <div class="logo-mini-container">
+            <img src="../static/images/insitra_logo.png" class="logo logo-mini" alt="INSITRA">
+        </div>
+
+        <div class="user-box">
+            <p>Hola <b class="user-highlight">{{nombre_usuario}}</b><br>¿Qué vamos a hacer hoy?</p>
+        </div>
+
+        <hr class="sidebar-divider">
+
+        <nav class="menu">
+            <p class="menu-title">Paneles</p>
+            
+            <a id="default-view" onclick="changeView('Inicio', this)">
+                <span class="icon">🏠</span>
+                <span class="text">Inicio</span>
+            </a>
+
+            {% if 2 in permisos %}
+            <a onclick="changeView('Totales', this)">
+                <span class="icon">📊</span>
+                <span class="text">Totales</span>
+            </a>
+            {% endif %}
+
+            {% if 3 in permisos %}
+            <a onclick="changeView('Unidades', this)">
+                <span class="icon">🚍</span>
+                <span class="text">Unidades</span>
+            </a>
+            {% endif %}
+
+            {% if 4 in permisos %}
+            <a onclick="changeView('Ruta', this)">
+                <span class="icon">🚦</span>
+                <span class="text">Ruta</span>
+            </a>
+            {% endif %}
+        </nav>
+
+        <hr class="sidebar-divider">
+
+        <div class="filters">
+            <p class="menu-title">Filtros</p>
+            <label for="select-corredor">Corredor</label>
+            <select id="select-corredor">
+            </select>
+        </div>
+
+        <hr class="theme-sidebar-divider">
+
+        <div class="theme-switcher">
+            <p class="menu-title">Tema</p>
+            <div class="theme-options">
+                <div class="theme-btn active" id="theme-dark" onclick="setTheme('dark')">
+                    <span class="icon">🌙</span>
+                    <span class="text">Tema oscuro</span>
+                </div>
+                <div class="theme-btn" id="theme-light" onclick="setTheme('light')">
+                    <span class="icon">☀️</span>
+                    <span class="text">Tema claro</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="logout-button">
+        <hr class="sidebar-divider">
+        <button class="logout-btn-container" onclick="location.href='/logout'">
+            <span class="logout-text">Cerrar Sesión</span>
+            <span class="logout-icon-collapsed">⎋</span>
+        </button>
+    </div>
+
+</aside>
+
+<!-- JavaScript de la Sidebar -->
+<script src="../static/js/js_Sidebar.js"></script>

@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+/* Paleta de Colores */
+:root {   
+    --boton: #751643; 
+    --boton_hover: #5a0e31;
+    --formulario: #262730; 
+    --texto1: #ffffff;
+    --texto2: #A5A6A9;
+    --error: #ff4d4d;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    color: var(--texto1);
+}
+
+body {
+    background-image: url("../images/fondo1.png"); 
+    font-family: Orbitron, sans-serif;
+    
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    width: 100vw;   /* 100% del ancho del monitor */
+    height: 100vh;  /* 100% de la altura del monitor */
+    overflow: hidden; /* Evita que aparezcan barras de scroll */
+}
+
+.form-section {
+    width: 90%; 
+    max-width: 500px;
+    padding: 2.5em;  
+    border-radius: 18px;
+    backdrop-filter: blur(2px);
+    background-color: rgba(0, 0, 0, 0.61);
+    box-shadow: 0px 15px 50px rgba(0,0,0,0.5);
+    
+    margin: auto; 
+}
+
+.error-box {
+    background-color: rgba(255, 0, 0, 0.2);
+    color: var(--error);
+    border: 1px solid var(--error);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif; 
+}
+
+.texto-iniciar p {
+    text-align: center;
+    font-size: 40px;
+    font-weight: bold;
+    color: var(--texto1);
+    margin-bottom: 25px;
+}
+
+.input-container {
+    margin-bottom: 22px;
+}
+
+.input-container p {
+    font-size: 25px;
+    margin-bottom: 10px;
+    color: var(--texto1);
+    text-align: center;
+}
+
+.input-container input {
+    width: 100%;
+    box-sizing: border-box; 
+    padding: 12px 14px;
+    font-family: Orbitron;
+    background-color: var(--formulario);
+    border: none;
+    border-radius: 8px;
+    color: var(--texto1);
+    font-size: 14px;
+}
+
+.input-container input::placeholder {
+    color: var(--placeholder);
+}
+
+.input-container input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--boton);
+}
+
+.login-button-container {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+}
+
+button {
+    width: 65%;
+    padding: 14px;
+    background-color: var(--boton);
+    border: none;
+    color: var(--texto);
+    font-size: 16px;
+    font-family: Orbitron;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: var(--boton_hover);
+    transform: scale(1.02);
+}
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 45px;
+}
+
+.toggle-eye {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: var(--texto2);
+    transition: color 0.3s ease;
+    z-index: 10;
+}
+
+.toggle-eye:hover {
+    color: var(--texto1);
+}
+
+.toggle-eye svg {
+    display: block;
+}
+
+/* --------- MEDIA QUERIES PARA HACER RESPONSIVE --------- */
+
+@media (max-width: 600px) {
+    .texto-iniciar p {
+        font-size: 28px; 
+    }
+
+    .input-container p {
+        font-size: 18px; 
+    }
+
+    button {
+        width: 100%;
+    }
+    
+    .form-section {
+        padding: 1.5em;
+    }
+}

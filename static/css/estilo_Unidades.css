@@ -1,0 +1,142 @@
+/* ------------------ CONFIGURACION CSS PARA LA SECCION UNIDADES ------------------ */
+
+.unidades-filters {
+    text-align: left;
+    margin-bottom: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* CHECKBOX (Seleccionar todos) */
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 0;
+    cursor: pointer;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    accent-color: var(--accent); 
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.checkbox-wrapper label {
+    font-size: 0.95rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* MULTISELECT (Contenedor y Select) */
+.multiselect-container {
+    position: relative;
+    width: 100%;
+    opacity: 0.8;
+}
+
+.custom-select {
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    padding: 12px 15px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--texto);
+    cursor: pointer;
+    transition: border-color 0.3s;
+    width: 100%;
+
+    min-height: 45px;
+    height: auto;
+    padding: 8px 15px;
+}
+
+.custom-select i {
+    font-size: 0.8rem;
+    transition: transform 0.3s;
+}
+
+/* ETIQUETAS (TAGS) */
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+    width: 95%;
+}
+
+.bus-tag {
+    background-color: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.remove-tag {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.remove-tag:hover {
+    color: #ffffff;
+}
+
+/* LISTA DESPLEGABLE (OPTIONS) */
+.options-list {
+    display: none;
+    position: relative;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-top: none;
+    max-height: 240px; 
+    overflow-y: auto;
+    border-radius: 0 0 6px 6px;
+    z-index: 1000;
+}
+
+.option {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.option.active:hover{
+    background-color: #a3215e;
+}
+
+.option:hover {
+    background-color: #3A5E7A;
+    color: #ffffff;
+}
+
+.option.active {
+    background-color: var(--accent);
+    color: #ffffff;
+}
+
+/* Scrollbar */
+.options-list::-webkit-scrollbar { width: 6px; }
+.options-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
+.options-list::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .custom-select { padding: 12px 15px; }
+}
