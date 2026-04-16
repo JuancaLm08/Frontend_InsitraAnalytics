@@ -1,0 +1,10 @@
+# Variables de entorno
+secrets.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VS Code
+.vscode/
