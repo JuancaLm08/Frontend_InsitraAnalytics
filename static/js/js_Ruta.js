@@ -7,7 +7,7 @@ const btnLimpiar = document.getElementById('btn-limpiar');
 const messageBlue = document.getElementById('info-message-blue');
 const tablaRuta = document.getElementById('data-expander-ruta');
 const valorPasajeros = document.getElementById('valor-pasajeros');
-const valorDescensos = document.getElementById('valor-descensos');
+//const valorDescensos = document.getElementById('valor-descensos');
 
 /**********************************************************************************************************************************************************/
 // FUNCION PARA INICIALIZAR EL MAPA ACOTADO
@@ -28,9 +28,25 @@ function inicializarMapa() {
         minZoom: 5, maxZoom: 18                      
     }).setView([19.4326, -99.1332], 11);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // 1. Definir la capa Normal (OpenStreetMap)
+    const mapaNormal = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    });
+
+    // 2. Definir la capa Satelital (Esri World Imagery)
+    const mapaSatelital = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    });
+
+    // 3. Añadir la capa normal por defecto al mapa para que cargue inicialmente
+    mapaNormal.addTo(map);
+
+    // 4. Crear el control de capas y agregarlo al mapa
+    const capasBase = {
+        "🗺️ Normal": mapaNormal,
+        "🛰️ Satelital": mapaSatelital
+    };
+    L.control.layers(capasBase).addTo(map);
 
     inicializarHerramientasLDraw();
 
@@ -80,12 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             document.getElementById('map-pasajeros-val').innerText = "0";
-            document.getElementById('map-descensos-val').innerText = "0";
+            //document.getElementById('map-descensos-val').innerText = "0";
 
             // Volver al estado inicial de la sección
             btnLimpiar.style.display = 'none';
             valorPasajeros.style.display = 'none';
-            valorDescensos.style.display = 'none';
+            //valorDescensos.style.display = 'none';
             tablaRuta.style.display = 'none';
             messageBlue.style.display = 'block';            
         });
@@ -116,13 +132,13 @@ function filtrarPuntosConTurf(zonaGeoJSON) {
         const pt = turf.point([p.lon, p.lat]);
         if (turf.booleanPointInPolygon(pt, poly)) {
             tOn += p.on;
-            tOff += p.off;
+            //tOff += p.off;
 
             puntosFiltrados.push({
                 unidad: p.sitename || p.terid || "N/A",
                 puerta: p.puerta_texto || (p.door === 'door_1' ? 'Delantera' : 'Trasera'),
                 on: Math.round(p.on),
-                off: Math.round(p.off),
+                //off: Math.round(p.off),
                 lat: parseFloat(p.lat).toFixed(6),
                 lon: parseFloat(p.lon).toFixed(6)
             });
@@ -130,16 +146,16 @@ function filtrarPuntosConTurf(zonaGeoJSON) {
     });
 
     document.getElementById('map-pasajeros-val').innerText = tOn.toLocaleString();
-    document.getElementById('map-descensos-val').innerText = tOff.toLocaleString();
+    //document.getElementById('map-descensos-val').innerText = tOff.toLocaleString();
 
     // Mostrar los elementos ocultos
     btnLimpiar.style.display = 'block';
     messageBlue.style.display = 'none';
     tablaRuta.style.display = 'block';
     valorPasajeros.style.display = 'block';
-    valorDescensos.style.display = 'block';
+    //valorDescensos.style.display = 'block';
     
-    renderizarTablaMaster({headers: ["Terid unidad", "Puerta", "Ascensos", "Descensos", "Latitud", "Longitud"], rows: puntosFiltrados}, 'tabla-ruta'); 
+    renderizarTablaMaster({headers: ["Terid unidad", "Puerta", "Ascensos", "Latitud", "Longitud"], rows: puntosFiltrados}, 'tabla-ruta'); 
 }
 
 /**********************************************************************************************************************************************************/
@@ -162,8 +178,8 @@ async function cargarDatosRuta(groupId) {
         // Crear la capa de calor
         heatLayer = L.heatLayer(res.heatmap, {
             radius: 23,         
-            blur: 15, 
-            minOpacity: 0.40,          
+            blur: 25, 
+            minOpacity: 0.10,          
             maxZoom: 13,
             max: maxPasajeros * 0.85, 
            gradient: {
@@ -175,11 +191,11 @@ async function cargarDatosRuta(groupId) {
                 0.60: '#1eff00',
                 0.65: '#9dff00',
                 0.70: '#fbff00', 
-                0.75: '#ffe600', 
-                0.80: '#ffa600',
-                0.85: '#ff5900', 
-                0.90: '#ff2200',
-                0.95: '#ff0000'  
+                0.75: '#ffe60083', 
+                0.80: '#ffa60083',
+                0.85: '#ff590088', 
+                0.90: '#ff22005e',
+                0.95: '#ff000065'  
             }
         }).addTo(map);
 
@@ -188,7 +204,7 @@ async function cargarDatosRuta(groupId) {
         }
         
         document.getElementById('map-pasajeros-val').innerText = "0";
-        document.getElementById('map-descensos-val').innerText = "0";
+        //document.getElementById('map-descensos-val').innerText = "0";
     }
 }
 

@@ -8,3 +8,5 @@ __pycache__/
 
 # VS Code
 .vscode/
+
+.static/data/Permisos_temporal.csv
