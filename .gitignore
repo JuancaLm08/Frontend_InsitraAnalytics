@@ -1,5 +1,5 @@
 # Variables de entorno
-secrets.env
+.env
 
 # Python cache
 __pycache__/
@@ -8,5 +8,3 @@ __pycache__/
 
 # VS Code
 .vscode/
-
-.static/data/Permisos_temporal.csv

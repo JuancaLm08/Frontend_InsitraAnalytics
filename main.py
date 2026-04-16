@@ -24,7 +24,7 @@ from flask import Flask, request, jsonify, render_template, session, redirect, u
 #############################################################################################################################################################
 # CONFIGURACIONES
 app = Flask(__name__)
-load_dotenv('secrets.env')
+load_dotenv('.env')
 API = os.getenv('CEIBA_BASE_URL')
 BCK = os.getenv('BACKEND')
 app.secret_key = 'tu_llave_secreta_aqui' # !!! ESTA SE DEBE DE CAMBIAR POSTERIORMENTE Y AGREGAR AL secrets.env ¡¡¡
