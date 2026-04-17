@@ -3,9 +3,10 @@ version: '3.8'
 services:
   frontend:
     build: .
-    container_name: refactor_frontend
+    container_name: frontend_analytics
     ports:
-      - "5000:5000"
+      #- "5000:5000"
+      - "80:5000"
     env_file:
       - secrets.env
     volumes:
@@ -15,9 +16,3 @@ services:
       options:
         max-size: "100m"
         max-file: "3"
-
-# Esto le dice al frontend que se una a la red de tu backend
-networks:
-  default:
-    name: refactor_analytics_default
-    external: true
