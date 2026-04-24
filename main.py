@@ -26,7 +26,7 @@ from flask import Flask, request, jsonify, render_template, session, redirect, u
 app = Flask(__name__)
 load_dotenv('.env')
 API = os.getenv('CEIBA_BASE_URL')
-BCK = os.getenv('BACKEND')
+BCK = os.getenv('BCK')
 app.secret_key = 'tu_llave_secreta_aqui' # !!! ESTA SE DEBE DE CAMBIAR POSTERIORMENTE Y AGREGAR AL secrets.env ¡¡¡
 
 # Obtener el nombre del día actual
@@ -127,8 +127,10 @@ def get_inicio_data():
         return jsonify({ "success": False, "error": "Falta parámetro: groupid"}), 400
 
     try:
-        response = requests.get(f"{BCK}/api/inicio-data", params={"groupid": group_id})
-        print(f"\n\nDATOS OBTENIDOS PARA INICIO\n{response.json()}")
+        ruta_back = f"{BCK}/api/inicio-data"
+        response = requests.get(ruta_back, params={"groupid": group_id})
+        #print(f"\n\nDATOS OBTENIDOS PARA INICIO\n{response.json()}")
+        print(f"\n\nDATOS OBTENIDOS PARA INICIO\n{ruta_back}")
         return jsonify(response.json()), response.status_code
 
     except Exception as e:
@@ -149,7 +151,7 @@ def get_totales_data():
 
     try:
         response = requests.get(f"{BCK}/api/totales-data", params={"groupid": group_id, "inicio": f"{inicio_totales} 00:00:00", "final": f"{final_totales} 23:59:59"})
-        print(f"\n\nDATOS OBTENIDOS PARA TOTALES\n{response.json()}")
+        #print(f"\n\nDATOS OBTENIDOS PARA TOTALES\n{response.json()}")
         return jsonify(response.json())
 
     except Exception as e:
@@ -187,8 +189,8 @@ def get_unidades_data():
         return jsonify({"success": False, "error": "Faltan parámetros: groupid, inicio, final"}), 400
 
     try:
-        response = requests.get(f"{BCK}/api/unidades-data", params={"groupid": group_id, "terids": raw_terids, "inicio": inicio, "final": final})
-        print(f"\n\nDATOS OBTENIDOS PARA UNIDADES\n{response.json()}")
+        response = requests.get(f"{BCK}/api/unidades-data", params={"groupid": group_id, "terids": raw_terids, "inicio": f"{inicio} 00:00:00", "final": f"{final} 23:59:59"})
+        #print(f"\n\nDATOS OBTENIDOS PARA UNIDADES\n{response.json()}")
         return jsonify(response.json()), response.status_code
 
     except Exception as e:
@@ -209,7 +211,7 @@ def get_ruta_data():
 
     try:
         response = requests.get(f"{BCK}/api/ruta-data", params={"groupid": group_id, "inicio": f"{inicio} 00:00:00", "final": f"{final} 23:59:59"})
-        print(f"\n\nDATOS OBTENIDOS PARA RUTA\n{response.json()}")
+        #print(f"\n\nDATOS OBTENIDOS PARA RUTA\n{response.json()}")
         return jsonify(response.json()), response.status_code
 
     except Exception as e:
