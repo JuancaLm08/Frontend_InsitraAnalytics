@@ -179,9 +179,9 @@ async function cargarDatosRuta(groupId) {
         heatLayer = L.heatLayer(res.heatmap, {
             radius: 23,         
             blur: 25, 
-            minOpacity: 0.10,          
+            minOpacity: 0.50,          
             maxZoom: 13,
-            max: maxPasajeros * 0.85, 
+            max: maxPasajeros * 1, 
            gradient: {
                 0.35: '#0000ff',
                 0.40: '#0033ff',
