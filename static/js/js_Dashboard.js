@@ -27,20 +27,17 @@ function getChartFontColor() {
 // FUNCION PARA CAMBIAR EL TEMA DEL DASHBOARD
 function setTheme(theme) {
     const body = document.body;
-    const lightBtn = document.getElementById('theme-light');
-    const darkBtn = document.getElementById('theme-dark');
+    const toggleInput = document.getElementById('theme-toggle-input');
     const logoImg = document.querySelector('.logo-top-nav');
 
     // Aplicar cambios de clase y UI
     if (theme === 'light') {
         body.classList.add('light-mode');
-        if (lightBtn) lightBtn.classList.add('active');
-        if (darkBtn) darkBtn.classList.remove('active');
+        if (toggleInput) toggleInput.checked = false;
         if (logoImg) logoImg.src = "../static/images/LoginTitle.png";
     } else {
         body.classList.remove('light-mode');
-        if (darkBtn) darkBtn.classList.add('active');
-        if (lightBtn) lightBtn.classList.remove('active');
+        if (toggleInput) toggleInput.checked = true;
         if (logoImg) logoImg.src = "../static/images/LoginTitle_white.png";
     }
 
@@ -88,8 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Manejo de cambio de fechas
-    const inputsFecha = ['fecha-inicio-totales', 'fecha-final-totales', 'fecha-inicio-unidades', 'fecha-final-unidades', 'fecha-inicio-ruta', 'fecha-final-ruta'];
+    // Manejo de cambio de fechas y horas
+    const inputsFecha = ['fecha-inicio-totales', 'fecha-final-totales', 'fecha-inicio-unidades', 'fecha-final-unidades', 'fecha-ruta', 'hora-inicio-h-ruta', 'hora-inicio-m-ruta', 'hora-final-h-ruta', 'hora-final-m-ruta'];
     inputsFecha.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -105,6 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
 /**********************************************************************************************************************************************************/
 // FUNCION PARA ESTABLECER LAS FECHAS DE INICIO Y FIN EN TOTALES, UNIDADES Y RUTA
 function inicializarFechas() {
+    // Asegurar que los selects de hora de Ruta tengan sus opciones antes de asignar valores
+    if (typeof llenarOpcionesHoraRuta === 'function') {
+        llenarOpcionesHoraRuta();
+    }
+
     const hoy = new Date();
     const fechaFinalStr = hoy.toISOString().split('T')[0]; 
 
@@ -117,8 +119,11 @@ function inicializarFechas() {
         { id: 'fecha-final-totales',  valor: fechaFinalStr },
         { id: 'fecha-inicio-unidades', valor: fechaInicioStr },
         { id: 'fecha-final-unidades',  valor: fechaFinalStr },
-        { id: 'fecha-inicio-ruta',     valor: fechaFinalStr }, 
-        { id: 'fecha-final-ruta',      valor: fechaFinalStr }
+        { id: 'fecha-ruta',            valor: fechaFinalStr },
+        { id: 'hora-inicio-h-ruta',    valor: '00' },
+        { id: 'hora-inicio-m-ruta',    valor: '00' },
+        { id: 'hora-final-h-ruta',     valor: '23' },
+        { id: 'hora-final-m-ruta',     valor: '59' }
     ];
 
     // Recorremos el arreglo y solo asignamos si el elemento existe

@@ -162,6 +162,18 @@ input[type="date"], .custom-select, select {
     box-sizing: border-box; 
 }
 
+/* Invertir el icono del calendario para que se vea sobre fondo oscuro */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(0.9);
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+body.light-mode input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
+    opacity: 0.7;
+}
+
 /* -------------------------------- CONTENEDORES DE DATOS Y GRÁFICAS -------------------------------- */
 .js-plotly-plot, 
 .plot-container {

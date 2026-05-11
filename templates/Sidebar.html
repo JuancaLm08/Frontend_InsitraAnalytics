@@ -60,25 +60,22 @@
             </select>
         </div>
 
-        <hr class="theme-sidebar-divider">
-
-        <div class="theme-switcher">
-            <p class="menu-title">Tema</p>
-            <div class="theme-options">
-                <div class="theme-btn active" id="theme-dark" onclick="setTheme('dark')">
-                    <span class="icon">🌙</span>
-                    <span class="text">Tema oscuro</span>
-                </div>
-                <div class="theme-btn" id="theme-light" onclick="setTheme('light')">
-                    <span class="icon">☀️</span>
-                    <span class="text">Tema claro</span>
-                </div>
-            </div>
-        </div>
-
     </div>
 
+    
+
     <div class="logout-button">
+        <hr class="sidebar-divider">
+        <div class="theme-switcher">
+        <label class="theme-toggle" for="theme-toggle-input" data-tooltip="Cambiar tema">
+            <span class="theme-toggle-icon sun" aria-hidden="true">☀️</span>
+            <input type="checkbox" id="theme-toggle-input" checked onchange="setTheme(this.checked ? 'dark' : 'light')">
+            <span class="theme-toggle-track">
+                <span class="theme-toggle-knob"></span>
+            </span>
+            <span class="theme-toggle-icon moon" aria-hidden="true">🌙</span>
+        </label>
+        </div>
         <hr class="sidebar-divider">
         <button class="logout-btn-container" onclick="location.href='/logout'">
             <span class="logout-text">Cerrar Sesión</span>

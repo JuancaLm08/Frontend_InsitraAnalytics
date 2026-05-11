@@ -203,18 +203,22 @@ def get_unidades_data():
 def get_ruta_data():
 
     group_id = request.args.get('groupid')
-    inicio = request.args.get('inicio')
-    final = request.args.get('final')
+    fecha = request.args.get('fecha')
+    hora_inicio = request.args.get('hora_inicio')  # formato HH:MM
+    hora_final = request.args.get('hora_final')    # formato HH:MM
 
-    if not group_id or not inicio or not final:
-        return jsonify({"success": False, "error": "Faltan parámetros: groupid, inicio, final"}), 400
+    if not group_id or not fecha or not hora_inicio or not hora_final:
+        return jsonify({"success": False, "error": "Faltan parámetros: groupid, fecha, hora_inicio, hora_final"}), 400
 
     try:
-        response = requests.get(f"{BCK}/api/ruta-data", params={"groupid": group_id, "inicio": f"{inicio} 00:00:00", "final": f"{final} 23:59:59"})
-        #print(f"\n\nDATOS OBTENIDOS PARA RUTA\n{response.json()}")
+        inicio = f"{fecha} {hora_inicio}:00"
+        final  = f"{fecha} {hora_final}:59"
+        response = requests.get(f"{BCK}/api/ruta-data", params={"groupid": group_id, "inicio": inicio, "final": final})
         return jsonify(response.json()), response.status_code
 
     except Exception as e:
+        import traceback
+        print(f"\n[RUTA] ERROR en /api/ruta-data:\n{traceback.format_exc()}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 #############################################################################################################################################################

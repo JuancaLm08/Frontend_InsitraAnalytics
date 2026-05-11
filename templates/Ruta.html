@@ -9,16 +9,33 @@
 
     <p class="section-subtitle"><b>Cuenca de Servicio</b></p>
 
-    <!----- FILTROS POR FECHAS ----->
-    <div class="date-filter-container">
-        <div class="date-group">
-            <label for="fecha-inicio">Fecha Inicio</label>
-            <input type="date" id="fecha-inicio-ruta">
+    <!----- FILTROS POR FECHA Y RANGO DE HORAS ----->
+    <div class="date-filter-header">
+        <div class="date-filter-container">
+            <div class="date-group">
+                <label for="fecha-ruta">Fecha</label>
+                <input type="date" id="fecha-ruta">
+            </div>
+            <div class="date-group">
+                <label>Hora Inicio</label>
+                <div class="time-select-group">
+                    <select id="hora-inicio-h-ruta" aria-label="Hora inicio - horas"></select>
+                    <span class="time-separator">:</span>
+                    <select id="hora-inicio-m-ruta" aria-label="Hora inicio - minutos"></select>
+                </div>
+            </div>
+            <div class="date-group">
+                <label>Hora Final</label>
+                <div class="time-select-group">
+                    <select id="hora-final-h-ruta" aria-label="Hora final - horas"></select>
+                    <span class="time-separator">:</span>
+                    <select id="hora-final-m-ruta" aria-label="Hora final - minutos"></select>
+                </div>
+            </div>
         </div>
-        <div class="date-group">
-            <label for="fecha-final">Fecha Final</label>
-            <input type="date" id="fecha-final-ruta">
-        </div>
+        <button id="btn-reset-horas-ruta" class="btn-reset-horas" title="Restaurar rango horario a 00:00 – 23:59">
+            <span>↺</span> Resetear horas
+        </button>
     </div>
 
     <div id="no-data-banner-ruta" class="status-banner">No hay datos para los filtros seleccionados.</div>
@@ -68,4 +85,4 @@
 <br>
 
 <!-- JavaScript de la Seccion Ruta -->
-<script src="../static/js/js_Ruta.js"></script> 
+<script src="../static/js/js_Ruta.js"></script>

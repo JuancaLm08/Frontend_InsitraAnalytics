@@ -91,8 +91,11 @@ function dispararActualizacionGlobal() {
         document.querySelector('.custom-select'),
         document.getElementById('fecha-inicio-unidades'),
         document.getElementById('fecha-final-unidades'),
-        document.getElementById('fecha-inicio-ruta'),
-        document.getElementById('fecha-final-ruta'),
+        document.getElementById('fecha-ruta'),
+        document.getElementById('hora-inicio-h-ruta'),
+        document.getElementById('hora-inicio-m-ruta'),
+        document.getElementById('hora-final-h-ruta'),
+        document.getElementById('hora-final-m-ruta'),
 
         document.getElementById('no-data-banner-inicio'),
         document.getElementById('no-data-banner-totales1'),

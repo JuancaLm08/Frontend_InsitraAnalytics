@@ -224,36 +224,169 @@
 .logout-icon-collapsed { display: none; font-size: 1.5rem; }
 .logout-text { display: inline; font-size: 0.9rem; }
 
-/* ---------------------------- CAMBIO TEMA DE LA VISTA ---------------------------- */
-.theme-options {
+/* ---------------------------- CAMBIO TEMA DE LA VISTA (TOGGLE SWITCH) ---------------------------- */
+.theme-switcher {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
+    justify-content: center;
+    margin: 4px 0 8px;
 }
 
-.theme-btn {
-    display: flex;
+.theme-toggle {
+    position: relative;                   /* necesario para el tooltip */
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 8px;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background-color: var(--hover);
     cursor: pointer;
-    transition: all 0.3s ease;
-    color: var(--texto-sidebar);
+    user-select: none;
+    transition: background-color 0.3s ease;
+    width: fit-content;                   /* el toggle no se estira */
 }
 
-.theme-btn:hover { 
-    background-color: var(--hover);
-    transition: all 0.3s ease;
+.theme-toggle:hover {
+    filter: brightness(1.15);
 }
 
-.theme-btn.active {
-    background-color: var(--hover);
+/* Tooltip que aparece al pasar el cursor sobre el toggle */
+.theme-toggle::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background-color: #0d1b2a;
+    color: #ffffff;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 1000;
 }
 
-/* Adaptación al colapso */
-.sidebar.collapsed .theme-btn { justify-content: center; }
-.sidebar.collapsed .theme-btn .text { display: none; }
+/* Flechita del tooltip */
+.theme-toggle::before {
+    content: "";
+    position: absolute;
+    bottom: calc(100% + 3px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    border: 5px solid transparent;
+    border-top-color: #0d1b2a;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 1000;
+}
+
+.theme-toggle:hover::after,
+.theme-toggle:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Ocultar el checkbox real, queda invisible pero accesible por teclado */
+.theme-toggle input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+/* Iconos sol/luna a los lados */
+.theme-toggle-icon {
+    font-size: 1rem;
+    line-height: 1;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+/* Track (carril del switch) — ancho compacto, ~mitad de lo anterior */
+.theme-toggle-track {
+    position: relative;
+    width: 40px;
+    height: 20px;
+    background-color: var(--fondo-sidebar, #0d1b2a);
+    border-radius: 999px;
+    border: 1px solid var(--input-border, rgba(255,255,255,0.15));
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    flex-shrink: 0;
+}
+
+/* Knob (círculo deslizante) */
+.theme-toggle-knob {
+    position: absolute;
+    top: 50%;
+    left: 3px;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #f5d76e;            /* color amarillo cálido cuando es modo claro */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: left 0.3s ease, background-color 0.3s ease;
+}
+
+/* Cuando el checkbox está marcado (modo oscuro), el knob se desplaza a la derecha */
+.theme-toggle input[type="checkbox"]:checked ~ .theme-toggle-track .theme-toggle-knob {
+    left: calc(100% - 17px);
+    background-color: #c4c4d4;            /* color frío para modo oscuro */
+}
+
+/* Resaltar el icono del modo activo y opacar el otro */
+.theme-toggle input[type="checkbox"]:not(:checked) ~ .theme-toggle-icon.moon,
+.theme-toggle input[type="checkbox"]:checked ~ .theme-toggle-icon.sun {
+    opacity: 0.45;
+    transform: scale(0.9);
+}
+
+.theme-toggle input[type="checkbox"]:not(:checked) ~ .theme-toggle-icon.sun,
+.theme-toggle input[type="checkbox"]:checked ~ .theme-toggle-icon.moon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Foco accesible por teclado */
+.theme-toggle input[type="checkbox"]:focus-visible ~ .theme-toggle-track {
+    outline: 2px solid var(--azul-claro, #4a90e2);
+    outline-offset: 2px;
+}
+
+/* Adaptación al colapso del sidebar: ocultar iconos laterales y mostrar solo el track compacto */
+.sidebar.collapsed .theme-switcher {
+    justify-content: center;
+}
+
+.sidebar.collapsed .theme-toggle {
+    padding: 6px;
+    gap: 0;
+}
+
+.sidebar.collapsed .theme-toggle-icon {
+    display: none;
+}
+
+.sidebar.collapsed .theme-toggle-track {
+    width: 36px;
+    height: 18px;
+}
+
+.sidebar.collapsed .theme-toggle-knob {
+    width: 12px;
+    height: 12px;
+}
+
+.sidebar.collapsed .theme-toggle input[type="checkbox"]:checked ~ .theme-toggle-track .theme-toggle-knob {
+    left: calc(100% - 15px);
+}
 
 
 /* ---------------------------- CONFIGURACION CUANDO LA BARRA ESTA COLAPSADA ---------------------------- */
@@ -306,8 +439,31 @@
         left: -250px;
     }
 
-    .sidebar.collapsed .theme-btn {
+    .sidebar.collapsed .theme-switcher {
         justify-content: flex-start !important;
+    }
+
+    .sidebar.collapsed .theme-toggle {
+        padding: 6px 10px;
+        gap: 8px;
+    }
+
+    .sidebar.collapsed .theme-toggle-icon {
+        display: inline-block !important;
+    }
+
+    .sidebar.collapsed .theme-toggle-track {
+        width: 50px;
+        height: 20px;
+    }
+
+    .sidebar.collapsed .theme-toggle-knob {
+        width: 14px;
+        height: 14px;
+    }
+
+    .sidebar.collapsed .theme-toggle input[type="checkbox"]:checked ~ .theme-toggle-track .theme-toggle-knob {
+        left: calc(100% - 17px);
     }
 
     /* Mostrar contenido normal */

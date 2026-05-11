@@ -25,8 +25,9 @@ function inicializarMapa() {
     map = L.map('map-canvas', {
         maxBounds: esquinasLimites, // Restringe el de movimiento en el mapa
         maxBoundsViscosity: 1.0,         
-        minZoom: 5, maxZoom: 18                      
-    }).setView([19.4326, -99.1332], 11);
+        minZoom: 5, maxZoom: 18,  // Limitar el zoom para evitar perder contexto  
+        zoomDelta: 0.3, zoomSnap: 0.3 // Zoom más suave                  
+    }).setView([19.4326, -99.1332], 15);
 
     // 1. Definir la capa Normal (OpenStreetMap)
     const mapaNormal = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -34,17 +35,25 @@ function inicializarMapa() {
     });
 
     // 2. Definir la capa Satelital (Esri World Imagery)
-    const mapaSatelital = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    const satelitalBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
     });
 
-    // 3. Añadir la capa normal por defecto al mapa para que cargue inicialmente
+    // 3. Definir una capa transparente de solo texto/calles (CartoDB)
+    const etiquetasCalles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    });
+
+    // 4. AGRUPAR ambas para crear la vista "Satelital Híbrida"
+    const mapaSatelitalHibrido = L.layerGroup([satelitalBase, etiquetasCalles]);
+
+    // 5. Añadir la capa normal por defecto al mapa para que cargue inicialmente
     mapaNormal.addTo(map);
 
-    // 4. Crear el control de capas y agregarlo al mapa
+    // 6. Crear el control de capas y agregarlo al mapa
     const capasBase = {
         "🗺️ Normal": mapaNormal,
-        "🛰️ Satelital": mapaSatelital
+        "🛰️ Satélital": mapaSatelitalHibrido
     };
     L.control.layers(capasBase).addTo(map);
 
@@ -85,17 +94,66 @@ function inicializarHerramientasLDraw() {
 }
 
 /**********************************************************************************************************************************************************/
+// LLENAR LAS OPCIONES DE LOS SELECTS DE HORAS Y MINUTOS (formato 24h)
+function llenarOpcionesHoraRuta() {
+    const selectsHoras = ['hora-inicio-h-ruta', 'hora-final-h-ruta'];
+    const selectsMins  = ['hora-inicio-m-ruta', 'hora-final-m-ruta'];
+
+    selectsHoras.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel || sel.options.length > 0) return;
+        for (let h = 0; h < 24; h++) {
+            const opt = document.createElement('option');
+            opt.value = String(h).padStart(2, '0');
+            opt.textContent = String(h).padStart(2, '0');
+            sel.appendChild(opt);
+        }
+    });
+
+    selectsMins.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel || sel.options.length > 0) return;
+        for (let m = 0; m < 60; m++) {
+            const opt = document.createElement('option');
+            opt.value = String(m).padStart(2, '0');
+            opt.textContent = String(m).padStart(2, '0');
+            sel.appendChild(opt);
+        }
+    });
+}
+
+/**********************************************************************************************************************************************************/
+// LEER LAS HORAS COMBINADAS COMO STRING "HH:MM"
+function getHoraInicioRuta() {
+    const h = document.getElementById('hora-inicio-h-ruta').value;
+    const m = document.getElementById('hora-inicio-m-ruta').value;
+    return `${h}:${m}`;
+}
+
+function getHoraFinalRuta() {
+    const h = document.getElementById('hora-final-h-ruta').value;
+    const m = document.getElementById('hora-final-m-ruta').value;
+    return `${h}:${m}`;
+}
+
+/**********************************************************************************************************************************************************/
 // ACTUALIZAR EL DASHBOARD EN CASO DE QUE CAMBIEN LAS FECHAS DE CONSULTA
+// ACTUALIZAR EL DASHBOARD EN CASO DE QUE CAMBIEN LAS FECHAS DE CONSULTA
+
 document.addEventListener('DOMContentLoaded', () => {
-        
+    // Asegurar que las opciones de los selects de hora estén disponibles
+    llenarOpcionesHoraRuta();
+
     if (btnLimpiar){
+
         btnLimpiar.addEventListener('click', () => {
-
             if (drawnItems) {
-                drawnItems.clearLayers();
-            }
 
+                drawnItems.clearLayers();
+
+            }
             document.getElementById('map-pasajeros-val').innerText = "0";
+
             //document.getElementById('map-descensos-val').innerText = "0";
 
             // Volver al estado inicial de la sección
@@ -104,13 +162,36 @@ document.addEventListener('DOMContentLoaded', () => {
             //valorDescensos.style.display = 'none';
             tablaRuta.style.display = 'none';
             messageBlue.style.display = 'block';            
+
+        });
+
+    }
+
+    // Botón para resetear las horas al rango por defecto (00:00 – 23:59)
+    const btnResetHoras = document.getElementById('btn-reset-horas-ruta');
+    if (btnResetHoras) {
+        btnResetHoras.addEventListener('click', () => {
+            document.getElementById('hora-inicio-h-ruta').value = '00';
+            document.getElementById('hora-inicio-m-ruta').value = '00';
+            document.getElementById('hora-final-h-ruta').value  = '23';
+            document.getElementById('hora-final-m-ruta').value  = '59';
+            // Relanzar la consulta si hay un corredor seleccionado
+            const groupId = document.getElementById('select-corredor').value;
+            if (groupId) dispararActualizacionGlobal();
         });
     }
 
-    // Escuchar cambios en las fechas
-    const fechaInicio = document.getElementById('fecha-inicio-ruta');
-    const fechaFinal = document.getElementById('fecha-final-ruta');
-    [fechaInicio, fechaFinal].forEach(input => {
+
+    // Escuchar cambios en la fecha y los selects del rango de horas
+    const inputsRuta = [
+        document.getElementById('fecha-ruta'),
+        document.getElementById('hora-inicio-h-ruta'),
+        document.getElementById('hora-inicio-m-ruta'),
+        document.getElementById('hora-final-h-ruta'),
+        document.getElementById('hora-final-m-ruta')
+    ];
+    inputsRuta.forEach(input => {
+        if (!input) return;
         input.addEventListener('change', () => {
             const groupId = document.getElementById('select-corredor').value; // Solo disparamos si hay un corredor seleccionado
             if (groupId) {
@@ -119,6 +200,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+/**********************************************************************************************************************************************************/
+// VALIDAR LA FECHA Y EL RANGO DE HORAS DE LA SECCION RUTA
+function validarFechaYHorasRuta(fecha, horaInicio, horaFinal) {
+    const dateHoy = new Date();
+    dateHoy.setHours(0, 0, 0, 0);
+
+    if (!fecha || !horaInicio || !horaFinal) {
+        return { valido: false };
+    }
+
+    const dateFecha = new Date(fecha + "T00:00:00");
+
+    if (dateFecha > dateHoy) {
+        return { valido: false, msj: "La fecha no puede ser después de hoy." };
+    }
+
+    // Comparamos las horas como strings "HH:MM" (lexicográficamente equivalentes a numéricamente)
+    if (horaInicio >= horaFinal) {
+        return { valido: false, msj: "La hora de inicio debe ser menor que la hora final." };
+    }
+
+    return { valido: true, msj: "OK" };
+}
 
 /**********************************************************************************************************************************************************/
 // FUNCION PARA MOSTRAR DATOS SEGUN AREA SELECCIONADA
@@ -161,10 +266,11 @@ function filtrarPuntosConTurf(zonaGeoJSON) {
 /**********************************************************************************************************************************************************/
 // FUNCION PARA MOSTRAR LOS DETALLES EN EL MAPA
 async function cargarDatosRuta(groupId) { 
-    const inicio = document.getElementById('fecha-inicio-ruta').value;
-    const final = document.getElementById('fecha-final-ruta').value;
+    const fecha = document.getElementById('fecha-ruta').value;
+    const horaInicio = getHoraInicioRuta();
+    const horaFinal = getHoraFinalRuta();
 
-    const response = await fetch(`/api/ruta-data?groupid=${groupId}&inicio=${inicio}&final=${final}`);
+    const response = await fetch(`/api/ruta-data?groupid=${groupId}&fecha=${fecha}&hora_inicio=${horaInicio}&hora_final=${horaFinal}`);
     const res = await response.json();
 
     if (res.success) {
@@ -211,14 +317,15 @@ async function cargarDatosRuta(groupId) {
 /**********************************************************************************************************************************************************/
 // FUNCION PARA ACTUALIZAR EN DASHBOARD EN LA SECCION DE RUTA
 async function actualizarDashboardRuta(groupId) {
-    const inicio = document.getElementById('fecha-inicio-ruta').value;
-    const final = document.getElementById('fecha-final-ruta').value;
+    const fecha = document.getElementById('fecha-ruta').value;
+    const horaInicio = getHoraInicioRuta();
+    const horaFinal = getHoraFinalRuta();
     const section = document.getElementById('section-ruta');
     const banners = section.querySelectorAll('.status-banner');
     const contentRuta = document.getElementById('ruta-content');
     
-    // Realizar la validación de las fechas ingresadas
-    const validacion = validarRangoFechas(inicio, final);
+    // Realizar la validación de la fecha y el rango de horas
+    const validacion = validarFechaYHorasRuta(fecha, horaInicio, horaFinal);
 
     if (!validacion.valido) {
         if (contentRuta) contentRuta.style.display = 'none';
