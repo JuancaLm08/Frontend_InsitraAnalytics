@@ -21,6 +21,7 @@
 
         <hr class="sidebar-divider">
 
+
         <nav class="menu">
             <p class="menu-title">Paneles</p>
             
@@ -49,6 +50,13 @@
                 <span class="text">Ruta</span>
             </a>
             {% endif %}
+
+            {% if 5 in permisos %}
+            <a onclick="changeView('Horaria', this)">
+                <span class="icon">🕐</span>
+                <span class="text">Horaria</span>
+            </a>
+            {% endif %}
         </nav>
 
         <hr class="sidebar-divider">
@@ -62,19 +70,17 @@
 
     </div>
 
-    
-
     <div class="logout-button">
         <hr class="sidebar-divider">
         <div class="theme-switcher">
-        <label class="theme-toggle" for="theme-toggle-input" data-tooltip="Cambiar tema">
-            <span class="theme-toggle-icon sun" aria-hidden="true">☀️</span>
-            <input type="checkbox" id="theme-toggle-input" checked onchange="setTheme(this.checked ? 'dark' : 'light')">
-            <span class="theme-toggle-track">
-                <span class="theme-toggle-knob"></span>
-            </span>
-            <span class="theme-toggle-icon moon" aria-hidden="true">🌙</span>
-        </label>
+            <label class="theme-toggle" for="theme-toggle-input" data-tooltip="Cambiar tema">
+                <span class="theme-toggle-icon sun" aria-hidden="true">☀️</span>
+                <input type="checkbox" id="theme-toggle-input" checked onchange="setTheme(this.checked ? 'dark' : 'light')">
+                <span class="theme-toggle-track">
+                    <span class="theme-toggle-knob"></span>
+                </span>
+                <span class="theme-toggle-icon moon" aria-hidden="true">🌙</span>
+            </label>
         </div>
         <hr class="sidebar-divider">
         <button class="logout-btn-container" onclick="location.href='/logout'">

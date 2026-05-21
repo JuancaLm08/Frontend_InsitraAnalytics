@@ -1,0 +1,744 @@
+/* ============================================================================================
+   ESTILO CSS — SECCIÓN HORARIA
+   ============================================================================================ */
+
+/* ---- Filtros generales ---- */
+.horaria-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    margin-bottom: 24px;
+}
+
+.horaria-filter-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.horaria-step-title {
+    font-size: 1.35rem;
+    font-weight: bold;
+    color: var(--texto);
+    margin: 0;
+}
+
+.horaria-counter {
+    font-size: 0.8rem;
+    font-weight: normal;
+    color: var(--texto);
+    opacity: 0.6;
+    margin-left: 6px;
+}
+
+/* ---- Selector de compañía (reutiliza clases de Unidades) ---- */
+/* Las clases .multiselect-container, .custom-select, .tags-container,
+   .options-list, .option, .bus-tag, .remove-tag ya están en estilo_Unidades.css */
+
+/* ---- Wrapper calendario + tags ---- */
+.horaria-date-picker-wrapper {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+/* ---- Calendario ---- */
+.horaria-calendar {
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    padding: 14px;
+    width: 270px;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.horaria-cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.horaria-cal-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--texto);
+    text-transform: capitalize;
+}
+
+.horaria-cal-nav {
+    background: none;
+    border: none;
+    color: var(--texto);
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.horaria-cal-nav:hover {
+    background-color: var(--hover);
+}
+
+.horaria-cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.horaria-cal-weekdays span {
+    font-size: 0.7rem;
+    color: var(--texto);
+    opacity: 0.55;
+    padding: 2px 0;
+}
+
+.horaria-cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.horaria-cal-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 0.82rem;
+    cursor: pointer;
+    color: var(--texto);
+    transition: background 0.15s, color 0.15s;
+}
+
+.horaria-cal-day:hover:not(.disabled):not(.empty) {
+    background-color: var(--hover);
+}
+
+.horaria-cal-day.selected {
+    background-color: var(--accent);
+    color: #fff;
+    font-weight: bold;
+}
+
+.horaria-cal-day.today:not(.selected) {
+    border: 1px solid var(--borde);
+    color: var(--texto);
+}
+
+.horaria-cal-day.disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+.horaria-cal-day.empty {
+    cursor: default;
+}
+
+/* Cuando ya llegamos al límite, opacar los no seleccionados */
+.horaria-cal-days.limit-reached .horaria-cal-day:not(.selected):not(.disabled):not(.empty) {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ---- Tags de días seleccionados ---- */
+.horaria-selected-days {
+    flex: 1;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 4px;
+}
+
+.horaria-no-days-msg {
+    font-size: 0.85rem;
+    opacity: 0.5;
+    margin: 0;
+    font-style: italic;
+}
+
+.horaria-day-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--accent);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255,255,255,0.15);
+    animation: horaria-tag-in 0.18s ease;
+}
+
+@keyframes horaria-tag-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.horaria-day-tag .remove-tag {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.horaria-day-tag .remove-tag:hover {
+    color: #ffd;
+}
+
+/* ---- Bloque de horas por día ---- */
+#horaria-hours-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.horaria-day-hours-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    background-color: var(--fondo-summary);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    animation: horaria-tag-in 0.2s ease;
+}
+
+.horaria-day-hours-label {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--texto);
+    min-width: 110px;
+}
+
+.horaria-hours-selects {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.horaria-time-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.horaria-time-group label {
+    font-size: 0.75rem;
+    opacity: 0.65;
+    color: var(--texto);
+}
+
+.horaria-time-group .time-select-group {
+    /* reutiliza las mismas reglas de estilo_Ruta.css */
+}
+
+/* ---- Botón generar ---- */
+.horaria-action-row {
+    margin-top: 4px;
+    margin-bottom: 20px;
+}
+
+.btn-generar-horaria {
+    padding: 10px 22px;
+    background-color: var(--fondo-summary);
+    border: 1px solid var(--borde-principal);
+    color: var(--texto);
+    border-radius: 7px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.88rem;
+    transition: all 0.3s ease;
+}
+
+.btn-generar-horaria:hover:not(:disabled) {
+    background-color: var(--hover-summary);
+}
+
+.btn-generar-horaria:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ---- Banner de error (variante roja) ---- */
+.status-banner--error {
+    background-color: rgba(255, 60, 60, 0.12);
+    color: #ff6b6b;
+    border-color: rgba(255, 60, 60, 0.35);
+}
+
+/* ---- Bloque de tarifas ---- */
+.horaria-tarifa-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+    background-color: var(--fondo-summary);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+}
+
+.horaria-tarifa-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.horaria-tarifa-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--texto);
+}
+
+.horaria-required {
+    color: #ff6b6b;
+    margin-left: 2px;
+}
+
+.horaria-tarifa-input {
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--texto);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    width: 180px;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.horaria-tarifa-input:focus {
+    border-color: var(--borde);
+    box-shadow: 0 0 0 2px rgba(136, 17, 62, 0.2);
+}
+
+/* Quitar flechas del input number en Chrome/Safari/Edge */
+.horaria-tarifa-input::-webkit-outer-spin-button,
+.horaria-tarifa-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.horaria-tarifa-input[type=number] { -moz-appearance: textfield; }
+
+/* ---- Toggle switch "Opcional" ---- */
+.horaria-opt-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.horaria-opt-toggle input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.horaria-opt-track {
+    position: relative;
+    width: 40px;
+    height: 20px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 999px;
+    transition: background-color 0.25s;
+    flex-shrink: 0;
+}
+
+.horaria-opt-knob {
+    position: absolute;
+    top: 50%;
+    left: 3px;
+    transform: translateY(-50%);
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background-color: var(--input-border);
+    transition: left 0.25s ease, background-color 0.25s;
+}
+
+.horaria-opt-toggle input:checked ~ .horaria-opt-track {
+    background-color: var(--accent);
+    border-color: var(--borde);
+}
+
+.horaria-opt-toggle input:checked ~ .horaria-opt-track .horaria-opt-knob {
+    left: calc(100% - 16px);
+    background-color: #fff;
+}
+
+.horaria-opt-badge {
+    font-size: 0.72rem;
+    opacity: 0.55;
+    color: var(--texto);
+}
+
+/* ---- Detalle extra (tarifa + sub-opciones) ---- */
+.horaria-tarifa-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 4px;
+    animation: horaria-tag-in 0.18s ease;
+}
+
+.horaria-tarifa-sublabel {
+    font-size: 0.8rem;
+    opacity: 0.65;
+    margin: 0 0 4px;
+    color: var(--texto);
+}
+
+/* ---- Horario nocturno ---- */
+.horaria-nocturna-horario {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.horaria-nocturna-time-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.horaria-time-arrow {
+    font-size: 1.1rem;
+    color: var(--texto);
+    opacity: 0.6;
+    padding-bottom: 8px;
+    flex-shrink: 0;
+}
+
+/* ---- Mapa de zona especial ---- */
+.horaria-zona-mapa-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Layout mapa + panel en fila */
+.horaria-zona-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+/* Columna del mapa: ocupa ~75% */
+.horaria-zona-map-col {
+    flex: 0 0 75%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#horaria-zona-map-container {
+    height: 380px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.horaria-zona-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.horaria-zona-counter {
+    font-size: 0.82rem;
+    opacity: 0.65;
+    color: var(--texto);
+}
+
+/* Panel lateral: ocupa el resto */
+.horaria-zona-panel {
+    flex: 1;
+    min-width: 200px;
+    height: 380px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.horaria-zona-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--input-border);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--texto);
+    background-color: var(--fondo-summary);
+    flex-shrink: 0;
+}
+
+/* Lista de polígonos — scrolleable */
+.horaria-zona-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.horaria-zona-panel-empty {
+    font-size: 0.8rem;
+    opacity: 0.45;
+    text-align: center;
+    margin-top: 24px;
+    font-style: italic;
+    color: var(--texto);
+}
+
+/* Cada ítem de polígono guardado */
+.horaria-zona-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background-color: var(--fondo-summary);
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: var(--texto);
+    animation: horaria-tag-in 0.18s ease;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.horaria-zona-item:hover {
+    border-color: var(--borde);
+    background-color: var(--hover);
+}
+
+.horaria-zona-item.activo {
+    border-color: var(--accent);
+    background-color: rgba(117, 22, 67, 0.15);
+}
+
+.horaria-zona-item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.horaria-zona-item-verts {
+    font-size: 0.72rem;
+    opacity: 0.55;
+    flex-shrink: 0;
+}
+
+/* Badge servidor / local */
+.horaria-zona-badge {
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+/* Menú de tres puntos */
+.horaria-zona-item-menu-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.horaria-zona-item-opts {
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    opacity: 0.6;
+    transition: opacity 0.2s, background-color 0.2s;
+    display: block;
+    user-select: none;
+}
+
+.horaria-zona-item-opts:hover {
+    opacity: 1;
+    background-color: var(--hover);
+}
+
+.horaria-zona-item-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background-color: var(--fondo-summary);
+    border: 1px solid var(--input-border);
+    border-radius: 7px;
+    min-width: 150px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    z-index: 500;
+    overflow: hidden;
+}
+
+.horaria-zona-menu-opt {
+    padding: 9px 14px;
+    font-size: 0.82rem;
+    color: var(--texto);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.horaria-zona-menu-opt:hover {
+    background-color: var(--hover);
+}
+
+.horaria-zona-menu-opt.danger {
+    color: #ff6b6b;
+}
+
+.horaria-zona-menu-opt.danger:hover {
+    background-color: rgba(255, 60, 60, 0.12);
+}
+
+/* Botón guardar zona */
+.btn-horaria-guardar-zona {
+    margin: 10px;
+    padding: 8px 12px;
+    background-color: var(--fondo-summary);
+    border: 1px solid var(--borde-principal);
+    color: var(--texto);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.78rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-horaria-guardar-zona:hover:not(:disabled) {
+    background-color: var(--hover-summary);
+}
+
+.btn-horaria-guardar-zona:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ---- Resultados ---- */
+#horaria-content {
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* Tarjetas de totales */
+.horaria-summary-cards {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.horaria-summary-card {
+    flex: 1;
+    min-width: 160px;
+    background-color: var(--fondo-summary);
+    border: 1px solid var(--borde-principal);
+    border-radius: 10px;
+    padding: 22px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.horaria-card-label {
+    font-size: 0.78rem;
+    opacity: 0.6;
+    color: var(--texto);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.horaria-card-value {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--texto);
+    line-height: 1;
+}
+
+.horaria-card-sub {
+    font-size: 0.8rem;
+    opacity: 0.5;
+    color: var(--texto);
+}
+
+/* Desglose por tarifa */
+.horaria-tarifa-breakdown {
+    display: flex;
+    margin-top: 15px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.horaria-breakdown-item {
+    flex: 1;
+    min-width: 140px;
+    background-color: var(--fondo-summary);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    padding: 16px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-left: 3px solid var(--borde);
+}
+
+.horaria-breakdown-item.tarifa-normal   { border-left-color: #4a90e2; }
+.horaria-breakdown-item.tarifa-nocturna { border-left-color: #a78bfa; }
+.horaria-breakdown-item.tarifa-especial { border-left-color: #f59e0b; }
+
+.horaria-breakdown-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    color: var(--texto);
+}
+
+.horaria-breakdown-asc {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--texto);
+}
+
+.horaria-breakdown-rec {
+    font-size: 0.85rem;
+    opacity: 0.65;
+    color: var(--texto);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+    .horaria-date-picker-wrapper  { flex-direction: column; }
+    .horaria-calendar             { width: 100%; }
+    .horaria-day-hours-row        { flex-direction: column; align-items: flex-start; }
+    .horaria-nocturna-time-row    { flex-direction: column; align-items: flex-start; }
+    .horaria-time-arrow           { display: none; }
+    .horaria-tarifa-input         { width: 100%; }
+    .horaria-summary-cards        { flex-direction: column; }
+    .horaria-tarifa-breakdown     { flex-direction: column; }
+    .horaria-zona-layout          { flex-direction: column; }
+    .horaria-zona-map-col         { flex: none; width: 100%; }
+    .horaria-zona-panel           { width: 100%; height: 260px; }
+}

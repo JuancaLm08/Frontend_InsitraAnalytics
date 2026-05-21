@@ -2,7 +2,7 @@ let debounceTimer; // Variable para el temporizador
 let insitraLoader; // Variable para controlar la aparicion de la animacion Lottie
 let animations = {}; // Objeto para guardar las instancias de Lottie
 
-window.seccionesCargadas = {'Inicio': false, 'Totales': false, 'Unidades': false, 'Ruta': false };
+window.seccionesCargadas = {'Inicio': false, 'Totales': false, 'Unidades': false, 'Ruta': false, 'Horaria': false };
 
 /**********************************************************************************************************************************************************/
 // FUNCION PARA CARGAR LA ANIMACION LOTTIE
@@ -48,7 +48,7 @@ async function changeView(view, el) {
     
     document.getElementById("view-title").innerText = "INSITRA ANALYTICS: " + view + " " + icon;
     document.getElementById("titulo-general").innerText = "INSITRA ANALYTICS: " + view;
-    const secciones = {'Inicio': 'section-inicio', 'Totales': 'section-totales', 'Unidades': 'section-unidades', 'Ruta': 'section-ruta'};
+    const secciones = {'Inicio': 'section-inicio', 'Totales': 'section-totales', 'Unidades': 'section-unidades', 'Ruta': 'section-ruta', 'Horaria': 'section-horaria'};
 
     // Ocultar todas las secciones y mostrar la activa
     Object.values(secciones).forEach(id => {
@@ -194,6 +194,7 @@ async function cargarCorredores() {
         });
 
         select.value = grupos[0].id;
+        if (typeof cargarListaBusesHoraria === 'function') cargarListaBusesHoraria(grupos[0].id);
         dispararActualizacionGlobal();
 
         // Evento al cambiar de corredor
@@ -203,6 +204,7 @@ async function cargarCorredores() {
             if (window.currentActiveView === 'Unidades') {
                 if (typeof cargarListaBuses === 'function') await cargarListaBuses(groupId);
             }
+            if (typeof cargarListaBusesHoraria === 'function') await cargarListaBusesHoraria(groupId);
             dispararActualizacionGlobal();
         });
 

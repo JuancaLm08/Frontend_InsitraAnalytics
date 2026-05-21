@@ -144,7 +144,7 @@
     .btn-reset-horas {
         align-self: flex-start;
     }
-}
+
     .map-header {
         flex-direction: column;
         align-items: flex-start;
@@ -159,7 +159,7 @@
     .map-container {
         height: 400px;
     }
-
+}
 
 /* SELECTORES DE HORA (HH:MM) - dos <select> en línea con separador */
 .time-select-group {
@@ -190,3 +190,4 @@
     user-select: none;
     opacity: 0.85;
 }
+

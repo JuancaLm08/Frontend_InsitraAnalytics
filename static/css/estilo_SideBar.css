@@ -312,7 +312,7 @@
 /* Track (carril del switch) — ancho compacto, ~mitad de lo anterior */
 .theme-toggle-track {
     position: relative;
-    width: 40px;
+    width: 50px;
     height: 20px;
     background-color: var(--fondo-sidebar, #0d1b2a);
     border-radius: 999px;

@@ -25,9 +25,9 @@ function inicializarMapa() {
     map = L.map('map-canvas', {
         maxBounds: esquinasLimites, // Restringe el de movimiento en el mapa
         maxBoundsViscosity: 1.0,         
-        minZoom: 5, maxZoom: 18,  // Limitar el zoom para evitar perder contexto  
-        zoomDelta: 0.3, zoomSnap: 0.3 // Zoom más suave                  
-    }).setView([19.4326, -99.1332], 15);
+        minZoom: 5, maxZoom: 18,
+        zoomDelta: 0.3, zoomSnap: 0.3 // Zoom más suave                       
+    }).setView([19.4326, -99.1332], 11);
 
     // 1. Definir la capa Normal (OpenStreetMap)
     const mapaNormal = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -56,6 +56,88 @@ function inicializarMapa() {
         "🛰️ Satélital": mapaSatelitalHibrido
     };
     L.control.layers(capasBase).addTo(map);
+
+    // --- BOTÓN DE PANTALLA COMPLETA ---
+    // 1. Crear un control personalizado de Leaflet
+    L.Control.PantallaCompleta = L.Control.extend({
+        options: { position: 'topleft' }, 
+        onAdd: function(map) {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            const button = L.DomUtil.create('a', '', container);
+            
+            // Le asignamos un ID para poder encontrarlo fácilmente después
+            button.id = 'btn-maximizar-mapa'; 
+            
+            // Estilos del botón iniciales
+            button.innerHTML = '⛶'; 
+            button.href = '#';
+            button.title = 'Maximizar mapa';
+            button.style.fontSize = '18px';
+            button.style.lineHeight = '30px';
+            button.style.textAlign = 'center';
+            button.style.textDecoration = 'none';
+            button.style.width = '30px';
+            button.style.height = '30px';
+            button.style.display = 'block';
+            button.style.backgroundColor = 'white';
+            button.style.color = '#333';
+            button.style.fontWeight = 'bold';
+
+            // 2. Lógica SOLO para pedir/quitar pantalla completa
+            L.DomEvent.on(button, 'click', function(e) {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+                
+                const mapContainer = document.getElementById('map-canvas');
+
+                if (!document.fullscreenElement) {
+                    // Entrar a pantalla completa
+                    if (mapContainer.requestFullscreen) {
+                        mapContainer.requestFullscreen();
+                    } else if (mapContainer.webkitRequestFullscreen) { 
+                        mapContainer.webkitRequestFullscreen();
+                    } else if (mapContainer.msRequestFullscreen) { 
+                        mapContainer.msRequestFullscreen();
+                    }
+                } else {
+                    // Salir de pantalla completa
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            });
+
+            return container;
+        }
+    });
+
+    // 3. Añadir el nuevo control al mapa
+    map.addControl(new L.Control.PantallaCompleta());
+
+    // 4. ESCUCHAR CUALQUIER CAMBIO DE PANTALLA (Botón o tecla ESC)
+    document.addEventListener('fullscreenchange', () => {
+        const btnFullScreen = document.getElementById('btn-maximizar-mapa');
+        
+        if (document.fullscreenElement) {
+            // Si la pantalla completa ESTÁ activa
+            if (btnFullScreen) {
+                btnFullScreen.innerHTML = '✖'; 
+                btnFullScreen.title = 'Salir de pantalla completa';
+            }
+        } else {
+            // Si la pantalla completa NO ESTÁ activa (por botón o tecla ESC)
+            if (btnFullScreen) {
+                btnFullScreen.innerHTML = '⛶';
+                btnFullScreen.title = 'Maximizar mapa';
+            }
+        }
+
+        // Redibujar el mapa
+        if (map) {
+            setTimeout(() => { map.invalidateSize(); }, 200); 
+        }
+    });
+    // -----------------------------------
 
     inicializarHerramientasLDraw();
 
@@ -138,22 +220,19 @@ function getHoraFinalRuta() {
 
 /**********************************************************************************************************************************************************/
 // ACTUALIZAR EL DASHBOARD EN CASO DE QUE CAMBIEN LAS FECHAS DE CONSULTA
-// ACTUALIZAR EL DASHBOARD EN CASO DE QUE CAMBIEN LAS FECHAS DE CONSULTA
-
 document.addEventListener('DOMContentLoaded', () => {
+
     // Asegurar que las opciones de los selects de hora estén disponibles
     llenarOpcionesHoraRuta();
 
     if (btnLimpiar){
-
         btnLimpiar.addEventListener('click', () => {
+
             if (drawnItems) {
-
                 drawnItems.clearLayers();
-
             }
-            document.getElementById('map-pasajeros-val').innerText = "0";
 
+            document.getElementById('map-pasajeros-val').innerText = "0";
             //document.getElementById('map-descensos-val').innerText = "0";
 
             // Volver al estado inicial de la sección
@@ -162,9 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
             //valorDescensos.style.display = 'none';
             tablaRuta.style.display = 'none';
             messageBlue.style.display = 'block';            
-
         });
-
     }
 
     // Botón para resetear las horas al rango por defecto (00:00 – 23:59)
@@ -180,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (groupId) dispararActualizacionGlobal();
         });
     }
-
 
     // Escuchar cambios en la fecha y los selects del rango de horas
     const inputsRuta = [

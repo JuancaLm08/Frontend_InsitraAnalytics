@@ -222,5 +222,115 @@ def get_ruta_data():
         return jsonify({"success": False, "error": str(e)}), 500
 
 #############################################################################################################################################################
+""" ##################################################################################################################################################### """
+""" ################################################################ SECCION DE HORARIA ################################################################## """
+# ENDPOINT PROXY DE LA SECCION DE HORARIA
+@app.route('/api/horaria-data', methods=['POST'])
+def post_horaria_data():
+
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"success": False, "error": "El body debe ser JSON."}), 400
+
+    try:
+        # ── 1. Traducir campos raíz ──────────────────────────────────────────
+        group_id = body.get('groupid')
+        unidades = body.get('terids', [])
+
+        # dias[].fecha → dias[].dia  (los demás campos coinciden)
+        dias = [
+            {
+                "dia":         d.get('fecha'),
+                "hora_inicio": d.get('hora_inicio'),
+                "hora_fin":    d.get('hora_fin'),
+            }
+            for d in body.get('dias', [])
+        ]
+
+        # ── 2. Traducir tarifas ──────────────────────────────────────────────
+        tf_front = body.get('tarifas', {})
+        tarifas  = { "normal": tf_front.get('normal') }
+
+        # Nocturna: valor→precio  |  desde/hasta→hora_inicio/hora_fin
+        noc = tf_front.get('nocturna')
+        if noc:
+            tarifas['nocturna'] = {
+                "precio":      noc.get('valor'),
+                "hora_inicio": noc.get('desde'),
+                "hora_fin":    noc.get('hasta'),
+            }
+
+        # Especial: valor→precio  |  geojson FeatureCollection → poligonos [[lat,lng],...]
+        esp = tf_front.get('especial')
+        if esp:
+            poligonos = []
+            fc = esp.get('geojson', {})
+            for feature in fc.get('features', []):
+                coords = feature.get('geometry', {}).get('coordinates', [[]])[0]
+                # GeoJSON usa [lng, lat]; el backend espera [lat, lng]
+                poligonos.append([[lat, lng] for lng, lat in coords])
+
+            tarifas['especial'] = {
+                "precio":    esp.get('valor'),
+                "poligonos": poligonos,
+            }
+
+        # ── 3. Payload final para el backend ─────────────────────────────────
+        payload_bck = {
+            "group_id": group_id,
+            "unidades": unidades,
+            "dias":     dias,
+            "tarifas":  tarifas,
+        }
+
+        response = requests.post(
+            f"{BCK}/api/horarios-data",
+            json=payload_bck,
+            timeout=60
+        )
+        return jsonify(response.json()), response.status_code
+
+    except Exception as e:
+        import traceback
+        print(f"\n[HORARIA] ERROR en /api/horaria-data:\n{traceback.format_exc()}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/zonas-tarifarias', methods=['GET'])
+def get_zonas():
+    group_id = request.args.get('groupid')
+    r = requests.get(f"{BCK}/api/zonas-tarifarias", params={"group_id": group_id}, timeout=10)
+    return jsonify(r.json()), r.status_code
+
+@app.route('/api/zonas-tarifarias', methods=['POST'])
+def post_zona():
+    body = request.get_json(silent=True)
+    payload = {
+        "group_id": body.get('groupid'),
+        "nombre":   body.get('nombre'),
+        "geojson":  body.get('geojson'),   # pasa tal cual
+    }
+    r = requests.post(f"{BCK}/api/zonas-tarifarias", json=payload, timeout=10)
+    return jsonify(r.json()), r.status_code
+
+@app.route('/api/zonas-tarifarias/<int:zona_id>', methods=['PUT'])
+def put_zona(zona_id):
+    body = request.get_json(silent=True)
+    payload = {
+        "nombre":  body.get('nombre'),
+        "geojson": body.get('geojson'),
+    }
+    r = requests.put(f"{BCK}/api/zonas-tarifarias/{zona_id}", json=payload, timeout=10)
+    return jsonify(r.json()), r.status_code
+
+@app.route('/api/zonas-tarifarias/<int:zona_id>', methods=['DELETE'])
+def delete_zona(zona_id):
+    group_id = request.args.get('groupid')
+    r = requests.delete(
+        f"{BCK}/api/zonas-tarifarias/{zona_id}",
+        params={"group_id": group_id},
+        timeout=10
+    )
+    return jsonify(r.json()), r.status_code
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
