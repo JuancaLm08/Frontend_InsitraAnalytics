@@ -57,6 +57,88 @@ function inicializarMapa() {
     };
     L.control.layers(capasBase).addTo(map);
 
+    // --- BOTÓN DE PANTALLA COMPLETA ---
+    // 1. Crear un control personalizado de Leaflet
+    L.Control.PantallaCompleta = L.Control.extend({
+        options: { position: 'topleft' }, 
+        onAdd: function(map) {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            const button = L.DomUtil.create('a', '', container);
+            
+            // Le asignamos un ID para poder encontrarlo fácilmente después
+            button.id = 'btn-maximizar-mapa'; 
+            
+            // Estilos del botón iniciales
+            button.innerHTML = '⛶'; 
+            button.href = '#';
+            button.title = 'Maximizar mapa';
+            button.style.fontSize = '18px';
+            button.style.lineHeight = '30px';
+            button.style.textAlign = 'center';
+            button.style.textDecoration = 'none';
+            button.style.width = '30px';
+            button.style.height = '30px';
+            button.style.display = 'block';
+            button.style.backgroundColor = 'white';
+            button.style.color = '#333';
+            button.style.fontWeight = 'bold';
+
+            // 2. Lógica SOLO para pedir/quitar pantalla completa
+            L.DomEvent.on(button, 'click', function(e) {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+                
+                const mapContainer = document.getElementById('map-canvas');
+
+                if (!document.fullscreenElement) {
+                    // Entrar a pantalla completa
+                    if (mapContainer.requestFullscreen) {
+                        mapContainer.requestFullscreen();
+                    } else if (mapContainer.webkitRequestFullscreen) { 
+                        mapContainer.webkitRequestFullscreen();
+                    } else if (mapContainer.msRequestFullscreen) { 
+                        mapContainer.msRequestFullscreen();
+                    }
+                } else {
+                    // Salir de pantalla completa
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            });
+
+            return container;
+        }
+    });
+
+    // 3. Añadir el nuevo control al mapa
+    map.addControl(new L.Control.PantallaCompleta());
+
+    // 4. ESCUCHAR CUALQUIER CAMBIO DE PANTALLA (Botón o tecla ESC)
+    document.addEventListener('fullscreenchange', () => {
+        const btnFullScreen = document.getElementById('btn-maximizar-mapa');
+        
+        if (document.fullscreenElement) {
+            // Si la pantalla completa ESTÁ activa
+            if (btnFullScreen) {
+                btnFullScreen.innerHTML = '✖'; 
+                btnFullScreen.title = 'Salir de pantalla completa';
+            }
+        } else {
+            // Si la pantalla completa NO ESTÁ activa (por botón o tecla ESC)
+            if (btnFullScreen) {
+                btnFullScreen.innerHTML = '⛶';
+                btnFullScreen.title = 'Maximizar mapa';
+            }
+        }
+
+        // Redibujar el mapa
+        if (map) {
+            setTimeout(() => { map.invalidateSize(); }, 200); 
+        }
+    });
+    // -----------------------------------
+
     inicializarHerramientasLDraw();
 
     const mapDiv = document.getElementById('map-canvas');
