@@ -390,9 +390,9 @@ function _horaria_initTarifas() {
 
 function _horaria_fillNocturnaSelects() {
     const ids = [
-        { id: 'horaria-noc-ini-h', min: 0, max: 23, def: '20' },
+        { id: 'horaria-noc-ini-h', min: 0, max: 23, def: '23' },
         { id: 'horaria-noc-ini-m', min: 0, max: 59, def: '00' },
-        { id: 'horaria-noc-fin-h', min: 0, max: 23, def: '05' },
+        { id: 'horaria-noc-fin-h', min: 0, max: 23, def: '06' },
         { id: 'horaria-noc-fin-m', min: 0, max: 59, def: '00' },
     ];
     ids.forEach(({ id, min, max, def }) => {
