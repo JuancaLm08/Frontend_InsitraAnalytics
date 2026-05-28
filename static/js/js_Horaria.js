@@ -67,7 +67,7 @@ async function cargarListaBusesHoraria(groupId) {
     _horaria_checkGenerarBtn();
 
     try {
-        const res  = await fetch(`/api/unidades-lista?groupid=${groupId}`);
+        const res  = await await fetch(`/api/unidades-lista?groupid=${groupId}`);
         const data = await res.json();
         if (!data || data.error) return;
 
@@ -368,10 +368,17 @@ function _horaria_initTarifas() {
         });
     }
 
-    // Botón guardar zona actual
+    // Botón guardar zona / guardar edición (comportamiento depende del modo)
     const btnGuardar = document.getElementById('btn-horaria-guardar-zona');
     if (btnGuardar) {
-        btnGuardar.addEventListener('click', _horaria_guardarZonaActual);
+        btnGuardar.dataset.mode = 'save';
+        btnGuardar.addEventListener('click', () => {
+            if (btnGuardar.dataset.mode === 'edit') {
+                _horaria_guardarEdicion();
+            } else {
+                _horaria_guardarZonaActual();
+            }
+        });
     }
 
     // Validación en tiempo real de tarifa normal
@@ -416,8 +423,7 @@ function _horaria_initZonaMap() {
         horaria_zonaMap = L.map('horaria-zona-map-canvas', {
             maxBounds: bounds,
             maxBoundsViscosity: 1.0,
-            minZoom: 5, maxZoom: 18,
-            zoomDelta: 0.3, zoomSnap: 0.3 // zoom más suave
+            minZoom: 5, maxZoom: 18
         }).setView([19.4326, -99.1332], 11);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -480,9 +486,11 @@ function _horaria_updateZonaCounter() {
 }
 
 /* ---- Estado del panel de zonas ---- */
-let horaria_poligonosGuardados   = [];   // [{ id, zona_id?, nombre, geojson, capas, esServidor }]
-let horaria_poligonoSeleccionado = null; // id local del que está visible en el mapa
-let horaria_menuAbiertoId        = null;
+let horaria_poligonosGuardados    = [];        // [{ id, zona_id?, nombre, geojson, capas, esServidor }]
+let horaria_seleccionadas         = new Set(); // ids locales de zonas visibles en el mapa
+let horaria_menuAbiertoId         = null;
+let horaria_menuListenerRegistrado = false;    // el listener de cerrar-menú se registra UNA sola vez
+let horaria_zonaEnEdicion         = null;      // { localId } zona cuyos puntos se están editando
 
 /* ──────────────────────────────────────────────────────────
    API — GET: cargar zonas guardadas en el servidor
@@ -499,6 +507,7 @@ async function _horaria_cargarZonasServidor() {
 
         // Limpiar las que venían del servidor (no las locales no guardadas)
         horaria_poligonosGuardados = horaria_poligonosGuardados.filter(p => !p.esServidor);
+        horaria_seleccionadas.clear();
 
         zonas.forEach(z => {
             // z = { zona_id, nombre, geojson: FeatureCollection }
@@ -527,15 +536,16 @@ async function _horaria_cargarZonasServidor() {
 async function _horaria_guardarZonaActual() {
     if (!horaria_zonasItems || horaria_zonasItems.getLayers().length === 0) return;
 
-    const n      = horaria_poligonosGuardados.filter(p => !p.esServidor).length + 1;
-    const nombre = `Zona ${n}`;
+    // Pedir nombre inmediatamente antes de guardar
+    const nombre = prompt('Nombre para esta zona:', `Zona ${horaria_poligonosGuardados.length + 1}`);
+    if (!nombre || !nombre.trim()) return; // usuario canceló
 
     // Construir FeatureCollection con name en properties
     const features = [];
     horaria_zonasItems.eachLayer(layer => {
         const f = layer.toGeoJSON();
-        f.properties        = f.properties || {};
-        f.properties.name   = nombre;
+        f.properties      = f.properties || {};
+        f.properties.name = nombre.trim();
         features.push(f);
     });
     const geojson = { type: 'FeatureCollection', features };
@@ -547,19 +557,18 @@ async function _horaria_guardarZonaActual() {
         const res  = await fetch('/api/zonas-tarifarias', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ groupid: groupId, nombre, geojson })
+            body: JSON.stringify({ groupid: groupId, nombre: nombre.trim(), geojson })
         });
         const data = await res.json();
 
-        // Guardar capas locales + zona_id devuelto por el servidor
         const capas = [];
         horaria_zonasItems.eachLayer(l => capas.push(l));
 
-        const id = Symbol('zona-' + (data.zona_id ?? Date.now()));
+        const id = Symbol('z');
         horaria_poligonosGuardados.push({
             id,
             zona_id:    data.zona_id ?? null,
-            nombre,
+            nombre:     nombre.trim(),
             geojson,
             capas,
             esServidor: true
@@ -567,7 +576,6 @@ async function _horaria_guardarZonaActual() {
 
         _horaria_renderPanelPoligonos();
 
-        // Limpiar canvas
         horaria_zonasItems.clearLayers();
         _horaria_updateZonaCounter();
         document.getElementById('btn-horaria-guardar-zona').disabled = true;
@@ -612,6 +620,102 @@ async function _horaria_renombrarPoligono(localId) {
 }
 
 /* ──────────────────────────────────────────────────────────
+   Edición de puntos de una zona guardada
+   ────────────────────────────────────────────────────────── */
+function _horaria_iniciarEdicionPuntos(localId) {
+    const poly = horaria_poligonosGuardados.find(p => p.id === localId);
+    if (!poly || !horaria_zonaMap) return;
+
+    // Si había otra en edición, cancelarla limpiando el canvas primero
+    if (horaria_zonaEnEdicion !== null) {
+        horaria_zonasItems.clearLayers();
+    }
+
+    // Quitar la zona del mapa si estaba visible (la vamos a poner en el canvas)
+    if (horaria_seleccionadas.has(localId)) {
+        poly.capas.forEach(l => { if (horaria_zonaMap.hasLayer(l)) horaria_zonaMap.removeLayer(l); });
+        poly.capas = [];
+        horaria_seleccionadas.delete(localId);
+    }
+
+    // Cargar los polígonos de esta zona al canvas editable
+    L.geoJSON(poly.geojson, {
+        style: { color: '#751643', fillOpacity: 0.2 }
+    }).eachLayer(l => horaria_zonasItems.addLayer(l));
+
+    horaria_zonaEnEdicion = localId;
+
+    // Cambiar el botón "Guardar zona" al modo edición
+    const btn = document.getElementById('btn-horaria-guardar-zona');
+    if (btn) {
+        btn.textContent  = '💾 Guardar cambios';
+        btn.disabled     = false;
+        btn.dataset.mode = 'edit';
+    }
+
+    _horaria_updateZonaCounter();
+    _horaria_renderPanelPoligonos();
+
+    // Hacer zoom a la zona
+    try {
+        horaria_zonaMap.fitBounds(L.geoJSON(poly.geojson).getBounds(), { padding: [30, 30] });
+    } catch (_) {}
+}
+
+async function _horaria_guardarEdicion() {
+    const localId = horaria_zonaEnEdicion;
+    const poly    = horaria_poligonosGuardados.find(p => p.id === localId);
+    if (!poly || !horaria_zonasItems) return;
+
+    // Construir nuevo GeoJSON desde el canvas actual
+    const features = [];
+    horaria_zonasItems.eachLayer(layer => {
+        const f = layer.toGeoJSON();
+        f.properties      = f.properties || {};
+        f.properties.name = poly.nombre;
+        features.push(f);
+    });
+    const nuevoGeojson = { type: 'FeatureCollection', features };
+
+    const groupId = document.getElementById('select-corredor')?.value;
+
+    _horaria_setPanelLoading(true);
+    try {
+        if (poly.zona_id) {
+            await fetch(`/api/zonas-tarifarias/${poly.zona_id}`, {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupid: groupId, nombre: poly.nombre, geojson: nuevoGeojson })
+            });
+        }
+
+        // Actualizar estado local
+        poly.geojson = nuevoGeojson;
+        poly.capas   = [];
+
+    } catch (err) {
+        console.error('[Horaria] Error al guardar edición de zona:', err);
+    } finally {
+        _horaria_setPanelLoading(false);
+    }
+
+    // Limpiar canvas y resetear modo
+    horaria_zonaEnEdicion = null;
+    horaria_zonasItems.clearLayers();
+    _horaria_updateZonaCounter();
+
+    // Restaurar botón original
+    const btn = document.getElementById('btn-horaria-guardar-zona');
+    if (btn) {
+        btn.innerHTML    = '<span>💾</span> Guardar zona actual';
+        btn.disabled     = true;
+        btn.dataset.mode = 'save';
+    }
+
+    _horaria_renderPanelPoligonos();
+}
+
+/* ──────────────────────────────────────────────────────────
    API — DELETE: eliminar zona
    ────────────────────────────────────────────────────────── */
 async function _horaria_eliminarPoligono(localId) {
@@ -623,7 +727,9 @@ async function _horaria_eliminarPoligono(localId) {
     poly.capas.forEach(l => {
         if (horaria_zonaMap?.hasLayer(l)) horaria_zonaMap.removeLayer(l);
     });
-    if (horaria_poligonoSeleccionado === localId) horaria_poligonoSeleccionado = null;
+    if (horaria_seleccionadas.has(localId)) {
+        horaria_seleccionadas.delete(localId);
+    }
     horaria_poligonosGuardados.splice(idx, 1);
     _horaria_renderPanelPoligonos();
 
@@ -649,23 +755,35 @@ function _horaria_renderPanelPoligonos() {
     horaria_menuAbiertoId = null;
     body.innerHTML = '';
 
+    // Registrar el listener de cierre UNA sola vez (no en cada render)
+    if (!horaria_menuListenerRegistrado) {
+        document.addEventListener('click', _horaria_cerrarMenus);
+        horaria_menuListenerRegistrado = true;
+    }
+
     if (horaria_poligonosGuardados.length === 0) {
         body.innerHTML = '<p class="horaria-zona-panel-empty">Aún no hay zonas guardadas.</p>';
         return;
     }
 
-    horaria_poligonosGuardados.forEach(poly => {
+    horaria_poligonosGuardados.forEach((poly, idx) => {
+        // Usar índice numérico como ID de menú → sin Symbols, sin paréntesis
+        const menuId = `hmenu-${idx}`;
         const totalPts = poly.geojson.features.reduce(
             (acc, f) => acc + (f.geometry?.coordinates?.[0]?.length ?? 0), 0
         );
-        const activo = horaria_poligonoSeleccionado === poly.id;
+        const activo = horaria_seleccionadas.has(poly.id);
+
+        const enEdicion = horaria_zonaEnEdicion === poly.id;
 
         const item = document.createElement('div');
-        item.className = 'horaria-zona-item' + (activo ? ' activo' : '');
+        item.className = 'horaria-zona-item' + (activo ? ' activo' : '') + (enEdicion ? ' en-edicion' : '');
 
-        const badge = poly.esServidor
-            ? '<span class="horaria-zona-badge servidor" title="Guardada en servidor">☁️</span>'
-            : '<span class="horaria-zona-badge local"    title="Local (sin guardar)">💾</span>';
+        const badge = enEdicion
+            ? '<span class="horaria-zona-badge editando" title="Editando puntos">✏️</span>'
+            : poly.esServidor
+                ? '<span class="horaria-zona-badge servidor" title="Guardada en servidor">☁️</span>'
+                : '<span class="horaria-zona-badge local" title="Local (sin guardar)">💾</span>';
 
         item.innerHTML = `
             <span class="horaria-zona-item-name" title="${poly.nombre}">📍 ${poly.nombre}</span>
@@ -673,23 +791,23 @@ function _horaria_renderPanelPoligonos() {
             <span class="horaria-zona-item-verts">${totalPts} pts</span>
             <div class="horaria-zona-item-menu-wrap">
                 <span class="horaria-zona-item-opts" title="Opciones">⋮</span>
-                <div class="horaria-zona-item-dropdown" id="hmenu-${poly.zona_id ?? poly.id.toString()}" style="display:none;">
+                <div class="horaria-zona-item-dropdown" id="${menuId}" style="display:none;">
                     <div class="horaria-zona-menu-opt" data-action="rename">✏️ Renombrar</div>
+                    <div class="horaria-zona-menu-opt" data-action="edit">🖊️ Editar puntos</div>
                     <div class="horaria-zona-menu-opt danger" data-action="delete">🗑️ Eliminar</div>
                 </div>
             </div>
         `;
 
-        // Toggle visibilidad en mapa
+        // Toggle visibilidad en mapa (multiselect)
         item.addEventListener('click', (e) => {
             if (e.target.closest('.horaria-zona-item-menu-wrap')) return;
             _horaria_togglePoligonoEnMapa(poly.id);
         });
 
-        // Menú ⋮
+        // Abrir/cerrar menú ⋮ — stopPropagation evita que el documento lo cierre de inmediato
         item.querySelector('.horaria-zona-item-opts').addEventListener('click', (e) => {
             e.stopPropagation();
-            const menuId = `hmenu-${poly.zona_id ?? poly.id.toString()}`;
             _horaria_toggleMenu(menuId);
         });
 
@@ -697,16 +815,16 @@ function _horaria_renderPanelPoligonos() {
         item.querySelectorAll('.horaria-zona-menu-opt').forEach(opt => {
             opt.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (opt.dataset.action === 'rename') _horaria_renombrarPoligono(poly.id);
-                if (opt.dataset.action === 'delete') _horaria_eliminarPoligono(poly.id);
                 horaria_menuAbiertoId = null;
+                document.getElementById(menuId)?.style && (document.getElementById(menuId).style.display = 'none');
+                if (opt.dataset.action === 'rename') _horaria_renombrarPoligono(poly.id);
+                if (opt.dataset.action === 'edit')   _horaria_iniciarEdicionPuntos(poly.id);
+                if (opt.dataset.action === 'delete') _horaria_eliminarPoligono(poly.id);
             });
         });
 
         body.appendChild(item);
     });
-
-    document.addEventListener('click', _horaria_cerrarMenus, { once: true });
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -733,27 +851,19 @@ function _horaria_cerrarMenus() {
 }
 
 /* ──────────────────────────────────────────────────────────
-   Toggle visible en el mapa
+   Toggle visible en el mapa (multiselect)
    ────────────────────────────────────────────────────────── */
 function _horaria_togglePoligonoEnMapa(localId) {
     const poly = horaria_poligonosGuardados.find(p => p.id === localId);
     if (!poly || !horaria_zonaMap) return;
 
-    if (horaria_poligonoSeleccionado === localId) {
-        // Ocultar
+    if (horaria_seleccionadas.has(localId)) {
+        // Deseleccionar: quitar del mapa
         poly.capas.forEach(l => { if (horaria_zonaMap.hasLayer(l)) horaria_zonaMap.removeLayer(l); });
         poly.capas = [];
-        horaria_poligonoSeleccionado = null;
+        horaria_seleccionadas.delete(localId);
     } else {
-        // Ocultar la anterior
-        if (horaria_poligonoSeleccionado !== null) {
-            const ant = horaria_poligonosGuardados.find(p => p.id === horaria_poligonoSeleccionado);
-            if (ant) {
-                ant.capas.forEach(l => { if (horaria_zonaMap.hasLayer(l)) horaria_zonaMap.removeLayer(l); });
-                ant.capas = [];
-            }
-        }
-        // Pintar desde el geojson
+        // Seleccionar: pintar desde el geojson
         const nuevasCapas = [];
         L.geoJSON(poly.geojson, {
             style: { color: '#751643', fillOpacity: 0.2 }
@@ -762,8 +872,9 @@ function _horaria_togglePoligonoEnMapa(localId) {
             nuevasCapas.push(l);
         });
         poly.capas = nuevasCapas;
-        horaria_poligonoSeleccionado = localId;
+        horaria_seleccionadas.add(localId);
 
+        // Centrar en esta zona
         try {
             horaria_zonaMap.fitBounds(L.geoJSON(poly.geojson).getBounds(), { padding: [20, 20] });
         } catch (_) {}
@@ -803,17 +914,18 @@ function _horaria_getTarifas() {
         const precio = parseFloat(document.getElementById('horaria-tarifa-especial')?.value) || 0;
         const allFeatures = [];
 
-        // Solo incluir la zona que está activa/visible en el mapa
-        if (horaria_poligonoSeleccionado !== null) {
-            const polyActivo = horaria_poligonosGuardados.find(p => p.id === horaria_poligonoSeleccionado);
-            if (polyActivo) {
-                polyActivo.geojson.features.forEach(f => {
-                    const feature = JSON.parse(JSON.stringify(f));
-                    feature.properties       = feature.properties || {};
-                    feature.properties.name  = polyActivo.nombre;
-                    allFeatures.push(feature);
+        // Incluir todas las zonas activas (visibles en el mapa)
+        if (horaria_seleccionadas.size > 0) {
+            horaria_poligonosGuardados
+                .filter(p => horaria_seleccionadas.has(p.id))
+                .forEach(poly => {
+                    poly.geojson.features.forEach(f => {
+                        const feature = JSON.parse(JSON.stringify(f));
+                        feature.properties      = feature.properties || {};
+                        feature.properties.name = poly.nombre;
+                        allFeatures.push(feature);
+                    });
                 });
-            }
         }
 
         // Polígonos del canvas sin guardar (siempre se incluyen)
@@ -879,7 +991,7 @@ async function _horaria_generarReporte() {
     // Validar que si tarifa especial está activa haya al menos una zona seleccionada
     const tocEsp = document.getElementById('horaria-toggle-especial');
     if (tocEsp?.checked) {
-        const tieneZonaActiva  = horaria_poligonoSeleccionado !== null;
+        const tieneZonaActiva  = horaria_seleccionadas.size > 0;
         const tieneCanvasZonas = horaria_zonasItems && horaria_zonasItems.getLayers().length > 0;
         if (!tieneZonaActiva && !tieneCanvasZonas) {
             errorBanner.textContent = 'Tarifa especial activa: selecciona o dibuja al menos una zona en el mapa.';
