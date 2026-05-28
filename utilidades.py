@@ -1,10 +1,7 @@
 """
 
-* En este script se realizan TODOS los calculos individuales para cada una de las secciones de ANALITYCS.
-* No existe una conexion con el backend, solo el procesamiento de los datos en bruto obtenidos por medio 
-  de la API para regresar un DataFrame a los endpoints de "main.py".
-* Los calculos estan divididos segun la seccion del dashboard que se va a mostrar despues de que el 
-  usuario haya seleccionado corredor y llenado los datos de fecha (si es el caso).
+Archivo: utilidades.py
+Descripción: Este archivo contiene funciones de utilidad para la aplicación, como la validación de usuarios
 
 """
 
