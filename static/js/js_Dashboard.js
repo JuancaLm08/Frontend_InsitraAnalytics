@@ -107,12 +107,21 @@ function inicializarFechas() {
         llenarOpcionesHoraRuta();
     }
 
+    // Usar hora LOCAL del cliente (no UTC) para evitar que después de las 18:00 CST
+    // toISOString() devuelva el día siguiente al estar ya en UTC+siguiente_día
+    const _localDateStr = (d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+
     const hoy = new Date();
-    const fechaFinalStr = hoy.toISOString().split('T')[0]; 
+    const fechaFinalStr = _localDateStr(hoy);
 
     const haceSeisDias = new Date();
     haceSeisDias.setDate(hoy.getDate() - 6);
-    const fechaInicioStr = haceSeisDias.toISOString().split('T')[0];
+    const fechaInicioStr = _localDateStr(haceSeisDias);
 
     const camposFecha = [
         { id: 'fecha-inicio-totales', valor: fechaInicioStr },
