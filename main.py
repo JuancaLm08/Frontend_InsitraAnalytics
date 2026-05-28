@@ -316,6 +316,7 @@ def post_zona():
 def put_zona(zona_id):
     body = request.get_json(silent=True)
     payload = {
+        "group_id": body.get('groupid'),
         "nombre":  body.get('nombre'),
         "geojson": body.get('geojson'),
     }
