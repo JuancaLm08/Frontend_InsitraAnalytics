@@ -436,9 +436,9 @@
     align-items: flex-start;
 }
 
-/* Columna del mapa: ocupa ~75% */
+/* Columna del mapa: ocupa ~65% */
 .horaria-zona-map-col {
-    flex: 0 0 75%;
+    flex: 0 0 65%;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -545,6 +545,11 @@
     font-size: 0.72rem;
     opacity: 0.55;
     flex-shrink: 0;
+}
+
+.horaria-zona-item.en-edicion {
+    border-color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.1);
 }
 
 /* Badge servidor / local */
