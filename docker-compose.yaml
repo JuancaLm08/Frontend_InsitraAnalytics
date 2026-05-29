@@ -9,7 +9,7 @@ services:
       #- "5000:5000"
       - "80:5000"
     env_file:
-      - secrets.env
+      - .env
     volumes:
       - .:/app
     logging:
