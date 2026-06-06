@@ -2,7 +2,7 @@ let debounceTimer; // Variable para el temporizador
 let insitraLoader; // Variable para controlar la aparicion de la animacion Lottie
 let animations = {}; // Objeto para guardar las instancias de Lottie
 
-window.seccionesCargadas = {'Inicio': false, 'Totales': false, 'Unidades': false, 'Ruta': false };
+window.seccionesCargadas = {'Inicio': false, 'Totales': false, 'Unidades': false, 'Ruta': false, 'PoligonoCarga': false };
 
 /**********************************************************************************************************************************************************/
 // FUNCION PARA CARGAR LA ANIMACION LOTTIE
@@ -48,7 +48,7 @@ async function changeView(view, el) {
     
     document.getElementById("view-title").innerText = "INSITRA ANALYTICS: " + view + " " + icon;
     document.getElementById("titulo-general").innerText = "INSITRA ANALYTICS: " + view;
-    const secciones = {'Inicio': 'section-inicio', 'Totales': 'section-totales', 'Unidades': 'section-unidades', 'Ruta': 'section-ruta'};
+    const secciones = {'Inicio': 'section-inicio', 'Totales': 'section-totales', 'Unidades': 'section-unidades', 'Ruta': 'section-ruta', 'PoligonoCarga': 'section-poligono-carga'};
 
     // Ocultar todas las secciones y mostrar la activa
     Object.values(secciones).forEach(id => {
@@ -153,6 +153,7 @@ function dispararActualizacionGlobal() {
                 case 'Totales': if (typeof actualizarDashboardTotales === 'function') await actualizarDashboardTotales(groupId); break;
                 case 'Unidades': if (typeof actualizarDashboardUnidades === 'function') await actualizarDashboardUnidades(); break;
                 case 'Ruta': if (typeof actualizarDashboardRuta === 'function') await actualizarDashboardRuta(groupId); break;
+                case 'PoligonoCarga': if (typeof actualizarDashboardPoligonoCarga === 'function') await actualizarDashboardPoligonoCarga(groupId); break;
             }
             window.seccionesCargadas[view] = true;
         } catch (error) {
