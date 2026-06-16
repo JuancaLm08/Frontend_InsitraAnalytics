@@ -1,62 +1,89 @@
+
 /**************************************************************************************************/
-// DATOS SIMULADOS (MOCK)
+// ESTADO Y DATOS REALES — PESTAÑA POR FRANJA HORARIA
 /**************************************************************************************************/
-const MOCK_RANGO = { hora_inicio: 6, hora_fin: 22 };
+let _pc_franjasPorHora = {};   // { "06:00-07:00": [estaciones], ... }
+let _pc_rutaActual     = null; // id de la ruta consultada
 
-const MOCK_RUTAS = [
-    { id: "XOCHIMILCO_TULYEHUALCO",  nombre: "Xochimilco → Tulyehualco" },
-    { id: "TULYEHUALCO_XOCHIMILCO",  nombre: "Tulyehualco → Xochimilco" },
-    { id: "EMBARCADERO_TULYEHUALCO", nombre: "Embarcadero → Tulyehualco" },
-    { id: "TULYEHUALCO_EMBARCADERO", nombre: "Tulyehualco → Embarcadero" },
-];
+// Catálogo de rutas del corredor -> selectores
+async function cargarRutasPoligono(groupId) {
+    try {
+        const resp = await fetch(`/api/poligono-carga/rutas?groupid=${groupId}`);
+        const data = await resp.json();
+        llenarSelectoresRuta((data && data.success && Array.isArray(data.rutas)) ? data.rutas : []);
+    } catch (e) {
+        console.error('Error cargando rutas de polígono:', e);
+        llenarSelectoresRuta([]);
+    }
+}
 
-const MOCK_FRANJA = {
-    ruta: "XOCHIMILCO_TULYEHUALCO",
-    franja: "07:00-08:00",
-    estaciones: [
-        { nombre: "CETRAM",         ascensos: 45, descensos: 0,  ocupacion: 45 },
-        { nombre: "AV_CUAUHTEMOC",  ascensos: 23, descensos: 8,  ocupacion: 60 },
-        { nombre: "CAPULINES",      ascensos: 10, descensos: 5,  ocupacion: 65 },
-        { nombre: "PIEDRA_LISA",    ascensos: 0,  descensos: 0,  ocupacion: 65 },
-        { nombre: "OJO_DE_AGUA",    ascensos: 15, descensos: 20, ocupacion: 60 },
-        { nombre: "MINAS",          ascensos: 0,  descensos: 12, ocupacion: 48 },
-        { nombre: "SAN_GREGORIO",   ascensos: 8,  descensos: 5,  ocupacion: 51 },
-        { nombre: "TLAXIALTEMALCO", ascensos: 3,  descensos: 10, ocupacion: 44 },
-        { nombre: "TULYEHUALCO",    ascensos: 0,  descensos: 44, ocupacion: 0  },
-    ]
-};
+// Consulta el polígono por franja para (fecha, ruta) y prepara el slider
+async function consultarFranja(groupId) {
+    const fecha = document.getElementById('fecha-franja').value;
+    const ruta  = document.getElementById('ruta-franja').value;
+    if (!fecha || !ruta) {
+        alert('Selecciona una fecha y una ruta para continuar.');
+        return;
+    }
 
-const MOCK_MAESTRAS = {
-    estaciones: [
-        { nombre: "OJO_DE_AGUA",    ocupacion_max: 65 },
-        { nombre: "CAPULINES",      ocupacion_max: 60 },
-        { nombre: "SAN_GREGORIO",   ocupacion_max: 51 },
-        { nombre: "AV_CUAUHTEMOC",  ocupacion_max: 48 },
-        { nombre: "TLAXIALTEMALCO", ocupacion_max: 44 },
-        { nombre: "MINAS",          ocupacion_max: 38 },
-        { nombre: "CETRAM",         ocupacion_max: 30 },
-        { nombre: "TULYEHUALCO",    ocupacion_max: 10 },
-    ]
-};
+    const loader = document.getElementById('loader-poligono-carga');
+    const banner = document.getElementById('no-data-banner-poligono-carga');
+    if (banner) banner.style.display = 'none';
+    if (loader) loader.style.display = 'flex';
 
-const MOCK_DETALLE = {
-    estacion: "OJO_DE_AGUA",
-    serie: [
-        { hora: "06:00", ascensos: 15, descensos: 3,  ocupacion: 12 },
-        { hora: "07:00", ascensos: 25, descensos: 8,  ocupacion: 34 },
-        { hora: "08:00", ascensos: 40, descensos: 10, ocupacion: 65 },
-        { hora: "09:00", ascensos: 12, descensos: 22, ocupacion: 55 },
-        { hora: "10:00", ascensos: 8,  descensos: 23, ocupacion: 40 },
-        { hora: "11:00", ascensos: 10, descensos: 12, ocupacion: 38 },
-        { hora: "12:00", ascensos: 20, descensos: 8,  ocupacion: 50 },
-        { hora: "13:00", ascensos: 15, descensos: 17, ocupacion: 48 },
-        { hora: "14:00", ascensos: 30, descensos: 18, ocupacion: 60 },
-        { hora: "15:00", ascensos: 10, descensos: 25, ocupacion: 45 },
-        { hora: "16:00", ascensos: 5,  descensos: 20, ocupacion: 30 },
-        { hora: "17:00", ascensos: 3,  descensos: 13, ocupacion: 20 },
-        { hora: "18:00", ascensos: 2,  descensos: 12, ocupacion: 10 },
-    ]
-};
+    try {
+        const url = `/api/poligono-carga-data?groupid=${groupId}` +
+                    `&fecha=${fecha}&ruta=${encodeURIComponent(ruta)}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+
+        const ocultar = () => {
+            document.getElementById('slider-box').style.display      = 'none';
+            document.getElementById('chart-franja-box').style.display = 'none';
+        };
+
+        if (!data || !data.success) {
+            if (banner) { banner.textContent = (data && data.error) || 'Error al consultar.'; banner.style.display = 'block'; }
+            ocultar();
+            return;
+        }
+
+        const franjas = data.franjas || [];
+        if (franjas.length === 0) {
+            if (banner) { banner.textContent = 'No hay datos para los filtros seleccionados.'; banner.style.display = 'block'; }
+            ocultar();
+            return;
+        }
+
+        // Indexar franjas por etiqueta para que el slider las seleccione
+        _pc_franjasPorHora = {};
+        franjas.forEach(f => { _pc_franjasPorHora[f.franja] = f.estaciones; });
+        _pc_rutaActual = ruta;
+
+        const rango = data.rango || { hora_inicio: 6, hora_fin: 22 };
+        inicializarSlider(rango.hora_inicio, rango.hora_fin);
+
+        // Posicionar el slider en la primera franja con datos y renderizarla
+        const primeraHora = parseInt(franjas[0].franja.slice(0, 2), 10);
+        document.getElementById('slider-hora').value = primeraHora;
+        _pc_mostrarFranja(primeraHora);
+
+    } catch (e) {
+        console.error('Error consultando polígono de carga:', e);
+        if (banner) { banner.textContent = 'Error de red al consultar.'; banner.style.display = 'block'; }
+    } finally {
+        if (loader) loader.style.display = 'none';
+    }
+}
+
+// Renderiza la franja de la hora h del slider desde lo ya consultado
+function _pc_mostrarFranja(h) {
+    const franja = `${String(h).padStart(2, '0')}:00-${String(h + 1).padStart(2, '0')}:00`;
+    const label  = document.getElementById('label-hora-slider');
+    if (label) label.textContent = `Franja horaria: ${String(h).padStart(2,'0')}:00 - ${String(h+1).padStart(2,'0')}:00`;
+    const estaciones = _pc_franjasPorHora[franja] || [];
+    renderizarPoligonoCarga({ ruta: _pc_rutaActual, franja, estaciones });
+}
 
 /**************************************************************************************************/
 // BLOQUEAR FECHAS FUTURAS Y HOY + PRESET EN AYER
@@ -111,7 +138,11 @@ function inicializarTabs() {
 // SLIDER DE HORAS
 /**************************************************************************************************/
 function inicializarSlider(hora_inicio, hora_fin) {
-    const slider      = document.getElementById('slider-hora');
+    // Clonar el slider para limpiar listeners de consultas previas
+    let slider = document.getElementById('slider-hora');
+    slider.replaceWith(slider.cloneNode(true));
+    slider = document.getElementById('slider-hora');
+
     const label       = document.getElementById('label-hora-slider');
     const marcaInicio = document.getElementById('slider-marca-inicio');
     const marcaFin    = document.getElementById('slider-marca-fin');
@@ -125,9 +156,7 @@ function inicializarSlider(hora_inicio, hora_fin) {
     label.textContent = `Franja horaria: ${String(hora_inicio).padStart(2,'0')}:00 - ${String(hora_inicio+1).padStart(2,'0')}:00`;
 
     slider.addEventListener('input', () => {
-        const h = parseInt(slider.value);
-        label.textContent = `Franja horaria: ${String(h).padStart(2,'0')}:00 - ${String(h+1).padStart(2,'0')}:00`;
-        renderizarPoligonoCarga(MOCK_FRANJA);
+        _pc_mostrarFranja(parseInt(slider.value));
     });
 
     document.getElementById('slider-box').style.display = 'block';
@@ -351,7 +380,12 @@ function exportarCSV(tablaId, nombreArchivo) {
 async function actualizarDashboardPoligonoCarga(groupId) {
     setMaxFechaAyer();
     inicializarTabs();
-    llenarSelectoresRuta(MOCK_RUTAS);
+
+    // Sin corredor seleccionado (p. ej. carga inicial): solo deja la UI lista
+    if (!groupId) return;
+
+    // Llenar selectores con el catálogo real de rutas del corredor
+    await cargarRutasPoligono(groupId);
 
     // ── Event listeners de botones ────────────────────────────
     const btnFranja   = document.getElementById('btn-consultar-franja');
@@ -359,16 +393,8 @@ async function actualizarDashboardPoligonoCarga(groupId) {
 
     if (btnFranja) {
         btnFranja.replaceWith(btnFranja.cloneNode(true));
-        document.getElementById('btn-consultar-franja').addEventListener('click', () => {
-            const fecha = document.getElementById('fecha-franja').value;
-            const ruta  = document.getElementById('ruta-franja').value;
-            if (!fecha || !ruta) {
-                alert('Selecciona una fecha y una ruta para continuar.');
-                return;
-            }
-            inicializarSlider(MOCK_RANGO.hora_inicio, MOCK_RANGO.hora_fin);
-            renderizarPoligonoCarga(MOCK_FRANJA);
-        });
+        document.getElementById('btn-consultar-franja')
+                .addEventListener('click', () => consultarFranja(groupId));
     }
 
     if (btnEstacion) {

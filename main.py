@@ -221,6 +221,54 @@ def get_ruta_data():
         print(f"\n[RUTA] ERROR en /api/ruta-data:\n{traceback.format_exc()}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+""" ############################################################ SECCION DE POLIGONO DE CARGA ########################################################## """
+# Pegar en main.py junto a las demás rutas proxy (antes del `if __name__ == '__main__'`).
+# Mismo patrón que /api/ruta-data: expande fecha -> inicio/final y reenvía a BCK.
+# Sin inversión de coordenadas: la pestaña de franja es gráfica de barras, no mapa.
+ 
+# Catálogo de rutas para el <select> (se llama al iniciar la sección)
+@app.route('/api/poligono-carga/rutas')
+def get_poligono_carga_rutas():
+ 
+    group_id = request.args.get('groupid')
+ 
+    if not group_id:
+        return jsonify({"success": False, "error": "Falta parámetro: groupid"}), 400
+ 
+    try:
+        response = requests.get(f"{BCK}/api/poligono-carga/rutas", params={"groupid": group_id})
+        return jsonify(response.json()), response.status_code
+ 
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+ 
+ 
+# Polígono de carga por franja horaria para una (fecha, ruta)
+@app.route('/api/poligono-carga-data')
+def get_poligono_carga_data():
+ 
+    group_id = request.args.get('groupid')
+    fecha = request.args.get('fecha')
+    ruta = request.args.get('ruta')
+ 
+    if not group_id or not fecha or not ruta:
+        return jsonify({"success": False, "error": "Faltan parámetros: groupid, fecha, ruta"}), 400
+ 
+    try:
+        inicio = f"{fecha} 00:00:00"
+        final = f"{fecha} 23:59:59"
+        response = requests.get(
+            f"{BCK}/api/poligono-carga-data",
+            params={"groupid": group_id, "inicio": inicio, "final": final, "ruta": ruta},
+        )
+        return jsonify(response.json()), response.status_code
+ 
+    except Exception as e:
+        import traceback
+        print(f"\n[POLIGONO_CARGA] ERROR en /api/poligono-carga-data:\n{traceback.format_exc()}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 #############################################################################################################################################################
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
