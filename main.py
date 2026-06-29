@@ -269,6 +269,53 @@ def get_poligono_carga_data():
         print(f"\n[POLIGONO_CARGA] ERROR en /api/poligono-carga-data:\n{traceback.format_exc()}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+# Estación maestra — lista de estaciones con mayor ocupación por franja
+@app.route('/api/poligono-carga/maestras')
+def get_poligono_carga_maestras():
+
+    group_id = request.args.get('groupid')
+    inicio   = request.args.get('inicio')
+    final    = request.args.get('final')
+    ruta     = request.args.get('ruta')
+
+    if not group_id or not inicio or not final or not ruta:
+        return jsonify({"success": False, "error": "Faltan parámetros: groupid, inicio, final, ruta"}), 400
+
+    try:
+        response = requests.get(
+            f"{BCK}/api/poligono-carga/maestras",
+            params={"groupid": group_id, "inicio": inicio, "final": final, "ruta": ruta},
+        )
+        return jsonify(response.json()), response.status_code
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# Detalle de una estación maestra a lo largo del día
+@app.route('/api/poligono-carga/detalle-estacion')
+def get_poligono_carga_detalle_estacion():
+
+    group_id = request.args.get('groupid')
+    inicio   = request.args.get('inicio')
+    final    = request.args.get('final')
+    ruta     = request.args.get('ruta')
+    estacion = request.args.get('estacion')
+
+    if not group_id or not inicio or not final or not ruta or not estacion:
+        return jsonify({"success": False, "error": "Faltan parámetros: groupid, inicio, final, ruta, estacion"}), 400
+
+    try:
+        response = requests.get(
+            f"{BCK}/api/poligono-carga/detalle-estacion",
+            params={"groupid": group_id, "inicio": inicio, "final": final, "ruta": ruta, "estacion": estacion},
+        )
+        return jsonify(response.json()), response.status_code
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+
 #############################################################################################################################################################
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
