@@ -119,7 +119,6 @@
 
 /* ── Gráficas ──────────────────────────────────────────────── */
 .chart-box {
-    background: white;    /* ← cámbialo por esto: */
     background: var(--fondo-summary);
     border-radius: 12px;
     padding: 20px 24px;
