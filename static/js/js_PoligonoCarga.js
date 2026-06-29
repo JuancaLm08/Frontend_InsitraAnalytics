@@ -1,89 +1,9 @@
-
 /**************************************************************************************************/
-// ESTADO Y DATOS REALES — PESTAÑA POR FRANJA HORARIA
+// ESTADO GLOBAL
 /**************************************************************************************************/
-let _pc_franjasPorHora = {};   // { "06:00-07:00": [estaciones], ... }
-let _pc_rutaActual     = null; // id de la ruta consultada
-
-// Catálogo de rutas del corredor -> selectores
-async function cargarRutasPoligono(groupId) {
-    try {
-        const resp = await fetch(`/api/poligono-carga/rutas?groupid=${groupId}`);
-        const data = await resp.json();
-        llenarSelectoresRuta((data && data.success && Array.isArray(data.rutas)) ? data.rutas : []);
-    } catch (e) {
-        console.error('Error cargando rutas de polígono:', e);
-        llenarSelectoresRuta([]);
-    }
-}
-
-// Consulta el polígono por franja para (fecha, ruta) y prepara el slider
-async function consultarFranja(groupId) {
-    const fecha = document.getElementById('fecha-franja').value;
-    const ruta  = document.getElementById('ruta-franja').value;
-    if (!fecha || !ruta) {
-        alert('Selecciona una fecha y una ruta para continuar.');
-        return;
-    }
-
-    const loader = document.getElementById('loader-poligono-carga');
-    const banner = document.getElementById('no-data-banner-poligono-carga');
-    if (banner) banner.style.display = 'none';
-    if (loader) loader.style.display = 'flex';
-
-    try {
-        const url = `/api/poligono-carga-data?groupid=${groupId}` +
-                    `&fecha=${fecha}&ruta=${encodeURIComponent(ruta)}`;
-        const resp = await fetch(url);
-        const data = await resp.json();
-
-        const ocultar = () => {
-            document.getElementById('slider-box').style.display      = 'none';
-            document.getElementById('chart-franja-box').style.display = 'none';
-        };
-
-        if (!data || !data.success) {
-            if (banner) { banner.textContent = (data && data.error) || 'Error al consultar.'; banner.style.display = 'block'; }
-            ocultar();
-            return;
-        }
-
-        const franjas = data.franjas || [];
-        if (franjas.length === 0) {
-            if (banner) { banner.textContent = 'No hay datos para los filtros seleccionados.'; banner.style.display = 'block'; }
-            ocultar();
-            return;
-        }
-
-        // Indexar franjas por etiqueta para que el slider las seleccione
-        _pc_franjasPorHora = {};
-        franjas.forEach(f => { _pc_franjasPorHora[f.franja] = f.estaciones; });
-        _pc_rutaActual = ruta;
-
-        const rango = data.rango || { hora_inicio: 6, hora_fin: 22 };
-        inicializarSlider(rango.hora_inicio, rango.hora_fin);
-
-        // Posicionar el slider en la primera franja con datos y renderizarla
-        const primeraHora = parseInt(franjas[0].franja.slice(0, 2), 10);
-        document.getElementById('slider-hora').value = primeraHora;
-        _pc_mostrarFranja(primeraHora);
-
-    } catch (e) {
-        console.error('Error consultando polígono de carga:', e);
-        if (banner) { banner.textContent = 'Error de red al consultar.'; banner.style.display = 'block'; }
-    } finally {
-        if (loader) loader.style.display = 'none';
-    }
-}
-
-// Renderiza la franja de la hora h del slider desde lo ya consultado
-function _pc_mostrarFranja(h) {
-    const franja = `${String(h).padStart(2, '0')}:00-${String(h + 1).padStart(2, '0')}:00`;
-    const label  = document.getElementById('label-hora-slider');
-    if (label) label.textContent = `Franja horaria: ${String(h).padStart(2,'0')}:00 - ${String(h+1).padStart(2,'0')}:00`;
-    const estaciones = _pc_franjasPorHora[franja] || [];
-    renderizarPoligonoCarga({ ruta: _pc_rutaActual, franja, estaciones });
-}
+let _pc_franjasPorHora = {};
+let _pc_rutaActual     = null;
+window._pc_maestrasData = null;
 
 /**************************************************************************************************/
 // BLOQUEAR FECHAS FUTURAS Y HOY + PRESET EN AYER
@@ -100,6 +20,20 @@ function setMaxFechaAyer() {
     document.getElementById('fecha-estacion').max   = fechaAyer;
     document.getElementById('fecha-franja').value   = fechaAyer;
     document.getElementById('fecha-estacion').value = fechaAyer;
+}
+
+/**************************************************************************************************/
+// CARGAR RUTAS DEL CORREDOR
+/**************************************************************************************************/
+async function cargarRutasPoligono(groupId) {
+    try {
+        const resp = await fetch(`/api/poligono-carga/rutas?groupid=${groupId}`);
+        const data = await resp.json();
+        llenarSelectoresRuta((data && data.success && Array.isArray(data.rutas)) ? data.rutas : []);
+    } catch (e) {
+        console.error('Error cargando rutas de polígono:', e);
+        llenarSelectoresRuta([]);
+    }
 }
 
 /**************************************************************************************************/
@@ -138,7 +72,6 @@ function inicializarTabs() {
 // SLIDER DE HORAS
 /**************************************************************************************************/
 function inicializarSlider(hora_inicio, hora_fin) {
-    // Clonar el slider para limpiar listeners de consultas previas
     let slider = document.getElementById('slider-hora');
     slider.replaceWith(slider.cloneNode(true));
     slider = document.getElementById('slider-hora');
@@ -160,6 +93,75 @@ function inicializarSlider(hora_inicio, hora_fin) {
     });
 
     document.getElementById('slider-box').style.display = 'block';
+}
+
+/**************************************************************************************************/
+// TAB 1 — CONSULTAR POLÍGONO POR FRANJA HORARIA
+/**************************************************************************************************/
+async function consultarFranja(groupId) {
+    const fecha = document.getElementById('fecha-franja').value;
+    const ruta  = document.getElementById('ruta-franja').value;
+    if (!fecha || !ruta) {
+        alert('Selecciona una fecha y una ruta para continuar.');
+        return;
+    }
+
+    const loader = document.getElementById('loader-poligono-carga');
+    const banner = document.getElementById('no-data-banner-poligono-carga');
+    if (banner) banner.style.display = 'none';
+    if (loader) loader.style.display = 'flex';
+
+    try {
+        const url = `/api/poligono-carga-data?groupid=${groupId}` +
+                    `&inicio=${fecha} 00:00:00` +
+                    `&final=${fecha} 23:59:59` +
+                    `&ruta=${encodeURIComponent(ruta)}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+
+        const ocultar = () => {
+            document.getElementById('slider-box').style.display       = 'none';
+            document.getElementById('chart-franja-box').style.display = 'none';
+        };
+
+        if (!data || !data.success) {
+            if (banner) { banner.textContent = (data && data.error) || 'Error al consultar.'; banner.style.display = 'block'; }
+            ocultar();
+            return;
+        }
+
+        const franjas = data.franjas || [];
+        if (franjas.length === 0) {
+            if (banner) { banner.textContent = 'No hay datos para los filtros seleccionados.'; banner.style.display = 'block'; }
+            ocultar();
+            return;
+        }
+
+        _pc_franjasPorHora = {};
+        franjas.forEach(f => { _pc_franjasPorHora[f.franja] = f.estaciones; });
+        _pc_rutaActual = ruta;
+
+        const rango = data.rango || { hora_inicio: 6, hora_fin: 22 };
+        inicializarSlider(rango.hora_inicio, rango.hora_fin);
+
+        const primeraHora = parseInt(franjas[0].franja.slice(0, 2), 10);
+        document.getElementById('slider-hora').value = primeraHora;
+        _pc_mostrarFranja(primeraHora);
+
+    } catch (e) {
+        console.error('Error consultando polígono de carga:', e);
+        if (banner) { banner.textContent = 'Error de red al consultar.'; banner.style.display = 'block'; }
+    } finally {
+        if (loader) loader.style.display = 'none';
+    }
+}
+
+function _pc_mostrarFranja(h) {
+    const franja = `${String(h).padStart(2, '0')}:00-${String(h + 1).padStart(2, '0')}:00`;
+    const label  = document.getElementById('label-hora-slider');
+    if (label) label.textContent = `Franja horaria: ${String(h).padStart(2,'0')}:00 - ${String(h+1).padStart(2,'0')}:00`;
+    const estaciones = _pc_franjasPorHora[franja] || [];
+    renderizarPoligonoCarga({ ruta: _pc_rutaActual, franja, estaciones });
 }
 
 /**************************************************************************************************/
@@ -220,6 +222,48 @@ function renderizarPoligonoCarga(data) {
 }
 
 /**************************************************************************************************/
+// TAB 2 — CONSULTAR ESTACIONES MAESTRAS
+/**************************************************************************************************/
+async function consultarEstacionesMaestras(groupId, fecha, ruta) {
+    const banner = document.getElementById('no-data-banner-poligono-carga');
+    const loader = document.getElementById('loader-poligono-carga');
+    if (banner) banner.style.display = 'none';
+    if (loader) loader.style.display = 'flex';
+
+    try {
+        const url = `/api/poligono-carga/maestras?groupid=${groupId}` +
+                    `&inicio=${fecha} 00:00:00` +
+                    `&final=${fecha} 23:59:59` +
+                    `&ruta=${encodeURIComponent(ruta)}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+
+        if (!data || !data.success) {
+            if (banner) { banner.textContent = (data && data.error) || 'Error al consultar.'; banner.style.display = 'block'; }
+            return;
+        }
+
+        // Guardar contexto para el detalle
+        window._pc_maestrasData = { groupId, fecha, ruta };
+
+        // Adaptar formato al que espera renderizarEstacionesMaestras
+        const estaciones = data.maestras.map(m => ({
+            nombre:        m.estacion_maestra,
+            ocupacion_max: m.ocupacion_max,
+            franja:        m.franja
+        }));
+
+        renderizarEstacionesMaestras({ estaciones });
+
+    } catch (e) {
+        console.error('Error consultando estaciones maestras:', e);
+        if (banner) { banner.textContent = 'Error de red al consultar.'; banner.style.display = 'block'; }
+    } finally {
+        if (loader) loader.style.display = 'none';
+    }
+}
+
+/**************************************************************************************************/
 // LISTA: ESTACIONES MAESTRAS
 /**************************************************************************************************/
 function renderizarEstacionesMaestras(data) {
@@ -233,11 +277,11 @@ function renderizarEstacionesMaestras(data) {
             <span>${e.nombre}</span>
             <span class="ocu-badge">${e.ocupacion_max} 👤</span>
         `;
-        item.addEventListener('click', () => {
+        item.addEventListener('click', async () => {
             document.querySelectorAll('.estacion-item')
                     .forEach(i => i.classList.remove('active'));
             item.classList.add('active');
-            renderizarDetalleEstacion(e.nombre, MOCK_DETALLE);
+            await consultarDetalleEstacion(e.nombre);
         });
         lista.appendChild(item);
     });
@@ -246,6 +290,37 @@ function renderizarEstacionesMaestras(data) {
     document.getElementById('detalle-placeholder').style.display     = 'flex';
     document.getElementById('titulo-detalle-estacion').style.display = 'none';
     document.getElementById('chart-detalle-estacion').style.display  = 'none';
+}
+
+/**************************************************************************************************/
+// TAB 2 — CONSULTAR DETALLE DE ESTACIÓN
+/**************************************************************************************************/
+async function consultarDetalleEstacion(nombreEstacion) {
+    const { groupId, fecha, ruta } = window._pc_maestrasData;
+    const loader = document.getElementById('loader-poligono-carga');
+    if (loader) loader.style.display = 'flex';
+
+    try {
+        const url = `/api/poligono-carga/detalle-estacion?groupid=${groupId}` +
+                    `&inicio=${fecha} 00:00:00` +
+                    `&final=${fecha} 23:59:59` +
+                    `&ruta=${encodeURIComponent(ruta)}` +
+                    `&estacion=${encodeURIComponent(nombreEstacion)}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+
+        if (!data || !data.success) {
+            console.error('Error detalle estación:', data);
+            return;
+        }
+
+        renderizarDetalleEstacion(nombreEstacion, data);
+
+    } catch (e) {
+        console.error('Error consultando detalle de estación:', e);
+    } finally {
+        if (loader) loader.style.display = 'none';
+    }
 }
 
 /**************************************************************************************************/
@@ -381,13 +456,10 @@ async function actualizarDashboardPoligonoCarga(groupId) {
     setMaxFechaAyer();
     inicializarTabs();
 
-    // Sin corredor seleccionado (p. ej. carga inicial): solo deja la UI lista
     if (!groupId) return;
 
-    // Llenar selectores con el catálogo real de rutas del corredor
     await cargarRutasPoligono(groupId);
 
-    // ── Event listeners de botones ────────────────────────────
     const btnFranja   = document.getElementById('btn-consultar-franja');
     const btnEstacion = document.getElementById('btn-consultar-estacion');
 
@@ -406,7 +478,7 @@ async function actualizarDashboardPoligonoCarga(groupId) {
                 alert('Selecciona una fecha y una ruta para continuar.');
                 return;
             }
-            renderizarEstacionesMaestras(MOCK_MAESTRAS);
+            consultarEstacionesMaestras(groupId, fecha, ruta);
         });
     }
 }
