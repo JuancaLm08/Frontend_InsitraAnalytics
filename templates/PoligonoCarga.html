@@ -88,34 +88,24 @@
         </button>
     </div>
 
-    <!-- Layout de dos columnas: lista + detalle -->
     <div id="estacion-maestra-layout" style="display:none;">
-        <div class="estacion-maestra-grid">
 
-            <!-- Lista de estaciones -->
-            <div class="estacion-lista-box">
-                <h2>Seleccione una estación maestra</h2>
-                <p class="chart-hint"></p>
-                <div id="lista-estaciones-maestras"></div>
+        <!-- Gráfica arriba a ancho completo -->
+        <div class="estacion-detalle-box" id="detalle-estacion-box">
+            <div id="detalle-placeholder" style="display:flex;">
+                <img src="../static/images/insitra_logo.png"
+                     id="img-placeholder-estacion"
+                     alt="Selecciona una estación">
+                <p>Selecciona una estación de la lista para ver su detalle</p>
             </div>
-
-            <!-- Detalle de estación seleccionada -->
-            <div class="estacion-detalle-box" id="detalle-estacion-box">
-
-                <!-- Placeholder antes de seleccionar -->
-                <div id="detalle-placeholder" style="display:flex;">
-                    <img src="../static/images/insitra_logo.png"
-                         id="img-placeholder-estacion"
-                         alt="Selecciona una estación">
-                    <p>Selecciona una estación de la lista para ver su detalle</p>
-                </div>
-
-                <!-- Título y gráfica — ocultos hasta seleccionar -->
-                <h3 id="titulo-detalle-estacion" style="display:none;"></h3>
-                <div id="chart-detalle-estacion" style="height: 300px; display:none;"></div>
-
-            </div>
+            <h3 id="titulo-detalle-estacion" style="display:none;"></h3>
+            <div id="chart-detalle-estacion" style="height: 350px; display:none;"></div>
         </div>
+
+        <!-- Grid de tarjetas abajo -->
+        <h3 class="grid-titulo">Estaciones maestras por franja horaria</h3>
+        <div id="grid-estaciones-maestras" class="estacion-maestra-cards"></div>
+
     </div>
 </div>
 
