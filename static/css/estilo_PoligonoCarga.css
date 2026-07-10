@@ -219,17 +219,14 @@ body:not(.light-mode) .tab-btn.active {
     margin-bottom: 4px;
 }
 
-.estacion-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.15s;
-    font-size: 13px;
-    border-bottom: 0.5px solid #f0f0f0;
+.estacion-lista-box {
+    background: transparent;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    min-width: 320px;
 }
+
 
 .estacion-item:hover {
     background: #f0f7ff;
@@ -283,6 +280,154 @@ body:not(.light-mode) .estacion-item.active {
 
 @media (max-width: 768px) {
     .estacion-maestra-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.estacion-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.estacion-nombre {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--texto);
+}
+
+.estacion-franjas {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.4;
+}
+
+body:not(.light-mode) .estacion-franjas {
+    color: #aaaaaa;
+}
+
+.estacion-ocupacion {
+    font-size: 13px;
+    color: var(--texto);
+    opacity: 0.8;
+}
+
+#titulo-detalle-estacion {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--texto);
+}
+
+/* ── Grid de tarjetas estación maestra ──────────────────────── */
+.grid-titulo {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 24px 0 12px;
+    color: var(--texto);
+}
+
+.estacion-maestra-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.estacion-card {
+    background: var(--fondo-summary);
+    border-radius: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.estacion-card:hover {
+    background: #e8f3fc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #378ADD;
+}
+
+.estacion-card.active {
+    background: #d4eaf9;
+    border-left: 3px solid #378ADD;
+}
+
+.estacion-card-hora {
+    font-size: 11px;
+    font-weight: 600;
+    color: #378ADD;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.estacion-card-nombre {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--texto);
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.estacion-card-ocupacion {
+    font-size: 13px;
+    color: var(--texto);
+    opacity: 0.7;
+}
+
+.estacion-card-badge {
+    display: inline-block;
+    background: #950c4b;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-top: 4px;
+    align-self: flex-start;
+}
+
+body:not(.light-mode) .estacion-card {
+    background: var(--fondo);
+}
+
+body:not(.light-mode) .estacion-card:hover {
+    background: #1a2a3a;
+}
+
+body:not(.light-mode) .estacion-card.active {
+    background: #1a3a5a;
+    border-left-color: #7ab8f5;
+}
+
+body:not(.light-mode) .estacion-card-hora {
+    color: #7ab8f5;
+}
+
+body:not(.light-mode) .estacion-card {
+    background: var(--fondo);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+body:not(.light-mode) .estacion-card:hover {
+    background: #1a2a3a;
+    border: 1px solid #7ab8f5;
+}
+
+@media (max-width: 900px) {
+    .estacion-maestra-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .estacion-maestra-cards {
         grid-template-columns: 1fr;
     }
 }
