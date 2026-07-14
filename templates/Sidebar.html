@@ -57,6 +57,13 @@
                 <span class="text">Horaria</span>
             </a>
             {% endif %}
+
+            {% if 6 in permisos %}
+            <a onclick="changeView('PoligonoCarga', this)">
+                <span class="icon">📈</span>
+                <span class="text">Polígono de Carga</span>
+            </a>
+            {% endif %}
         </nav>
 
         <hr class="sidebar-divider">
