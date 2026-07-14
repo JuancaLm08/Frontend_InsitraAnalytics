@@ -2,7 +2,7 @@ let debounceTimer; // Variable para el temporizador
 let insitraLoader; // Variable para controlar la aparicion de la animacion Lottie
 let animations = {}; // Objeto para guardar las instancias de Lottie
 
-window.seccionesCargadas = {'Inicio': false, 'Totales': false, 'Unidades': false, 'Ruta': false, 'Horaria': false };
+window.seccionesCargadas = {'Inicio': false, 'Totales': false, 'Unidades': false, 'Ruta': false, 'Horaria': false, 'PoligonoCarga': false };
 
 /**********************************************************************************************************************************************************/
 // FUNCION PARA CARGAR LA ANIMACION LOTTIE
@@ -48,7 +48,7 @@ async function changeView(view, el) {
     
     document.getElementById("view-title").innerText = "INSITRA ANALYTICS: " + view + " " + icon;
     document.getElementById("titulo-general").innerText = "INSITRA ANALYTICS: " + view;
-    const secciones = {'Inicio': 'section-inicio', 'Totales': 'section-totales', 'Unidades': 'section-unidades', 'Ruta': 'section-ruta', 'Horaria': 'section-horaria'};
+    const secciones = {'Inicio': 'section-inicio', 'Totales': 'section-totales', 'Unidades': 'section-unidades', 'Ruta': 'section-ruta', 'Horaria': 'section-horaria', 'PoligonoCarga': 'section-poligono-carga'};
 
     // Ocultar todas las secciones y mostrar la activa
     Object.values(secciones).forEach(id => {
@@ -195,6 +195,7 @@ async function cargarCorredores() {
 
         select.value = grupos[0].id;
         if (typeof cargarListaBusesHoraria === 'function') cargarListaBusesHoraria(grupos[0].id);
+        if (typeof actualizarDashboardPoligonoCarga === 'function') actualizarDashboardPoligonoCarga(grupos[0].id);
         dispararActualizacionGlobal();
 
         // Evento al cambiar de corredor
@@ -205,6 +206,7 @@ async function cargarCorredores() {
                 if (typeof cargarListaBuses === 'function') await cargarListaBuses(groupId);
             }
             if (typeof cargarListaBusesHoraria === 'function') await cargarListaBusesHoraria(groupId);
+            if (typeof actualizarDashboardPoligonoCarga === 'function') await actualizarDashboardPoligonoCarga(groupId);
             dispararActualizacionGlobal();
         });
 
