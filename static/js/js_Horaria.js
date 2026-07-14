@@ -67,7 +67,7 @@ async function cargarListaBusesHoraria(groupId) {
     _horaria_checkGenerarBtn();
 
     try {
-        const res  = await await fetch(`/api/unidades-lista?groupid=${groupId}`);
+        const res  = await fetch(`/api/unidades-lista?groupid=${groupId}`);
         const data = await res.json();
         if (!data || data.error) return;
 
@@ -1013,7 +1013,12 @@ async function _horaria_generarReporte() {
 
     const loader  = document.getElementById('loader-horaria');
     const content = document.getElementById('horaria-content');
-    if (loader) loader.style.display = 'flex';
+    if (loader) {
+        loader.style.display = 'flex';
+        if (typeof animations !== 'undefined' && animations['loader-horaria']) {
+            animations['loader-horaria'].play();
+        }
+    }
     // Limpiar resultados anteriores
     content.style.display = 'none';
     ['horaria-summary-cards', 'horaria-tarifa-breakdown'].forEach(id => {
@@ -1044,7 +1049,12 @@ async function _horaria_generarReporte() {
         errorBanner.textContent = 'Error de conexión al generar el reporte.';
         errorBanner.style.display = 'block';
     } finally {
-        if (loader) loader.style.display = 'none';
+        if (loader) {
+            loader.style.display = 'none';
+            if (typeof animations !== 'undefined' && animations['loader-horaria']) {
+                animations['loader-horaria'].stop();
+            }
+        }
     }
 }
 
