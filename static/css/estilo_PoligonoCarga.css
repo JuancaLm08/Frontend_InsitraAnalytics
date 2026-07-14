@@ -1,0 +1,433 @@
+/* ── Filtros superiores ────────────────────────────────────── */
+.filtros-poligono {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filtro-grupo label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary, #666);
+}
+
+.filtro-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    min-width: 180px;
+    background: white;
+    cursor: pointer;
+}
+
+.filtro-input:focus {
+    outline: none;
+    border-color: #378ADD;
+}
+
+.btn-consultar {
+    padding: 8px 20px;
+    background:var(--fondo-summary);
+    color: white;
+    border: 1px solid var(--borde-principal);
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    height: 38px;
+}
+
+.tab-btn:hover {
+    color: #950c4b;
+    background: rgba(55, 138, 221, 0.08);   /* ← fondo suave al pasar */
+    border-radius: 8px 8px 0 0;
+}
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+.tabs-poligono {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    font-size: 18px;
+    font-weight: 500;
+    color: #0c0c0c;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+    border-radius: 8px 8px 0 0;
+}
+
+.tab-btn:hover {
+    color: var(--texto);
+    background: rgba(0, 0, 0, 0.06);   /* ← gris neutro suave */
+    border-radius: 8px 8px 0 0;
+}
+
+.tab-btn.active {
+    color: #080808c9;
+    border-bottom-color: #c2bbbe42;
+    background: rgba(223, 217, 220, 0.12);
+}
+/* ── Slider de horas ───────────────────────────────────────── */
+.slider-container {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+}
+
+.slider-container label {
+    display: block;
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.hora-slider {
+    width: 100%;
+    accent-color: #378ADD;
+    cursor: pointer;
+}
+
+.slider-marcas {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #888;
+    margin-top: 6px;
+}
+
+/* ── Gráficas ──────────────────────────────────────────────── */
+.chart-box {
+    background: var(--fondo-summary);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.chart-box h2 {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.chart-hint {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 12px;
+}
+
+/* ── Modo oscuro ─────────────────────────────────────────────── */
+body:not(.light-mode) .filtro-input {
+    background: #111118;
+    color: #ffffff;
+    border-color: #444;
+}
+
+body:not(.light-mode) .slider-container {
+    background: #2a2a3a;
+    color: #ffffff;
+}
+
+body:not(.light-mode) .slider-container label {
+    color: #ffffff;
+}
+
+body:not(.light-mode) .slider-marcas span {
+    color: #aaaaaa;
+}
+
+body:not(.light-mode) .chart-box {
+    background:  var(--fondo);
+    color: #ffffff;
+}
+
+body:not(.light-mode) .chart-box h2 {
+    color: #ffffff;
+}
+
+body:not(.light-mode) .tab-btn {
+    color: #aaaaaa;
+}
+
+body:not(.light-mode) .tab-btn.active {
+    color: #ffffff;
+}
+
+
+
+#detalle-placeholder {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    gap: 16px;
+    opacity: 0.9;
+}
+
+#img-placeholder-estacion {
+    width: 140px;
+    filter: grayscale(30%);
+}
+
+#detalle-placeholder p {
+    font-size: 13px;
+    color: var(--texto);
+    text-align: center;
+}
+
+/* ── Layout estación maestra ─────────────────────────────────── */
+.estacion-maestra-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.estacion-lista-box {
+    background: transparent;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.estacion-lista-box h3 {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.estacion-lista-box {
+    background: transparent;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    min-width: 320px;
+}
+
+
+.estacion-item:hover {
+    background: #f0f7ff;
+}
+
+.estacion-item.active {
+    background: #e6f1fb;
+    font-weight: 500;
+    color: #185FA5;
+}
+
+.estacion-item .ocu-badge {
+    background: #378ADD;
+    color: white;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.estacion-detalle-box {
+    background: transparent;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.estacion-detalle-box h3 {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+body:not(.light-mode) .estacion-lista-box,
+body:not(.light-mode) .estacion-detalle-box {
+    background: transparent;
+    color: #ffffff;
+}
+
+body:not(.light-mode) .estacion-item {
+    border-bottom-color: #333;
+}
+
+body:not(.light-mode) .estacion-item:hover {
+    background: #2a3a4a;
+}
+
+body:not(.light-mode) .estacion-item.active {
+    background: #1a3a5a;
+    color: #7ab8f5;
+}
+
+@media (max-width: 768px) {
+    .estacion-maestra-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.estacion-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.estacion-nombre {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--texto);
+}
+
+.estacion-franjas {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.4;
+}
+
+body:not(.light-mode) .estacion-franjas {
+    color: #aaaaaa;
+}
+
+.estacion-ocupacion {
+    font-size: 13px;
+    color: var(--texto);
+    opacity: 0.8;
+}
+
+#titulo-detalle-estacion {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--texto);
+}
+
+/* ── Grid de tarjetas estación maestra ──────────────────────── */
+.grid-titulo {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 24px 0 12px;
+    color: var(--texto);
+}
+
+.estacion-maestra-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.estacion-card {
+    background: var(--fondo-summary);
+    border-radius: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.estacion-card:hover {
+    background: #e8f3fc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #378ADD;
+}
+
+.estacion-card.active {
+    background: #d4eaf9;
+    border-left: 3px solid #378ADD;
+}
+
+.estacion-card-hora {
+    font-size: 11px;
+    font-weight: 600;
+    color: #378ADD;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.estacion-card-nombre {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--texto);
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.estacion-card-ocupacion {
+    font-size: 13px;
+    color: var(--texto);
+    opacity: 0.7;
+}
+
+.estacion-card-badge {
+    display: inline-block;
+    background: #950c4b;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-top: 4px;
+    align-self: flex-start;
+}
+
+body:not(.light-mode) .estacion-card {
+    background: var(--fondo);
+}
+
+body:not(.light-mode) .estacion-card:hover {
+    background: #1a2a3a;
+}
+
+body:not(.light-mode) .estacion-card.active {
+    background: #1a3a5a;
+    border-left-color: #7ab8f5;
+}
+
+body:not(.light-mode) .estacion-card-hora {
+    color: #7ab8f5;
+}
+
+body:not(.light-mode) .estacion-card {
+    background: var(--fondo);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+body:not(.light-mode) .estacion-card:hover {
+    background: #1a2a3a;
+    border: 1px solid #7ab8f5;
+}
+
+@media (max-width: 900px) {
+    .estacion-maestra-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .estacion-maestra-cards {
+        grid-template-columns: 1fr;
+    }
+}
