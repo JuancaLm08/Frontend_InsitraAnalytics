@@ -333,5 +333,47 @@ def delete_zona(zona_id):
     )
     return jsonify(r.json()), r.status_code
 
+""" ############################################################ SECCION DE POLIGONO DE CARGA ########################################################## """
+ 
+# Catálogo de rutas para el <select> (se llama al iniciar la sección)
+@app.route('/api/poligono-carga/rutas')
+def get_poligono_carga_rutas():
+ 
+    group_id = request.args.get('groupid')
+ 
+    if not group_id:
+        return jsonify({"success": False, "error": "Falta parámetro: groupid"}), 400
+ 
+    try:
+        response = requests.get(f"{BCK}/api/poligono-carga/rutas", params={"groupid": group_id})
+        return jsonify(response.json()), response.status_code
+ 
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+ 
+ 
+@app.route('/api/poligono-carga-data')
+def get_poligono_carga_data():
+
+    group_id = request.args.get('groupid')
+    inicio   = request.args.get('inicio')    # ← cambiar fecha por inicio
+    final    = request.args.get('final')     # ← agregar final
+    ruta     = request.args.get('ruta')
+
+    if not group_id or not inicio or not final or not ruta:
+        return jsonify({"success": False, "error": "Faltan parámetros: groupid, inicio, final, ruta"}), 400
+
+    try:
+        response = requests.get(
+            f"{BCK}/api/poligono-carga-data",
+            params={"groupid": group_id, "inicio": inicio, "final": final, "ruta": ruta},
+        )
+        return jsonify(response.json()), response.status_code
+
+    except Exception as e:
+        import traceback
+        print(f"\n[POLIGONO_CARGA] ERROR:\n{traceback.format_exc()}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
