@@ -219,34 +219,55 @@ function _pc_mostrarFranja(h) {
     const label      = document.getElementById('label-hora-slider');
     if (label) label.textContent = `Franja horaria: ${String(h).padStart(2,'0')}:00 - ${String(h+1).padStart(2,'0')}:00`;
     const estaciones = _pc_franjasPorHora[franja] || [];
-    renderizarPoligonoCarga({ ruta: _pc_rutaActual, franja, estaciones });
+    const payload     = { ruta: _pc_rutaActual, franja, estaciones };
+
+    // Si la gráfica ya fue dibujada antes (primer Plotly.newPlot ya ejecutado),
+    // usamos una transición animada al cambiar de franja (mucho más agradable al
+    // arrastrar el slider). Si es el primer dibujo, renderizarPoligonoCarga() se
+    // encarga del Plotly.newPlot inicial.
+    if (_pc_graficaInicializada) {
+        _pc_animarCambioFranja(payload);
+    } else {
+        renderizarPoligonoCarga(payload);
+    }
 }
 
-    // Animación suave entre franjas
-    const nombres   = estaciones.map(e => e.nombre);
-    const ascensos  = estaciones.map(e => e.ascensos);
-    const descensos = estaciones.map(e => e.descensos);
-    const ocupacion = estaciones.map(e => e.ocupacion);
-    const unidades  = estaciones.map(e => e.unidades || 0);
+/**************************************************************************************************/
+// TRANSICIÓN ANIMADA ENTRE FRANJAS (al mover el slider de horas, con la gráfica ya dibujada)
+/**************************************************************************************************/
+function _pc_animarCambioFranja(data) {
+    const nombres   = data.estaciones.map(e => e.nombre);
+    const ascensos  = data.estaciones.map(e => e.ascensos);
+    const descensos = data.estaciones.map(e => e.descensos);
+    const ocupacion = data.estaciones.map(e => e.ocupacion);
+    const unidades  = data.estaciones.map(e => e.unidades || 0);
 
     const maestraDeEstaFranja = window._pc_maestrasData?.maestras?.find(
-        m => m.franja === franja
+        m => m.franja === data.franja
     )?.estacion_maestra || null;
 
     const coloresAscensos  = nombres.map(n => n === maestraDeEstaFranja ? '#F4C542' : '#651c44');
     const coloresDescensos = nombres.map(n => n === maestraDeEstaFranja ? '#F4A522' : '#3a5d79');
 
+    // customdata se recalcula en cada franja para que el hover ("Unidades: ...") no
+    // se quede con datos de la franja anterior tras la animación.
+    const customdata = nombres.map((n, i) => ({
+        unidades: unidades[i],
+        maestra: n === maestraDeEstaFranja
+    }));
+
     Plotly.animate('chart-poligono-franja', {
         data: [
-            { x: nombres, y: ascensos,  marker: { color: coloresAscensos,  opacity: 0.85 } },
-            { x: nombres, y: descensos, marker: { color: coloresDescensos, opacity: 0.85 } },
+            { x: nombres, y: ascensos,  marker: { color: coloresAscensos,  opacity: 0.85 }, customdata },
+            { x: nombres, y: descensos, marker: { color: coloresDescensos, opacity: 0.85 }, customdata },
             {
                 x: nombres, y: ocupacion,
                 marker: {
                     size:   nombres.map(n => n === maestraDeEstaFranja ? 10 : 5),
                     color:  nombres.map(n => n === maestraDeEstaFranja ? '#F4C542' : '#950c4b'),
                     symbol: nombres.map(n => n === maestraDeEstaFranja ? 'star' : 'circle')
-                }
+                },
+                customdata
             }
         ],
         layout: {
@@ -259,17 +280,18 @@ function _pc_mostrarFranja(h) {
     });
 
     document.getElementById('titulo-grafica-franja').textContent =
-        `${_pc_rutaActual} | ${franja}`;
+        `${data.ruta} | ${data.franja}`;
 
-    const datosExpander = estaciones.map(e => ({
-        Franja:    franja,
+    const datosExpander = data.estaciones.map(e => ({
+        Franja:    data.franja,
         Estación:  e.nombre,
         Maestra:   e.nombre === maestraDeEstaFranja ? 'Sí' : 'No',
         Ascensos:  e.ascensos,
         Descensos: e.descensos,
         Ocupación: e.ocupacion
     }));
-    crearExpander('chart-poligono-franja', datosExpander, `poligono_carga_${franja}`);
+    crearExpander('chart-poligono-franja', datosExpander, `poligono_carga_${data.franja}`);
+}
 
 
 /**************************************************************************************************/
