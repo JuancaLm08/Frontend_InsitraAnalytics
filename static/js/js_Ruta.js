@@ -316,6 +316,7 @@ function filtrarPuntosConTurf(zonaGeoJSON) {
             //tOff += p.off;
 
             puntosFiltrados.push({
+                timestamp: p.timestamp,
                 unidad: p.sitename || p.terid || "N/A",
                 puerta: p.puerta_texto || (p.door === 'door_1' ? 'Delantera' : 'Trasera'),
                 on: Math.round(p.on),
@@ -336,7 +337,7 @@ function filtrarPuntosConTurf(zonaGeoJSON) {
     valorPasajeros.style.display = 'block';
     //valorDescensos.style.display = 'block';
     
-    renderizarTablaMaster({headers: ["Terid unidad", "Puerta", "Ascensos", "Latitud", "Longitud"], rows: puntosFiltrados}, 'tabla-ruta'); 
+    renderizarTablaMaster({headers: ["Fecha y Hora", "Terid unidad", "Puerta", "Ascensos", "Latitud", "Longitud"], rows: puntosFiltrados}, 'tabla-ruta'); 
 }
 
 /**********************************************************************************************************************************************************/
