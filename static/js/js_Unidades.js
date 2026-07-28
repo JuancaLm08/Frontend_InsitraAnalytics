@@ -248,7 +248,8 @@ function renderizarGraficaUnidades(data, containerId) {
     Plotly.newPlot(chartDiv, traces, layout, { 
         responsive: true, 
         displaylogo: false,
-        displayModeBar: false
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d']
     }).then(() => {
         Plotly.Plots.resize(chartDiv);
 

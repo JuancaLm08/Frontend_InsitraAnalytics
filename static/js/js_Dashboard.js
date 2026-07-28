@@ -293,7 +293,8 @@ function renderizarGraficaMaster(data, containerId) {
     Plotly.newPlot(chartDiv, [trace], layout, { 
         responsive: true, 
         displaylogo: false,
-        displayModeBar: false 
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d']
     }).then(() => {
         Plotly.Plots.resize(chartDiv);
         const resizeObserver = new ResizeObserver(() => {

@@ -391,7 +391,13 @@ function renderizarPoligonoCarga(data) {
     if (_pc_graficaInicializada) {
     Plotly.react('chart-poligono-franja', trazas, layout, { responsive: true });
         } else {
-    Plotly.newPlot('chart-poligono-franja', trazas, layout, { responsive: true });
+    Plotly.newPlot('chart-poligono-franja', trazas, layout, 
+        { 
+            responsive: true, 
+            displayModeBar: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['lasso2d', 'select2d'] 
+        });
     _pc_graficaInicializada = true;
         }
 
@@ -586,7 +592,13 @@ function renderizarDetalleEstacion(nombreEstacion, data) {
         `${nombreEstacion} — ocupación a lo largo del día`;
     document.getElementById('chart-detalle-estacion').style.display  = 'block';
 
-    Plotly.newPlot('chart-detalle-estacion', trazas, layout, { responsive: true });
+    Plotly.newPlot('chart-detalle-estacion', trazas, layout, 
+        { 
+        responsive: true, 
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d']
+     });
 
     const datosExpander = data.serie.map(s => ({
         Estación:  nombreEstacion,
