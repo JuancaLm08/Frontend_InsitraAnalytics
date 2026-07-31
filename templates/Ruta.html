@@ -36,6 +36,9 @@
         <button id="btn-reset-horas-ruta" class="btn-reset-horas" title="Restaurar rango horario a 00:00 – 23:59">
             <span>↺</span> Resetear horas
         </button>
+        <button id="btn-consultar-ruta" class="btn-consultar" title="Ejecutar la consulta con los filtros actuales">
+            <span>🔍</span> Consultar
+        </button>
     </div>
 
     <div id="no-data-banner-ruta" class="status-banner">No hay datos para los filtros seleccionados.</div>
@@ -48,17 +51,26 @@
 
         <div class="map-metrics">
             <div id = "valor-pasajeros" class="map-metric-item" style="display: none;">
-                <label>Pasajeros</label>
+                <label>Pasajeros 🟢</label>
                 <p id="map-pasajeros-val">—</p>
             </div>
-            <!-- <div id = "valor-descensos" class="map-metric-item" style="display: none;">
-                <label>Descensos (off)</label>
+            <div id = "valor-descensos" class="map-metric-item" style="display: none;">
+                <label>Pasajeros 🔴</label>
                 <p id="map-descensos-val">—</p>
-            </div> -->
+            </div>
         </div>
-
-        <div class="map-container">
-            <div id="map-canvas" style="width: 100%; height: 100%;"></div>
+        
+        <div class="map-block">
+            <div class="map-toolbar">
+                <span class="map-toolbar-label">Capa de calor</span>
+                <div id="capa-switch-ruta" class="capa-switch" role="tablist" aria-label="Capa de calor">
+                    <button type="button" class="capa-option active" data-capa="ascensos" role="tab" aria-selected="true">Ascensos</button>
+                    <button type="button" class="capa-option" data-capa="descensos" role="tab" aria-selected="false">Descensos</button>
+                </div>
+            </div>
+            <div class="map-container">
+                <div id="map-canvas" style="width: 100%; height: 100%;"></div>
+            </div>
         </div>
 
         <br>

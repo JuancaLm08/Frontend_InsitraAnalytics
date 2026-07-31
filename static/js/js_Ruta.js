@@ -1,13 +1,38 @@
 let puntosRutaGlobal = []; // Almacen para Turf.js
-let heatLayer = null;
+let heatLayer = null;      // Se mantiene por compatibilidad: apunta a la capa visible
 let drawnItems = null;
 
-// Variables que se ocultans segun el contenido
+// Capas de calor separadas y estado del selector
+let heatLayers = { ascensos: null, descensos: null };
+let capaActivaRuta = 'ascensos';
+let datosCargadosRuta = false;
+
+// Estado de la zona dibujada (para saber qué métrica mostrar)
+let hayZonaDibujadaRuta = false;
+let totalesZonaRuta = { ascensos: 0, descensos: 0 };
+
+// ESCALA ÚNICA para ambas capas: mismo gradiente y mismo máximo de normalización
+const GRADIENTE_CALOR = {
+    0.35: '#0000ff', 0.40: '#0033ff', 0.45: '#008cff', 0.50: '#00d9ff',
+    0.55: '#00ff95', 0.60: '#1eff00', 0.65: '#9dff00', 0.70: '#fbff00',
+    0.75: '#ffe60083', 0.80: '#ffa60083', 0.85: '#ff590088',
+    0.90: '#ff22005e', 0.95: '#ff000065'
+};
+
+const CONFIG_CAPAS = {
+    ascensos:  { campo: 'on',  metricaId: 'valor-pasajeros', valorId: 'map-pasajeros-val' },
+    descensos: { campo: 'off', metricaId: 'valor-descensos', valorId: 'map-descensos-val' }
+};
+
+// Decimales para agrupar puntos coincidentes (~1 m a 5 decimales)
+const PRECISION_AGRUPACION = 5;
+
+// Variables que se ocultan segun el contenido
 const btnLimpiar = document.getElementById('btn-limpiar');
 const messageBlue = document.getElementById('info-message-blue');
 const tablaRuta = document.getElementById('data-expander-ruta');
 const valorPasajeros = document.getElementById('valor-pasajeros');
-//const valorDescensos = document.getElementById('valor-descensos');
+const valorDescensos = document.getElementById('valor-descensos');
 
 /**********************************************************************************************************************************************************/
 // FUNCION PARA INICIALIZAR EL MAPA ACOTADO
@@ -222,29 +247,43 @@ function getHoraFinalRuta() {
 // ACTUALIZAR EL DASHBOARD EN CASO DE QUE CAMBIEN LAS FECHAS DE CONSULTA
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Asegurar que las opciones de los selects de hora estén disponibles
     llenarOpcionesHoraRuta();
 
-    if (btnLimpiar){
-        btnLimpiar.addEventListener('click', () => {
-
-            if (drawnItems) {
-                drawnItems.clearLayers();
-            }
-
-            document.getElementById('map-pasajeros-val').innerText = "0";
-            //document.getElementById('map-descensos-val').innerText = "0";
-
-            // Volver al estado inicial de la sección
-            btnLimpiar.style.display = 'none';
-            valorPasajeros.style.display = 'none';
-            //valorDescensos.style.display = 'none';
-            tablaRuta.style.display = 'none';
-            messageBlue.style.display = 'block';            
+    // Botón "Consultar": único punto que dispara la petición a la API
+    const btnConsultar = document.getElementById('btn-consultar-ruta');
+    if (btnConsultar) {
+        btnConsultar.addEventListener('click', () => {
+            const groupId = document.getElementById('select-corredor').value;
+            if (!groupId) return;
+            actualizarDashboardRuta(groupId, true);
         });
     }
 
-    // Botón para resetear las horas al rango por defecto (00:00 – 23:59)
+    // Selector de capa: solo alterna capas ya cargadas, NO vuelve a consultar
+    const capaSwitch = document.getElementById('capa-switch-ruta');
+    if (capaSwitch) {
+        capaSwitch.addEventListener('click', (e) => {
+            const btn = e.target.closest('.capa-option');
+            if (!btn) return;
+            mostrarCapaRuta(btn.dataset.capa);
+        });
+    }
+
+    if (btnLimpiar) {
+        btnLimpiar.addEventListener('click', () => {
+            if (drawnItems) drawnItems.clearLayers();
+
+            hayZonaDibujadaRuta = false;
+            totalesZonaRuta = { ascensos: 0, descensos: 0 };
+            actualizarMetricasRuta();
+
+            btnLimpiar.style.display = 'none';
+            tablaRuta.style.display = 'none';
+            setMensajeRuta(datosCargadosRuta ? 'dibujar' : 'consultar');
+        });
+    }
+
+    // Resetear horas: ya NO consulta, solo marca los filtros como pendientes
     const btnResetHoras = document.getElementById('btn-reset-horas-ruta');
     if (btnResetHoras) {
         btnResetHoras.addEventListener('click', () => {
@@ -252,13 +291,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('hora-inicio-m-ruta').value = '00';
             document.getElementById('hora-final-h-ruta').value  = '23';
             document.getElementById('hora-final-m-ruta').value  = '59';
-            // Relanzar la consulta si hay un corredor seleccionado
-            const groupId = document.getElementById('select-corredor').value;
-            if (groupId) dispararActualizacionGlobal();
+            marcarFiltrosPendientes(true);
         });
     }
 
-    // Escuchar cambios en la fecha y los selects del rango de horas
+    // Cambios en fecha/horas: solo marcan pendiente, no disparan la consulta
     const inputsRuta = [
         document.getElementById('fecha-ruta'),
         document.getElementById('hora-inicio-h-ruta'),
@@ -268,14 +305,13 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     inputsRuta.forEach(input => {
         if (!input) return;
-        input.addEventListener('change', () => {
-            const groupId = document.getElementById('select-corredor').value; // Solo disparamos si hay un corredor seleccionado
-            if (groupId) {
-                dispararActualizacionGlobal();
-            }
-        });
+        input.addEventListener('change', () => marcarFiltrosPendientes(true));
     });
+
+    setMensajeRuta('consultar');
+    mostrarCapaRuta('ascensos');
 });
+
 
 /**********************************************************************************************************************************************************/
 // VALIDAR LA FECHA Y EL RANGO DE HORAS DE LA SECCION RUTA
@@ -313,36 +349,184 @@ function filtrarPuntosConTurf(zonaGeoJSON) {
         const pt = turf.point([p.lon, p.lat]);
         if (turf.booleanPointInPolygon(pt, poly)) {
             tOn += p.on;
-            //tOff += p.off;
+            tOff += p.off;
 
             puntosFiltrados.push({
                 timestamp: p.timestamp,
                 unidad: p.sitename || p.terid || "N/A",
                 puerta: p.puerta_texto || (p.door === 'door_1' ? 'Delantera' : 'Trasera'),
                 on: Math.round(p.on),
-                //off: Math.round(p.off),
+                off: Math.round(p.off),
                 lat: parseFloat(p.lat).toFixed(6),
                 lon: parseFloat(p.lon).toFixed(6)
             });
         }
     });
 
-    document.getElementById('map-pasajeros-val').innerText = tOn.toLocaleString();
-    //document.getElementById('map-descensos-val').innerText = tOff.toLocaleString();
+    // Se guardan ambos totales, pero solo se pinta el de la capa activa
+    totalesZonaRuta = { ascensos: tOn, descensos: tOff };
+    hayZonaDibujadaRuta = true;
+    actualizarMetricasRuta();
 
-    // Mostrar los elementos ocultos
     btnLimpiar.style.display = 'block';
     messageBlue.style.display = 'none';
     tablaRuta.style.display = 'block';
-    valorPasajeros.style.display = 'block';
-    //valorDescensos.style.display = 'block';
-    
-    renderizarTablaMaster({headers: ["Fecha y Hora", "Terid unidad", "Puerta", "Ascensos", "Latitud", "Longitud"], rows: puntosFiltrados}, 'tabla-ruta'); 
+
+    renderizarTablaMaster({headers: ["Fecha y Hora", "Terid unidad", "Puerta", "Ascensos", "Descensos", "Latitud", "Longitud"], rows: puntosFiltrados}, 'tabla-ruta');
+}
+/**********************************************************************************************************************************************************/
+// CONSTRUCCION Y CONTROL DE LAS CAPAS DE CALOR
+function construirHeatmapDesdeDetalles(puntos, campo) {
+    const acumulado = new Map();
+
+    puntos.forEach(p => {
+        const valor = Number(p[campo]) || 0;
+        if (valor <= 0) return;
+
+        const lat = parseFloat(p.lat);
+        const lon = parseFloat(p.lon);
+        if (!isFinite(lat) || !isFinite(lon)) return;
+
+        const clave = `${lat.toFixed(PRECISION_AGRUPACION)}|${lon.toFixed(PRECISION_AGRUPACION)}`;
+        const acc = acumulado.get(clave);
+        if (acc) acc[2] += valor;
+        else acumulado.set(clave, [lat, lon, valor]);
+    });
+
+    return Array.from(acumulado.values());
+}
+
+function crearCapaCalor(datos, maximo) {
+    return L.heatLayer(datos, {
+        radius: 23,
+        blur: 25,
+        minOpacity: 0.50,
+        maxZoom: 13,
+        max: maximo,
+        gradient: GRADIENTE_CALOR
+    });
+}
+
+function quitarCapasCalor() {
+    Object.keys(heatLayers).forEach(k => {
+        if (heatLayers[k] && map && map.hasLayer(heatLayers[k])) map.removeLayer(heatLayers[k]);
+        heatLayers[k] = null;
+    });
+    heatLayer = null;
+}
+
+async function reconstruirCapasRuta() {
+    if (!map) return;
+    quitarCapasCalor();
+
+    const datos = {};
+    let maximoGlobal = 1;
+
+    // Primero se calculan ambas capas para obtener un único máximo compartido
+    Object.keys(CONFIG_CAPAS).forEach(k => {
+        datos[k] = construirHeatmapDesdeDetalles(puntosRutaGlobal, CONFIG_CAPAS[k].campo);
+        datos[k].forEach(p => { if (p[2] > maximoGlobal) maximoGlobal = p[2]; });
+    });
+
+    await siguienteFrame();
+
+    Object.keys(CONFIG_CAPAS).forEach(k => {
+        heatLayers[k] = crearCapaCalor(datos[k], maximoGlobal);
+    });
+
+    await siguienteFrame();
+
+    mostrarCapaRuta(capaActivaRuta);
+}
+
+function actualizarMetricasRuta() {
+    Object.keys(CONFIG_CAPAS).forEach(k => {
+        const cont = document.getElementById(CONFIG_CAPAS[k].metricaId);
+        const val  = document.getElementById(CONFIG_CAPAS[k].valorId);
+        const visible = hayZonaDibujadaRuta && k === capaActivaRuta;
+
+        if (val) val.innerText = (totalesZonaRuta[k] || 0).toLocaleString();
+        if (cont) cont.style.display = visible ? 'block' : 'none';
+    });
+}
+
+function mostrarCapaRuta(capa) {
+    if (!CONFIG_CAPAS[capa]) return;
+    capaActivaRuta = capa;
+
+    // Estado visual del selector
+    document.querySelectorAll('#capa-switch-ruta .capa-option').forEach(btn => {
+        const activo = btn.dataset.capa === capa;
+        btn.classList.toggle('active', activo);
+        btn.setAttribute('aria-selected', activo ? 'true' : 'false');
+    });
+
+    // Solo se muestra la métrica de la capa activa
+    actualizarMetricasRuta();
+
+    if (!map) return;
+
+    // Solo una capa de calor visible a la vez
+    Object.keys(heatLayers).forEach(k => {
+        const layer = heatLayers[k];
+        if (!layer) return;
+        if (k === capa) { if (!map.hasLayer(layer)) layer.addTo(map); }
+        else if (map.hasLayer(layer)) map.removeLayer(layer);
+    });
+
+    heatLayer = heatLayers[capa] || null;
 }
 
 /**********************************************************************************************************************************************************/
+// ESTADO DE LA SECCION (mensajes, loader, filtros pendientes)
+function setMensajeRuta(modo) {
+    if (!messageBlue) return;
+    messageBlue.innerText = (modo === 'consultar')
+        ? 'Ajusta los filtros y presiona Consultar para cargar el mapa.'
+        : 'Dibuja o termina de cerrar el polígono/rectángulo para ver los totales.';
+    messageBlue.style.display = 'block';
+}
+
+function marcarFiltrosPendientes(pendiente) {
+    const btn = document.getElementById('btn-consultar-ruta');
+    if (btn) btn.classList.toggle('pendiente', !!pendiente);
+}
+
+function siguienteFrame() {
+    return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+}
+
+function mostrarLoaderRuta(mostrar) {
+    const loader = document.getElementById('loader-ruta');
+    if (loader) loader.style.display = mostrar ? 'flex' : 'none';
+
+    // "animations" se inicializa en js_Sidebar.js (una instancia de Lottie por cada
+    // .section-loader, indexada por su id). Al ser scripts clasicos en la misma pagina
+    // comparten scope global, por lo que la variable es visible aqui.
+    if (typeof animations !== 'undefined' && animations['loader-ruta']) {
+        if (mostrar) animations['loader-ruta'].play();
+        else animations['loader-ruta'].stop();
+    }
+}
+
+function limpiarResultadosRuta() {
+    puntosRutaGlobal = [];
+    datosCargadosRuta = false;
+    hayZonaDibujadaRuta = false;
+    totalesZonaRuta = { ascensos: 0, descensos: 0 };
+
+    if (drawnItems) drawnItems.clearLayers();
+    quitarCapasCalor();
+    actualizarMetricasRuta();
+
+    if (btnLimpiar) btnLimpiar.style.display = 'none';
+    if (tablaRuta) tablaRuta.style.display = 'none';
+
+    setMensajeRuta('consultar');
+}
+/**********************************************************************************************************************************************************/
 // FUNCION PARA MOSTRAR LOS DETALLES EN EL MAPA
-async function cargarDatosRuta(groupId) { 
+async function cargarDatosRuta(groupId) {
     const fecha = document.getElementById('fecha-ruta').value;
     const horaInicio = getHoraInicioRuta();
     const horaFinal = getHoraFinalRuta();
@@ -350,84 +534,73 @@ async function cargarDatosRuta(groupId) {
     const response = await fetch(`/api/ruta-data?groupid=${groupId}&fecha=${fecha}&hora_inicio=${horaInicio}&hora_final=${horaFinal}`);
     const res = await response.json();
 
-    if (res.success) {
-        puntosRutaGlobal = res.detalles;
+    if (!res.success) throw new Error(res.error || 'La API devolvió success = false');
 
-        if (heatLayer) map.removeLayer(heatLayer);
+    puntosRutaGlobal = Array.isArray(res.detalles) ? res.detalles : [];
 
-        const intensidades = res.heatmap.map(p => p[2]);
-        const maxPasajeros = Math.max(...intensidades, 1);
+    await reconstruirCapasRuta();
 
-        // Crear la capa de calor
-        heatLayer = L.heatLayer(res.heatmap, {
-            radius: 23,         
-            blur: 25, 
-            minOpacity: 0.50,          
-            maxZoom: 13,
-            max: maxPasajeros * 1, 
-           gradient: {
-                0.35: '#0000ff',
-                0.40: '#0033ff',
-                0.45: '#008cff', 
-                0.50: '#00d9ff',
-                0.55: '#00ff95', 
-                0.60: '#1eff00',
-                0.65: '#9dff00',
-                0.70: '#fbff00', 
-                0.75: '#ffe60083', 
-                0.80: '#ffa60083',
-                0.85: '#ff590088', 
-                0.90: '#ff22005e',
-                0.95: '#ff000065'  
-            }
-        }).addTo(map);
-
-        if (res.heatmap.length > 0) {
-            map.setView(res.centro, 12);
-        }
-        
-        document.getElementById('map-pasajeros-val').innerText = "0";
-        //document.getElementById('map-descensos-val').innerText = "0";
+    if (puntosRutaGlobal.length > 0 && res.centro) {
+        map.setView(res.centro, 12);
     }
-}
 
+    return puntosRutaGlobal.length;
+}
 /**********************************************************************************************************************************************************/
 // FUNCION PARA ACTUALIZAR EN DASHBOARD EN LA SECCION DE RUTA
-async function actualizarDashboardRuta(groupId) {
+// ejecutarConsulta = false -> solo prepara la sección (no consulta la API)
+// ejecutarConsulta = true  -> lo dispara el botón "Consultar"
+async function actualizarDashboardRuta(groupId, ejecutarConsulta = false) {
     const fecha = document.getElementById('fecha-ruta').value;
     const horaInicio = getHoraInicioRuta();
     const horaFinal = getHoraFinalRuta();
     const section = document.getElementById('section-ruta');
     const banners = section.querySelectorAll('.status-banner');
     const contentRuta = document.getElementById('ruta-content');
-    
-    // Realizar la validación de la fecha y el rango de horas
+
     const validacion = validarFechaYHorasRuta(fecha, horaInicio, horaFinal);
 
     if (!validacion.valido) {
         if (contentRuta) contentRuta.style.display = 'none';
-        
         banners.forEach(b => { b.textContent = validacion.msj; b.style.display = 'block'; });
         return;
     }
 
+    banners.forEach(b => b.style.display = 'none');
+    if (contentRuta) contentRuta.style.display = 'block';
+
+    inicializarMapa();
+    setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+
+    // Cambio de corredor / carga inicial: se limpia y se espera al botón
+    if (!ejecutarConsulta) {
+        limpiarResultadosRuta();
+        marcarFiltrosPendientes(true);
+        return;
+    }
+
     try {
-        banners.forEach(b => b.style.display = 'none');
-        
-        if (contentRuta) contentRuta.style.display = 'block';
+        mostrarLoaderRuta(true);
+        limpiarResultadosRuta();
 
-        inicializarMapa();    
-        
-        setTimeout(() => {
-            if(map) map.invalidateSize();
-        }, 300);
+        await siguienteFrame();
 
-        await cargarDatosRuta(groupId);
-           
+        const totalPuntos = await cargarDatosRuta(groupId);
+        datosCargadosRuta = true;
+        marcarFiltrosPendientes(false);
+
+        if (totalPuntos === 0) {
+            banners.forEach(b => { b.textContent = "No hay datos para los filtros seleccionados."; b.style.display = 'block'; });
+        } else {
+            setMensajeRuta('dibujar');
+        }
     } catch (error) {
         console.error("Error cargando la ruta:", error);
         if (contentRuta) contentRuta.style.display = 'none';
         banners.forEach(b => { b.textContent = "No hay datos para los filtros seleccionados."; b.style.display = 'block'; });
+    } finally {
+        await siguienteFrame();
+        mostrarLoaderRuta(false);
     }
 }
     

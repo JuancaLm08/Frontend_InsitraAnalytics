@@ -191,3 +191,110 @@
     opacity: 0.85;
 }
 
+/* BOTÓN DE CONSULTA */
+.btn-consultar {
+    padding: 8px 18px;
+    background-color: var(--fondo-summary);
+    border: 1px solid var(--borde-principal);
+    color: var(--texto) !important;
+    border-radius: 7px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    font-weight: bold;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    align-self: flex-end;
+}
+
+.btn-consultar:hover { background-color: var(--hover-summary); }
+
+/* Estado "filtros modificados, falta consultar" */
+.btn-consultar.pendiente {
+    border-color: #00aaff;
+    box-shadow: 0 0 0 1px rgba(0, 170, 255, 0.35);
+    animation: pulso-consultar 1.8s ease-in-out infinite;
+}
+
+@keyframes pulso-consultar {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(0, 170, 255, 0.20); }
+    50%      { box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.12); }
+}
+
+/* BLOQUE INTEGRADO: BARRA DE CAPAS + MAPA */
+.map-block {
+    margin-top: 5px;
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.map-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 12px;
+    background-color: var(--fondo-summary);
+    border-bottom: 1px solid var(--input-border);
+}
+
+.map-toolbar-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    color: var(--texto);
+    opacity: 0.6;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* El contenedor del mapa pierde su borde propio al vivir dentro del bloque */
+.map-block .map-container {
+    margin-top: 0;
+    border: none;
+    border-radius: 0;
+}
+
+/* SELECTOR DE CAPA (ASCENSOS / DESCENSOS) */
+.capa-switch {
+    display: inline-flex;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid var(--borde-principal);
+    border-radius: 8px;
+}
+
+.capa-option {
+    padding: 6px 18px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--texto);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.78rem;
+    cursor: pointer;
+    opacity: 0.55;
+    transition: all 0.2s ease;
+}
+
+.capa-option:hover {
+    background-color: var(--hover-summary);
+    opacity: 1;
+}
+
+.capa-option.active {
+    background-color: var(--hover-summary);
+    opacity: 1;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .map-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .capa-switch { width: 100%; }
+    .capa-option { flex: 1; padding: 8px 0; }
+    .btn-consultar { align-self: flex-start; }
+}
