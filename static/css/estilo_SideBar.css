@@ -1,548 +1,253 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+/* ==========================================================================
+   INSITRA ANALYTICS — BARRA LATERAL (propuesta con topbar)
+   El sidebar ya NO lleva logo, saludo, switch de tema ni logout: todo eso
+   vive ahora en la barra superior. Aquí quedan: cabecera "Módulos", el menú,
+   los filtros y el footer "DESARROLLADO POR".
+   Los tokens viven en estilo_Dashboard.css; este archivo no define :root.
+   ========================================================================== */
 
-/* ---------------------------- PALETA DE COLORES PARA LA BARRA LATERAL ---------------------------- */
-:root {
-    --sidebar: #062b42;
-    --boton: #04324D; 
-    --hover: #0b3c5d;
-    --borde-sidebar: #355a70;
-    --borde-principal: #4c4c4c;
-    --texto-sidebar: #ffffff;
-}
-
-/* ---------------------------- SIDEBAR ---------------------------- */
 .sidebar {
-    width: 250px;
-    min-width: 250px;
+    width: 236px;
+    min-width: 236px;
     flex-shrink: 0;
-    color: var(--texto-sidebar);
-    background-color: var(--sidebar);
-    padding: 15px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    transition: width 0.35s ease;
+    background-color: var(--sidebar);
+    border-right: 1px solid var(--sidebar-borde);
+    color: var(--sidebar-texto);
     position: sticky;
-    top: 0;
-    height: 100vh; 
+    top: 60px;                      /* debajo de la topbar */
+    height: calc(100vh - 60px);
     overflow-y: auto;
-    z-index: 1000;
     overflow-x: hidden;
+    z-index: 1000;
     scrollbar-width: none;
+    transition: width 0.3s ease, min-width 0.3s ease;
 }
 
-.sidebar::-webkit-scrollbar {
-    display: none; /* Oculta scrollbar en Chrome/Safari */
-}
+.sidebar::-webkit-scrollbar { display: none; }
 
-.sidebar.collapsed {
-    width: 60px;
-    min-width: 60px;
-}
-
-/* HEADER */
-.sidebar-header {
+/* ---------------------------- CABECERA "MÓDULOS" ---------------------------- */
+.sidebar-modulos-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
+    padding: 16px 18px;
+    background-color: #02121b;
+    color: #FFFFFF;
+    font-family: var(--font-display);
+    font-size: 0.92rem;
+    font-weight: bold;
+    flex-shrink: 0;
 }
 
-.sidebar.collapsed .sidebar-header {
-    justify-content: center;
+.sidebar-modulos-header .mh-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
 }
 
-/* TOGGLE */
-.toggle-btn {
-    background: none;
-    border: none;
-    color: var(--texto-sidebar);
-    font-size: 20px;
-    cursor: pointer;
-    border-radius: 8px;
-    padding: 1px 3px;
+.sidebar-modulos-header svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.icon-open{
-    visibility: hidden;
-}
+/* El chevron es decorativo */
+.sidebar-modulos-header .mh-chevron { opacity: 0.85; }
 
-.toggle-btn:hover {
-    background-color: var(--hover);
-    transition: all 0.3s ease;
-
-}
-
-.sidebar:hover .toggle-btn .icon-open {
-    opacity: 1;
-    visibility: visible;
-}
-
-.icon-open { display: inline; }
-.icon-closed { display: none; }
-
-.sidebar.collapsed .icon-open { display: none; }
-.sidebar.collapsed .icon-closed { display: inline; }
-.sidebar.collapsed .toggle-btn {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 2px 0;
-}
-
-
-/* LOGOS */
-.logo-full { width: 140px; }
-.logo-mini-container { display: none; justify-content: center; margin-top: 10px; }
-.logo-mini { width: 24px; }
-
-
-/* ---------------------------- USER BOX ---------------------------- */
-.user-box { 
-    font-size: 0.9rem;
-    text-align: justify;
-    margin: 15px 0; 
-}
-
-/* Animación solo cuando la sidebar está abierta */
-.sidebar:not(.collapsed) .user-box {
-    animation: fadeInUser 0.75s ease-out forwards;
-}
-
-.user-highlight {
-    background: rgba(53, 90, 112, 0.4);
-    color: #ffffff;
-    padding: 2px 8px;
-    border-radius: 4px;
-    text-transform: capitalize;
-    display: inline-block;
-    letter-spacing: 1px;
-}
-
-/* Definición de la animación específica para el texto */
-@keyframes fadeInUser {
-    from { 
-        opacity: 0; 
-        transform: translateX(-5px); /* Desliza ligeramente desde la izquierda */
-    }
-    to { 
-        opacity: 1; 
-        transform: translateX(0); 
-    }
-}
-
-/* ---------------------------- DIVIDER ---------------------------- */
-.sidebar-divider, .theme-sidebar-divider {
-    border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.3);
-    margin: 10px 0;
-}
-
-/* ---------------------------- MENU ---------------------------- */
+/* ---------------------------- MENÚ ---------------------------- */
 .menu {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
+    padding: 14px 12px 6px;
 }
 
-.menu-title { 
-    font-weight: bold; 
-    font-size: 1.3rem;
-    margin-bottom: 10px; 
-}
-
-.menu-title, .filters label, .user-box p {
-    color: var(--texto-sidebar) !important;
-}
+/* "Paneles" ya no se muestra: la cabecera es "Módulos".
+   Se conserva la regla por si algún include aún lo trae. */
+.menu > .menu-title { display: none; }
 
 .menu a {
-    color: var(--texto-sidebar);
-    text-decoration: none;
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border-radius: 8px;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: var(--radio-sm);
+    color: var(--sidebar-texto-suave);
+    text-decoration: none;
     cursor: pointer;
-    transition: all 0.3s ease
+    font-size: 0.85rem;
+    font-weight: bold;
+    transition: background-color 0.18s ease, color 0.18s ease;
 }
 
-.menu a:hover, .menu a.active {background-color: var(--hover);}
-.sidebar.collapsed .menu a { justify-content: center; }
-.sidebar.collapsed .text { display: none; }
-
-.sidebar.collapsed .menu a:hover {
-    background-color: var(--hover);
-    transform: scale(1.1); 
-    border-radius: 8px;
+.menu a .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 
-/* ---------------------------- FILTROS Y SELECT  ---------------------------- */
-.filters label { 
-    display: block; 
-    margin-bottom: 5px;
-    color: var(--texto-sidebar);
+.menu a .icon svg {
+    width: 17px;
+    height: 17px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.menu a:hover {
+    background-color: var(--sidebar-hover);
+    color: var(--sidebar-texto);
+}
+
+/* Ítem ACTIVO: degradado morado→magenta a TODO el ancho del sidebar,
+   pegado al borde izquierdo y con redondeo solo en el lado derecho.
+   Los márgenes negativos anulan el padding lateral del .menu para que
+   la caja toque los bordes; el padding interno lo repone para que el
+   texto no se pegue. */
+.menu a.active {
+    background-image: var(--grad-menu);
+    color: #FFFFFF;
+    box-shadow: 0 4px 14px rgba(174, 25, 89, 0.25);
+
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 26px;   /* 14 original + 12 del margen negativo */
+    padding-right: 26px;
+    border-radius: 0 var(--radio-pill) var(--radio-pill) 0;
+}
+
+.menu a.active .icon { color: #FFFFFF; }
+
+/* ---------------------------- FILTROS ---------------------------- */
+.filters {
+    padding: 6px 16px 16px;
+    margin-top: 4px;
+    border-top: 1px solid var(--sidebar-borde);
+    padding-top: 16px;
+}
+
+.filters .menu-title,
+.filters > p {
+    font-size: 0.64rem;
+    font-weight: 500;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--sidebar-texto-tenue);
+    margin: 0 0 10px 2px;
+}
+
+.filters label {
+    display: block;
+    margin: 0 0 6px 2px;
+    font-size: 0.72rem;
+    color: var(--sidebar-texto-suave);
 }
 
 .filters select {
     width: 100%;
-    padding: 8px;
-    border-radius: 6px;
-    border: none;
+    padding: 10px 30px 10px 12px;
+    border-radius: var(--radio-sm);
+    border: 1px solid var(--sidebar-borde);
     background-color: var(--fondo-filtros);
-    color: var(--texto-sidebar);
+    color: var(--sidebar-texto);
     outline: none;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.82rem;
+    font-family: var(--font-ui);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A909C' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filters select:hover { border-color: var(--sidebar-texto-tenue); }
+
+.filters select:focus {
+    border-color: var(--sidebar-accent);
+    box-shadow: 0 0 0 3px rgba(174, 25, 89, 0.18);
 }
 
 .filters select option {
-    background-color: var(--hover);
-    color: var(--texto-sidebar);
+    background-color: var(--fondo-filtros);
+    color: var(--sidebar-texto);
 }
 
-/* ---------------------------- BOTON LOGOUT ---------------------------- */
-.logout-btn-container {
-    width: 100%;
-    padding: 10px;
-    background-color: var(--sidebar);
-    border: 1px solid var(--borde-sidebar); 
-    color: var(--texto-sidebar);
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: all 0.3s ease;
-    font-family: 'Orbitron', sans-serif;
+/* ---------------------------- FOOTER ---------------------------- */
+.sidebar-footer {
+    margin-top: auto;
+    padding: 20px 16px 22px;
+    text-align: center;
+    border-top: 1px solid var(--sidebar-borde);
 }
 
-.logout-btn-container:hover {
-    background-color: var(--hover); 
+.sidebar-footer-eyebrow {
+    font-size: 0.58rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sidebar-texto-tenue);
+    margin-bottom: 10px;
 }
 
-/* Manejo de estados (Texto vs Icono) */
-.logout-icon-collapsed { display: none; font-size: 1.5rem; }
-.logout-text { display: inline; font-size: 0.9rem; }
-
-/* ---------------------------- CAMBIO TEMA DE LA VISTA (TOGGLE SWITCH) ---------------------------- */
-.theme-switcher {
-    display: flex;
-    justify-content: center;
-    margin: 4px 0 8px;
-}
-
-.theme-toggle {
-    position: relative;                   /* necesario para el tooltip */
+.sidebar-footer-brand {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background-color: var(--hover);
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.3s ease;
-    width: fit-content;                   /* el toggle no se estira */
 }
 
-.theme-toggle:hover {
-    filter: brightness(1.15);
+.sidebar-footer-brand img { height: 22px; width: auto; }
+
+.sidebar-footer-brand span {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--sidebar-texto);
+    letter-spacing: 0.02em;
 }
 
-/* Tooltip que aparece al pasar el cursor sobre el toggle */
-.theme-toggle::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%) translateY(4px);
-    background-color: #0d1b2a;
-    color: #ffffff;
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 1000;
-}
-
-/* Flechita del tooltip */
-.theme-toggle::before {
-    content: "";
-    position: absolute;
-    bottom: calc(100% + 3px);
-    left: 50%;
-    transform: translateX(-50%) translateY(4px);
-    border: 5px solid transparent;
-    border-top-color: #0d1b2a;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 1000;
-}
-
-.theme-toggle:hover::after,
-.theme-toggle:hover::before {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-
-/* Ocultar el checkbox real, queda invisible pero accesible por teclado */
-.theme-toggle input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    pointer-events: none;
-}
-
-/* Iconos sol/luna a los lados */
-.theme-toggle-icon {
-    font-size: 1rem;
-    line-height: 1;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    flex-shrink: 0;
-}
-
-/* Track (carril del switch) — ancho compacto, ~mitad de lo anterior */
-.theme-toggle-track {
-    position: relative;
-    width: 50px;
-    height: 20px;
-    background-color: var(--fondo-sidebar, #0d1b2a);
-    border-radius: 999px;
-    border: 1px solid var(--input-border, rgba(255,255,255,0.15));
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-    flex-shrink: 0;
-}
-
-/* Knob (círculo deslizante) */
-.theme-toggle-knob {
-    position: absolute;
-    top: 50%;
-    left: 3px;
-    transform: translateY(-50%);
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background-color: #f5d76e;            /* color amarillo cálido cuando es modo claro */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    transition: left 0.3s ease, background-color 0.3s ease;
-}
-
-/* Cuando el checkbox está marcado (modo oscuro), el knob se desplaza a la derecha */
-.theme-toggle input[type="checkbox"]:checked ~ .theme-toggle-track .theme-toggle-knob {
-    left: calc(100% - 17px);
-    background-color: #c4c4d4;            /* color frío para modo oscuro */
-}
-
-/* Resaltar el icono del modo activo y opacar el otro */
-.theme-toggle input[type="checkbox"]:not(:checked) ~ .theme-toggle-icon.moon,
-.theme-toggle input[type="checkbox"]:checked ~ .theme-toggle-icon.sun {
-    opacity: 0.45;
-    transform: scale(0.9);
-}
-
-.theme-toggle input[type="checkbox"]:not(:checked) ~ .theme-toggle-icon.sun,
-.theme-toggle input[type="checkbox"]:checked ~ .theme-toggle-icon.moon {
-    opacity: 1;
-    transform: scale(1);
-}
-
-/* Foco accesible por teclado */
-.theme-toggle input[type="checkbox"]:focus-visible ~ .theme-toggle-track {
-    outline: 2px solid var(--azul-claro, #4a90e2);
-    outline-offset: 2px;
-}
-
-/* Adaptación al colapso del sidebar: ocultar iconos laterales y mostrar solo el track compacto */
-.sidebar.collapsed .theme-switcher {
-    justify-content: center;
-}
-
-.sidebar.collapsed .theme-toggle {
-    padding: 6px;
-    gap: 0;
-}
-
-.sidebar.collapsed .theme-toggle-icon {
-    display: none;
-}
-
-.sidebar.collapsed .theme-toggle-track {
-    width: 36px;
-    height: 18px;
-}
-
-.sidebar.collapsed .theme-toggle-knob {
-    width: 12px;
-    height: 12px;
-}
-
-.sidebar.collapsed .theme-toggle input[type="checkbox"]:checked ~ .theme-toggle-track .theme-toggle-knob {
-    left: calc(100% - 15px);
-}
-
-
-/* ---------------------------- CONFIGURACION CUANDO LA BARRA ESTA COLAPSADA ---------------------------- */
-.sidebar.collapsed .logo-full,
-.sidebar.collapsed .user-box,
-.sidebar.collapsed .filters,
-.sidebar.collapsed .menu-title,
-.sidebar.collapsed .logout,
-.sidebar.collapsed .logout-text,
-.sidebar.collapsed .theme-sidebar-divider{ display: none; }
-
-.sidebar.collapsed .logout-btn-container { border: none; padding: 2px 0; }
-
-.sidebar.collapsed .logo-mini-container { display: flex; }
-.sidebar.collapsed .logout-button { border-top: none; }
-.sidebar.collapsed .logout-icon-collapsed { display: inline; }
-
-/* --------- MEDIA QUERIES PARA RESPONSIVE --------- */
+/* ==========================================================================
+   RESPONSIVE — móvil: sidebar oculto, se abre desde la hamburguesa de la topbar
+   ========================================================================== */
 @media (max-width: 768px) {
-
-    main.content, .content { 
-        margin-top: 5px !important; 
-        
-        padding-top: 10px !important; 
-    }
-
-    .logo-top-nav, .sidebar-header {
-        margin-top: 0 !important;
-    }
-
-    .top-logo-container, .logo-top-nav {
-        display: none !important;
-    }
+    .topbar-burger { display: inline-flex; }
 
     .sidebar {
         position: fixed;
-        left: -250px;
-        width: 250px;
-        height: 100vh;
-        transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        top: 60px;
+        left: 0;
+        height: calc(100vh - 60px);
+        transform: translateX(-100%);
+        transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
     }
 
-    .sidebar-header {
-        margin-top: 10px !important;
-        justify-content: center !important;
-    }
+    /* La abre toggleSidebar() alternando .mobile-open (hook ya existente) */
+    .sidebar.mobile-open { transform: translateX(0); }
 
-    .sidebar.collapsed {
-        width: 250px !important;
-        left: -250px;
-    }
-
-    .sidebar.collapsed .theme-switcher {
-        justify-content: flex-start !important;
-    }
-
-    .sidebar.collapsed .theme-toggle {
-        padding: 6px 10px;
-        gap: 8px;
-    }
-
-    .sidebar.collapsed .theme-toggle-icon {
-        display: inline-block !important;
-    }
-
-    .sidebar.collapsed .theme-toggle-track {
-        width: 50px;
-        height: 20px;
-    }
-
-    .sidebar.collapsed .theme-toggle-knob {
-        width: 14px;
-        height: 14px;
-    }
-
-    .sidebar.collapsed .theme-toggle input[type="checkbox"]:checked ~ .theme-toggle-track .theme-toggle-knob {
-        left: calc(100% - 17px);
-    }
-
-    /* Mostrar contenido normal */
-    .sidebar.collapsed .logo-full,
-    .sidebar.collapsed .user-box,
-    .sidebar.collapsed .filters,
-    .sidebar.collapsed .menu-title,
-    .sidebar.collapsed .logout-text,
-    .sidebar.collapsed .text,
-    .sidebar.collapsed .theme-sidebar-divider { 
-        display: block !important; 
-    }
-
-    .sidebar.collapsed .logo-mini-container { 
-        display: none !important; 
-    }
-
-    /* ====== ARREGLO: MENU NO CENTRADO ====== */
-    .sidebar.collapsed .menu a {
-        justify-content: flex-start !important;
-    }
-
-    /* ====== ARREGLO: SIN ZOOM HOVER ====== */
-    .sidebar.collapsed .menu a:hover {
-        transform: none !important;
-    }
-
-    /* ====== ARREGLO: LOGOUT NORMAL ====== */
-    .sidebar.collapsed .logout-btn-container {
-        border: 1px solid var(--borde-sidebar) !important;
-        padding: 10px !important;
-    }
-
-    .sidebar.collapsed .logout-icon-collapsed {
-        display: none !important;
-    }
-
-    .sidebar.collapsed .logout-text {
-        display: inline !important;
-    }
-
-    /* ====== ARREGLO: TEXTOS ALINEADOS ====== */
-    .sidebar.collapsed .menu-title,
-    .sidebar.collapsed .text {
-        text-align: left !important;
-    }
-
-    /* ====== ICONOS TOGGLE ====== */
-    .icon-open { display: none !important; }
-    .icon-closed { display: inline !important; }
-
-    .sidebar.mobile-open .icon-open { 
-        display: inline !important; 
-    }
-
-    .sidebar.mobile-open .icon-closed { 
-        display: none !important; 
-    }
-
-    /* Sidebar visible */
-    .sidebar.mobile-open {
-        left: 0 !important;
-        box-shadow: 5px 0 25px rgba(0,0,0,0.5);
-    }
-
-    .toggle-btn {
+    /* Velo detrás del sidebar abierto */
+    .sidebar.mobile-open::after {
+        content: "";
         position: fixed;
-        left: 10px !important;
-        top: 16px !important;
-        z-index: 1100;
-        background-color: var(--sidebar);
-        padding: 5px 8px !important;
-        border: 1px solid var(--borde-sidebar);
-        width: auto !important;
-        font-size: 20px !important; 
-        max-width: 35px !important; 
-        height: 35px !important;    
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
+        top: 0;
+        left: 236px;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.35);
+        z-index: -1;
     }
 }

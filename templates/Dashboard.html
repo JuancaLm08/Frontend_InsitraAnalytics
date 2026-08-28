@@ -1,14 +1,10 @@
 <!--
 
 * En este archivo html se define toda la estructura del apartado visual del Dashboard de Analytics.
-* Se definen los espacios (secciones) para cada uno de los cuatro paneles principales, y la barra  laterial 
+* Se definen los espacios (secciones) para cada uno de los paneles principales, y la barra lateral
   (Sidebar) para la navegacion y seleccion de corredores.
 * Dentro de cada seccion se definen los espacios donde se mostraran las graficas y tablas asi como el nombre de
-  las variables de cada uno de los elementos visuales, tanto graficas y tablas, como aquellos elementos que se 
-  usan para el procesamiento (Fechas, Corredor, Autobuses).
-* Tambien aqui se define cuales son los archivos "css" y "js" con los que se hace referencia para cada una de
-  las secciones, ya sean css para apartados visuales como el tipo, color y tamaño de letra, y los archivos js
-  que permiten el mostrar el mapa y el procesamiento de datos de cada sección. 
+  las variables de cada uno de los elementos visuales.
 * IMPORTANTE: En ese archivo NO SE REALIZA NINGUN PROCESAMIENTO DE DATOS, solo se define la estructura y espacio
   para mostrar los resultados de dicho procesamiento.
 
@@ -26,34 +22,70 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script> <!-- Para ver la animacion de carga -->
-        <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script> <!-- Para mostrar las graficas -->
-    
+        <script src="https://cdn.plot.ly/plotly-4.0.0.min.js"></script> <!-- Para mostrar las graficas (>=2.27 para fillgradient) -->
+
     <!-- Elementos css generales de Analytics -->
-    <link rel="stylesheet" href="../static/css/estilo_Dashboard.css">      
+    <link rel="stylesheet" href="../static/css/estilo_Dashboard.css">
 </head>
 <body>
 
-    <div class="dashboard">
+    <div class="app-shell">
+
+        <!------------------------------------------ BARRA SUPERIOR ----------------------------------------->
+        <header class="topbar">
+            <div class="topbar-left">
+                <!-- Hamburguesa: solo se muestra en móvil; usa el mismo toggleSidebar() -->
+                <button class="topbar-burger" onclick="toggleSidebar()" aria-label="Abrir o cerrar el menú">☰</button>
+                <a class="topbar-brand" >
+                    <img src="../static/images/insitra_logo.png" class="topbar-logo" alt="">
+                    <span class="topbar-title">Insitra Analytics</span>
+                </a>
+            </div>
+
+            <div class="topbar-right">
+                <!-- Botón "Tema": alterna claro/oscuro. Mantiene el input oculto
+                     que ya usa setTheme() como fuente de verdad del estado. -->
+                <button type="button" class="topbar-btn" id="btn-tema"
+                        onclick="var t=document.getElementById('theme-toggle-input'); t.checked=!t.checked; setTheme(t.checked ? 'dark' : 'light');">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+                    <span>Tema</span>
+                </button>
+                <input type="checkbox" id="theme-toggle-input" checked hidden>
+
+                <span class="topbar-user">
+                    <span class="topbar-user-avatar">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+                    </span>
+                    <b>{{nombre_usuario}}</b>
+                </span>
+
+                <button class="topbar-logout" onclick="location.href='/logout'">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="app-body">
         <!------------------------------------------ SIDEBAR ----------------------------------------->
         {% include 'Sidebar.html' %}
-        
+
         <!------------------------------------------ CONTENIDO PRINCIPAL ----------------------------------------->
         <main class="content">
-            <div class="top-logo-container">
-                <img src="../static/images/LoginTitle_white.png" class="logo-top-nav" alt="INSITRA">
-            </div>
-            
-            <!-- Titulo se actualiza segun la seccion activa -->
-            <h1 id="view-title">---</h1> 
-            <hr>
+            <!-- Cabecera: el titulo se actualiza segun la seccion activa -->
+            <header class="view-header">
+                <h1 id="view-title">---</h1>
 
-            <!-- Actualizar la seccion actual -->
-            <button id="btn-refresh" class="btn-refresh"><span>🔄️</span>Actualizar Sección</button> 
+                <!-- Actualizar la seccion actual -->
+                <button id="btn-refresh" class="btn-refresh">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    <span>Actualizar sección</span>
+                </button>
+            </header>
 
             <div id="view-content">
                 <!--------------------- SECCIÓN DE INICIO (id = 1) --------------------->
-                {% include 'Inicio.html' %} 
-                
+                {% include 'Inicio.html' %}
+
                 <!--------------------- SECCIÓN DE TOTALES (id = 2) -------------------->
                 {% if 2 in permisos %}
                     {% include 'Totales.html' %}
@@ -80,7 +112,8 @@
                 {% endif %}
             </div>
         </main>
-    </div>
+        </div><!-- /.app-body -->
+    </div><!-- /.app-shell -->
 
     <!-- Scripts JavaScript de cada parte del Dashboard y para trabajar con el mapa-->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -89,7 +122,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
     <!-- JavaScript general de Analitycs -->
+    <script src="../static/js/js_DatePicker.js"></script>
+    <script src="../static/js/js_MultiselectSearch.js"></script>
     <script src="../static/js/js_Dashboard.js"></script>
-    
+
 </body>
 </html>
