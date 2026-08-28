@@ -1,26 +1,59 @@
 let map; // Variable global para ver y trabajar con el mapa
 window.currentActiveView = 'Inicio';
 
-/**********************************************************************************************************************************************************/
-// DEFINIR LA SECCION DE INCIO COMO LA INICIAL
+/* =========================================================================================
+   CONFIGURACION VISUAL DE LAS GRAFICAS
+   MINIMAL_AXES = true  -> como el diseño nuevo: sin títulos de eje y sin números en el eje Y
+   MINIMAL_AXES = false -> recupera los números del eje Y y los títulos de ambos ejes
+   ========================================================================================= */
+const MINIMAL_AXES = false;
+
+
 window.onload = function() {
     const btnInicio = document.getElementById("default-view");
     if (btnInicio) {
         changeView('Inicio', btnInicio);
     }
 };
-
 /**********************************************************************************************************************************************************/
-// FUNCION PARA OBTENER Y ESTABLECER EL COLOR DEL FONDO 
-function getGridColor() {
-    const isLight = document.body.classList.contains('light-mode');
-    return isLight ? '#d1d1d1' : '#31333F';
+// LECTURA DE TOKENS DE COLOR DEFINIDOS EN estilo_Dashboard.css
+function cssVar(nombre, fallback) {
+    const v = getComputedStyle(document.body).getPropertyValue(nombre).trim();
+    return v || fallback;
+}
+
+// Convierte "#E8175D" (o rgb()) a rgba con la opacidad indicada
+function conAlpha(color, alpha) {
+    const hex = color.replace('#', '');
+    if (/^[0-9a-f]{6}$/i.test(hex)) {
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    return color;
+}
+
+function temaGrafica() {
+    return {
+        accent:     cssVar('--accent', '#E8175D'),
+        grid:       cssVar('--borde-principal', '#21262C'),
+        texto:      cssVar('--texto', '#ECEFF1'),
+        suave:      cssVar('--texto-suave', '#8C959F'),
+        superficie: cssVar('--superficie-2', '#171B20')
+    };
 }
 
 /**********************************************************************************************************************************************************/
-// FUNCION PARA OBTENER EL COLOR DEL TEXTO
+// FUNCION PARA OBTENER Y ESTABLECER EL COLOR DE LA CUADRICULA (se conserva por compatibilidad)
+function getGridColor() {
+    return cssVar('--borde-principal', '#21262C');
+}
+
+/**********************************************************************************************************************************************************/
+// FUNCION PARA OBTENER EL COLOR DEL TEXTO (se conserva por compatibilidad)
 function getChartFontColor() {
-    return getComputedStyle(document.body).getPropertyValue('--texto').trim() || '#ffffff';
+    return cssVar('--texto-suave', '#8C959F');
 }
 
 /**********************************************************************************************************************************************************/
@@ -42,24 +75,47 @@ function setTheme(theme) {
     }
 
     // ACTUALIZAR GRÁFICAS DE PLOTLY
-    const charts = document.querySelectorAll('.js-plotly-plot');
-    
-    if (charts.length > 0) {
-        const nuevoColor = getChartFontColor();
-        const nuevaGrid = getGridColor();
+    // El restyle global pinta line/marker/fill con el acento único: sirve para
+    // gráficas de UNA serie, pero aplastaría a las multiserie (Unidades, Polígono
+    // de Carga), dejándolas todas del mismo color. Por eso separamos:
+    //  - relayout (rejilla, tipografía, hover) sí aplica a TODAS las gráficas.
+    //  - restyle de color solo a las que NO son multiserie.
+    // Las de Polígono de Carga además se repintan con su propia paleta desde
+    // js_PoligonoCarga.js; las de Unidades usan PALETA_COLORES fija, así que con
+    // excluirlas del restyle basta para que conserven sus colores.
+    const todasLasGraficas = document.querySelectorAll('.js-plotly-plot');
+    const graficasUnaSerie = document.querySelectorAll(
+        '.js-plotly-plot:not(.pc-chart):not(.grafica-multiserie)'
+    );
 
-        const update = {
-            'font.color': nuevoColor,
-            'xaxis.tickfont.color': nuevoColor,
-            'yaxis.tickfont.color': nuevoColor,
-            'yaxis.gridcolor': nuevaGrid,
-            'xaxis.title.font.color': nuevoColor,
-            'yaxis.title.font.color': nuevoColor
+    if (todasLasGraficas.length > 0) {
+        const t = temaGrafica();
+
+        const relayout = {
+            'font.color': t.suave,
+            'xaxis.tickfont.color': t.suave,
+            'yaxis.tickfont.color': t.suave,
+            'yaxis.gridcolor': t.grid,
+            'hoverlabel.bgcolor': t.superficie,
+            'hoverlabel.bordercolor': conAlpha(t.accent, 0.5),
+            'hoverlabel.font.color': t.texto
         };
 
-        charts.forEach(chart => {
-            Plotly.relayout(chart, update);
-        });
+        const restyle = {
+            'line.color': t.accent,
+            'marker.color': t.accent,
+            'fillcolor': conAlpha(t.accent, 0.10),
+            'fillgradient.colorscale': [[
+                [0, conAlpha(t.accent, 0.00)],
+                [1, conAlpha(t.accent, 0.10)]
+            ]]
+        };
+
+        // Rejilla/tipografía/hover a todas (incluidas las multiserie)
+        todasLasGraficas.forEach(chart => Plotly.relayout(chart, relayout));
+
+        // Color de línea/marcador/relleno solo a las de una serie
+        graficasUnaSerie.forEach(chart => Plotly.restyle(chart, restyle));
     }
 }
 
@@ -144,6 +200,7 @@ function inicializarFechas() {
     });
 }
 document.addEventListener('DOMContentLoaded', inicializarFechas);
+
 /**********************************************************************************************************************************************************/
 // FUNCION PARA VALIDAR QUE LAS FECHAS INGRESADAS EN TOTALES, UNIDADES Y RUTA SEAN CORRECTAS
 function validarRangoFechas(inicio, final) {
@@ -161,14 +218,14 @@ function validarRangoFechas(inicio, final) {
     if (dateFinal > dateHoy) {
         return { valido: false, msj: "La fecha final no puede ser después de hoy." };
     }
-    
+
     if (dateInicio > dateFinal) {
         return { valido: false, msj: "La fecha de inicio no puede ser mayor a la fecha final." };
     }
 
     const diffTime = Math.abs(dateFinal - dateInicio);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays > maxDias) {
         return { valido: false, msj: "El rango de fechas no puede ser mayor a 31 días." };
     }
@@ -182,7 +239,7 @@ function exportTableToCSV(tableID) {
     const table = document.getElementById(tableID);
     let csv = [];
     const rows = table.querySelectorAll("tr");
-    
+
     for (const row of rows) {
         const cols = row.querySelectorAll("td, th");
         const rowData = Array.from(cols).map(col => `"${col.innerText.replace(/"/g, '""')}"`);
@@ -193,7 +250,7 @@ function exportTableToCSV(tableID) {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    
+
     link.setAttribute("href", url);
     link.setAttribute("download", `${tableID}.csv`);
     link.style.visibility = 'hidden';
@@ -219,7 +276,7 @@ function renderizarTablaMaster(data, tableId) {
     if (tbody && data.rows && data.rows.length > 0) {
         tbody.innerHTML = data.rows.map((row, i) => {
             const celdasDinamicas = Object.values(row).map(val => `<td>${val}</td>`).join('');
-            
+
             return `
                 <tr>
                     <td class="row-index">${i + 1}</td>
@@ -230,13 +287,15 @@ function renderizarTablaMaster(data, tableId) {
 }
 
 /**********************************************************************************************************************************************************/
-// FUNCION MODULARIZADA PARA MOSTRAR UNA GRAFICA SEGUN LOS DATOS RECIBIDOS 
+// FUNCION MODULARIZADA PARA MOSTRAR UNA GRAFICA SEGUN LOS DATOS RECIBIDOS
 function renderizarGraficaMaster(data, containerId) {
     const chartDiv = document.getElementById(containerId);
     if (!chartDiv || !data.values || data.values.length === 0) return;
 
-    const config = data.config || {}; 
-    
+    const config = data.config || {};
+    const t = temaGrafica();
+    const color = t.accent;
+
     let hoverMessages = data.hovertext || [];
     if (hoverMessages.length === 0) {
         const nombreEjeX = config.xTitle || 'X';
@@ -245,20 +304,37 @@ function renderizarGraficaMaster(data, containerId) {
         hoverMessages = data.labels.map((label, index) => {
             const valor = data.values[index];
             const valorFormateado = typeof valor === 'number' ? valor.toLocaleString() : valor;
-            
+
             return `<b>${nombreEjeX}:</b> ${label}<br><b>${nombreEjeY}:</b> ${valorFormateado}`;
         });
     }
+
+    // Rango vertical del relleno, para anclar el degradado
+    const numeros = data.values.map(Number).filter(Number.isFinite);
+    const yMax = numeros.length ? Math.max(...numeros) : 1;
+    const yMin = Math.min(0, ...(numeros.length ? numeros : [0]));
 
     const trace = {
         x: data.labels,
         y: data.values,
         text: hoverMessages,
-        hoverinfo: 'text',          
+        hoverinfo: 'text',
         type: 'scatter',
         mode: 'lines+markers',
-        line: { color: config.color || '#ff0055', width: 2.5, shape: 'linear' },
-        marker: { color: config.color || '#ff0055', size: 9 },
+        line: { color: color, width: 2, shape: 'spline', smoothing: 0.5 },
+        marker: { color: color, size: 5, line: { width: 0 } },
+        fill: 'tozeroy',
+        // fillcolor queda como respaldo si Plotly < 2.27 (ignora fillgradient)
+        fillcolor: conAlpha(color, 0.10),
+        fillgradient: {
+            type: 'vertical',
+            start: yMin,                 // abajo: transparente
+            stop: yMax,                  // arriba: color
+            colorscale: [
+                [0, conAlpha(color, 0.00)],
+                [1, conAlpha(color, 0.10)]
+            ]
+        },
         name: config.label || 'Datos'
     };
 
@@ -266,35 +342,49 @@ function renderizarGraficaMaster(data, containerId) {
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
         autosize: true,
-        font: { color: getChartFontColor(), family: "'Orbitron', sans-serif" },
-        margin: { t: 30, r: 20, b: 60, l: 60 },
-        showlegend: false, 
+        font: { color: t.suave, family: "'Orbitron', sans-serif", size: 11 },
+        margin: { t: 10, r: 14, b: 34, l: MINIMAL_AXES ? 14 : 52 },
+        showlegend: false,
 
-        hoverlabel: { 
-            bgcolor: '#ff0055',
-            font: { color: '#ffffff', family: "'Orbitron', sans-serif", size: 14 },
-            bordercolor: config.color || '#ff0055'
+        hovermode: 'closest',
+        hoverlabel: {
+            bgcolor: t.superficie,
+            bordercolor: conAlpha(color, 0.5),
+            font: { color: t.texto, family: "'Orbitron', sans-serif", size: 11 },
+            align: 'left'
         },
 
-        xaxis: { 
-            title: { text: config.xTitle || 'X', font: { size: 14 } },
+        xaxis: {
+            title: MINIMAL_AXES ? null : { text: config.xTitle || 'X', font: { size: 12 } },
+            type: 'category',
             showgrid: false,
             zeroline: false,
-            tickfont: { size: 11 }
+            showline: false,
+            ticks: '',
+            tickfont: { size: 10, color: t.suave },
+            automargin: true,
+            range: (data.labels && data.labels.length) ? [-0.5, data.labels.length - 0.5] : undefined
         },
-        yaxis: { 
-            title: { text: config.yTitle || 'Y', font: { size: 14 }, standoff: 20},
+        yaxis: {
+            title: MINIMAL_AXES ? null : { text: config.yTitle || 'Y', font: { size: 12 }, standoff: 18 },
             showgrid: true,
-            gridcolor: getGridColor(),
-            zeroline: true,
+            gridcolor: t.grid,
+            gridwidth: 1,
+            zeroline: false,
+            showline: false,
+            ticks: '',
+            showticklabels: !MINIMAL_AXES,
+            tickfont: { size: 10, color: t.suave },
+            range: [ -(yMax > 0 ? yMax : 1) * 0.06, (yMax > 0 ? yMax : 1) * 1.08 ],
+            nticks: 4,
+            automargin: true
         }
     };
 
-    Plotly.newPlot(chartDiv, [trace], layout, { 
-        responsive: true, 
+    Plotly.newPlot(chartDiv, [trace], layout, {
+        responsive: true,
         displaylogo: false,
-        displayModeBar: true,
-        modeBarButtonsToRemove: ['lasso2d', 'select2d']
+        displayModeBar: false
     }).then(() => {
         Plotly.Plots.resize(chartDiv);
         const resizeObserver = new ResizeObserver(() => {

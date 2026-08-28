@@ -2,10 +2,75 @@
 // ESTADO GLOBAL
 /**************************************************************************************************/
 let _pc_franjasPorHora = {};
+let _pc_estacionActual = null;   // última estación maestra abierta (para repintar al cambiar de tema)
 let _pc_rutaActual     = null;
 let _pc_maxY = null;
 window._pc_maestrasData = null;
 
+
+function _pc_paleta() {
+    const css = getComputedStyle(document.body);
+    const v = (n, f) => css.getPropertyValue(n).trim() || f;
+    return {
+        ascensos:      v('--accent-solido', '#C1226B'),
+        descensos:     v('--serie-descensos', '#5B8FD6'),
+        ocupacion:     v('--accent', '#D02B72'),
+        maestra:       v('--maestra', '#F4C542'),
+        maestraSuave:  v('--tarifa-especial', '#F59E0B')
+    };
+}
+ 
+/* Layout compartido por las dos gráficas de la sección */
+function _pc_layout({ barras = true, rangoY = null, tickangle = -45, marginB = 110 } = {}) {
+    const t = temaGrafica();
+    const p = _pc_paleta();
+ 
+    return {
+        barmode: barras ? 'group' : undefined,
+        bargap: 0.35,
+        bargroupgap: 0.15,
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: t.suave, family: "'Orbitron', sans-serif", size: 11 },
+ 
+        xaxis: {
+            tickangle: tickangle,          // ← nombres de estación abajo
+            tickfont: { size: 9, color: t.suave },
+            showgrid: false,
+            zeroline: false,
+            showline: false,
+            ticks: '',
+            automargin: true
+        },
+        yaxis: {
+            title: null,
+            range: rangoY,
+            showgrid: true,
+            gridcolor: t.grid,
+            gridwidth: 1,
+            zeroline: false,
+            showline: false,
+            ticks: '',
+            tickfont: { size: 10, color: t.suave },
+            nticks: 5,
+            automargin: true
+        },
+ 
+        legend: {
+            orientation: 'h',
+            y: 1.12, x: 0.5, xanchor: 'center',
+            font: { size: 10, color: t.suave }
+        },
+        margin: { t: 34, r: 14, b: marginB, l: 44 },
+ 
+        hoverlabel: {
+            bgcolor: t.superficie,
+            bordercolor: conAlpha(p.ascensos, 0.5),
+            font: { color: t.texto, family: "'Orbitron', sans-serif", size: 11 },
+            align: 'left'
+        }
+    };
+}
 
 /**************************************************************************************************/
 // BLOQUEAR FECHAS FUTURAS Y HOY + PRESET EN AYER
@@ -219,80 +284,8 @@ function _pc_mostrarFranja(h) {
     const label      = document.getElementById('label-hora-slider');
     if (label) label.textContent = `Franja horaria: ${String(h).padStart(2,'0')}:00 - ${String(h+1).padStart(2,'0')}:00`;
     const estaciones = _pc_franjasPorHora[franja] || [];
-    const payload     = { ruta: _pc_rutaActual, franja, estaciones };
-
-    // Si la gráfica ya fue dibujada antes (primer Plotly.newPlot ya ejecutado),
-    // usamos una transición animada al cambiar de franja (mucho más agradable al
-    // arrastrar el slider). Si es el primer dibujo, renderizarPoligonoCarga() se
-    // encarga del Plotly.newPlot inicial.
-    if (_pc_graficaInicializada) {
-        _pc_animarCambioFranja(payload);
-    } else {
-        renderizarPoligonoCarga(payload);
-    }
+    renderizarPoligonoCarga({ ruta: _pc_rutaActual, franja, estaciones });
 }
-
-/**************************************************************************************************/
-// TRANSICIÓN ANIMADA ENTRE FRANJAS (al mover el slider de horas, con la gráfica ya dibujada)
-/**************************************************************************************************/
-function _pc_animarCambioFranja(data) {
-    const nombres   = data.estaciones.map(e => e.nombre);
-    const ascensos  = data.estaciones.map(e => e.ascensos);
-    const descensos = data.estaciones.map(e => e.descensos);
-    const ocupacion = data.estaciones.map(e => e.ocupacion);
-    const unidades  = data.estaciones.map(e => e.unidades || 0);
-
-    const maestraDeEstaFranja = window._pc_maestrasData?.maestras?.find(
-        m => m.franja === data.franja
-    )?.estacion_maestra || null;
-
-    const coloresAscensos  = nombres.map(n => n === maestraDeEstaFranja ? '#F4C542' : '#651c44');
-    const coloresDescensos = nombres.map(n => n === maestraDeEstaFranja ? '#F4A522' : '#3a5d79');
-
-    // customdata se recalcula en cada franja para que el hover ("Unidades: ...") no
-    // se quede con datos de la franja anterior tras la animación.
-    const customdata = nombres.map((n, i) => ({
-        unidades: unidades[i],
-        maestra: n === maestraDeEstaFranja
-    }));
-
-    Plotly.animate('chart-poligono-franja', {
-        data: [
-            { x: nombres, y: ascensos,  marker: { color: coloresAscensos,  opacity: 0.85 }, customdata },
-            { x: nombres, y: descensos, marker: { color: coloresDescensos, opacity: 0.85 }, customdata },
-            {
-                x: nombres, y: ocupacion,
-                marker: {
-                    size:   nombres.map(n => n === maestraDeEstaFranja ? 10 : 5),
-                    color:  nombres.map(n => n === maestraDeEstaFranja ? '#F4C542' : '#950c4b'),
-                    symbol: nombres.map(n => n === maestraDeEstaFranja ? 'star' : 'circle')
-                },
-                customdata
-            }
-        ],
-        layout: {
-            'xaxis.ticktext': nombres,
-            'xaxis.tickvals': nombres,
-        }
-    }, {
-        transition: { duration: 300, easing: 'cubic-in-out' },
-        frame:      { duration: 300 }
-    });
-
-    document.getElementById('titulo-grafica-franja').textContent =
-        `${data.ruta} | ${data.franja}`;
-
-    const datosExpander = data.estaciones.map(e => ({
-        Franja:    data.franja,
-        Estación:  e.nombre,
-        Maestra:   e.nombre === maestraDeEstaFranja ? 'Sí' : 'No',
-        Ascensos:  e.ascensos,
-        Descensos: e.descensos,
-        Ocupación: e.ocupacion
-    }));
-    crearExpander('chart-poligono-franja', datosExpander, `poligono_carga_${data.franja}`);
-}
-
 
 /**************************************************************************************************/
 // GRAFICA: POLÍGONO DE CARGA POR FRANJA
@@ -310,8 +303,9 @@ function renderizarPoligonoCarga(data) {
     )?.estacion_maestra || null;
 
     // Color especial para la estación maestra
-    const coloresAscensos  = nombres.map(n => n === maestraDeEstaFranja ? '#F4C542' : '#651c44');
-    const coloresDescensos = nombres.map(n => n === maestraDeEstaFranja ? '#F4A522' : '#3a5d79');
+    const p = _pc_paleta();
+    const coloresAscensos  = nombres.map(n => n === maestraDeEstaFranja ? p.maestra      : p.ascensos);
+    const coloresDescensos = nombres.map(n => n === maestraDeEstaFranja ? p.maestraSuave : p.descensos);
 
     const trazas = [
         {
@@ -353,7 +347,7 @@ function renderizarPoligonoCarga(data) {
             line:   { color: '#950c4b', width: 2.5, shape: 'spline' },
             marker: { 
                 size:  nombres.map(n => n === maestraDeEstaFranja ? 10 : 5),
-                color: nombres.map(n => n === maestraDeEstaFranja ? '#F4C542' : '#950c4b'),
+                color: nombres.map(n => n === maestraDeEstaFranja ? p.maestra : p.ocupacion),
                 symbol: nombres.map(n => n === maestraDeEstaFranja ? 'star' : 'circle')
             },
             customdata: nombres.map((n, i) => ({
@@ -374,32 +368,28 @@ function renderizarPoligonoCarga(data) {
     const maxFlujo     = Math.max(...ascensos, ...descensos, 0);
     const maxY         = Math.ceil(Math.max(maxOcupacion, maxFlujo) * 1.1);
 
-    const layout = {
-        barmode: 'group',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor:  'rgba(0,0,0,0)',
-        font:   { color: getChartFontColor() },
-        xaxis:  { tickangle: -90, tickfont: { size: 10 } },
-        yaxis:  { title: 'Pasajeros / Ocupación', range: [0, _pc_maxY] },
-        legend: { orientation: 'h', y: 1.12, x: 0, xanchor: 'left' },
-        margin: { t: 40, b: 120 }
-    };
+    const layout = _pc_layout({ rangoY: [0, _pc_maxY], marginB: 120 });
 
     document.getElementById('titulo-grafica-franja').textContent =
         `${data.ruta} | ${data.franja}`;
     document.getElementById('chart-franja-box').style.display = 'block';
     if (_pc_graficaInicializada) {
-    Plotly.react('chart-poligono-franja', trazas, layout, { responsive: true });
+    Plotly.react('chart-poligono-franja', trazas, layout, { 
+        responsive: true,
+        displaylogo: false,
+        displayModeBar: 'hover',
+        modeBarButtonsToRemove: ['zoom2d','pan2d','select2d','lasso2d','autoScale2d']
+    });
         } else {
-    Plotly.newPlot('chart-poligono-franja', trazas, layout, 
-        { 
-            responsive: true, 
-            displayModeBar: true,
+    Plotly.newPlot('chart-poligono-franja', trazas, layout, { 
+            responsive: true,
             displaylogo: false,
-            modeBarButtonsToRemove: ['lasso2d', 'select2d'] 
+            displayModeBar: 'hover',
+            modeBarButtonsToRemove: ['zoom2d','pan2d','select2d','lasso2d','autoScale2d'] 
         });
     _pc_graficaInicializada = true;
         }
+    document.getElementById('chart-poligono-franja').classList.add('pc-chart');
 
     const datosExpander = data.estaciones.map(e => ({
         Franja:    data.franja,
@@ -539,6 +529,7 @@ async function consultarDetalleEstacion(nombreEstacion) {
         return;
     }
 
+    _pc_estacionActual = nombreEstacion;
     renderizarDetalleEstacion(nombreEstacion, { serie });
 }
 
@@ -550,64 +541,105 @@ function renderizarDetalleEstacion(nombreEstacion, data) {
     const ocupacion = data.serie.map(s => s.ocupacion);
     const ascensos  = data.serie.map(s => s.ascensos  || 0);
     const descensos = data.serie.map(s => s.descensos || 0);
-
+ 
+    const p = _pc_paleta();
+ 
     const trazas = [
         {
             name: 'Ascensos',
             x: horas, y: ascensos,
             type: 'bar',
-            marker: { color: '#950c4b', opacity: 0.85 }
+            marker: { color: p.ascensos }
         },
         {
             name: 'Descensos',
             x: horas, y: descensos,
             type: 'bar',
-            marker: { color: '#3a5d79', opacity: 0.85 }
+            marker: { color: p.descensos }
         },
         {
             name: 'Ocupación',
             x: horas, y: ocupacion,
             type: 'scatter', mode: 'lines+markers',
-            line:      { color: '#019cdc', width: 2.5, shape:'spline' },
-            marker:    { size: 6, color: '#019cdc' },
+            line:      { color: p.ocupacion, width: 2, shape: 'spline' },
+            marker:    { size: 5, color: p.ocupacion },
             fill:      'tozeroy',
-            fillcolor: 'rgba(173,216,230,0.10)'
+            fillgradient: {
+                type: 'vertical',
+                start: 0,
+                stop: Math.max(...ocupacion, 1),
+                colorscale: [[0, conAlpha(p.ocupacion, 0)], [1, conAlpha(p.ocupacion, 0.22)]]
+            },
+            fillcolor: conAlpha(p.ocupacion, 0.12)
         }
     ];
-
-    const layout = {
-        barmode: 'group',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor:  'rgba(0,0,0,0)',
-        font:   { color: getChartFontColor() },
-        xaxis:  { title: 'Hora del día', tickfont: { size: 11 } },
-        yaxis:  { title: 'Pasajeros / Ocupación' },
-        legend: { orientation: 'h', y: -0.3 },
-        margin: { t: 20, b: 80 }
-    };
-
+ 
+    // El eje X aquí son horas, no nombres largos: no hace falta inclinarlas
+    const layout = _pc_layout({ tickangle: 0, marginB: 40 });
+ 
     document.getElementById('detalle-placeholder').style.display     = 'none';
     document.getElementById('titulo-detalle-estacion').style.display = 'block';
     document.getElementById('titulo-detalle-estacion').textContent   =
         `${nombreEstacion} — ocupación a lo largo del día`;
     document.getElementById('chart-detalle-estacion').style.display  = 'block';
-
-    Plotly.newPlot('chart-detalle-estacion', trazas, layout, 
-        { 
-        responsive: true, 
-        displayModeBar: true,
+ 
+    Plotly.newPlot('chart-detalle-estacion', trazas, layout, {
+        responsive: true,
         displaylogo: false,
-        modeBarButtonsToRemove: ['lasso2d', 'select2d']
-     });
+        displayModeBar: 'hover',
+        modeBarButtonsToRemove: ['zoom2d','pan2d','select2d','lasso2d','autoScale2d']
+    });
+    document.getElementById('chart-detalle-estacion').classList.add('pc-chart');
+}
 
-    const datosExpander = data.serie.map(s => ({
-        Estación:  nombreEstacion,
-        Hora:      s.hora,
-        Ascensos:  s.ascensos  || 0,
-        Descensos: s.descensos || 0,
-        Ocupación: s.ocupacion
-    }));
-    crearExpander('chart-detalle-estacion', datosExpander, `detalle_${nombreEstacion}`);
+
+/**************************************************************************************************/
+// REPINTAR AL CAMBIAR DE TEMA
+// setTheme() (js_Dashboard.js) hace un Plotly.restyle GLOBAL que pinta line/marker/fill de TODAS
+// las gráficas con el acento único. Eso sirve para las de una sola serie (Inicio, Totales…), pero
+// aplasta las multiserie de esta sección: dejaría ascensos, descensos y ocupación del mismo color
+// y borraría el ámbar de la estación maestra. Por eso setTheme ya NO toca las gráficas de esta
+// sección (se excluyen con la clase .pc-chart en el layout), y aquí las volvemos a dibujar con
+// _pc_paleta(), que lee los colores correctos del tema recién aplicado.
+/**************************************************************************************************/
+function _pc_repintarTema() {
+    if (_pc_graficaInicializada) {
+        const slider = document.getElementById('slider-hora');
+        const h = slider ? parseInt(slider.value, 10) : null;
+        if (h !== null && !Number.isNaN(h)) {
+            const franja     = `${String(h).padStart(2, '0')}:00-${String(h + 1).padStart(2, '0')}:00`;
+            const estaciones = _pc_franjasPorHora[franja] || [];
+            renderizarPoligonoCarga({ ruta: _pc_rutaActual, franja, estaciones });
+        }
+    }
+
+    if (_pc_estacionActual && window._pc_maestrasData && window._pc_maestrasData.series) {
+        const serie = window._pc_maestrasData.series[_pc_estacionActual];
+        if (serie && serie.length) {
+            renderizarDetalleEstacion(_pc_estacionActual, { serie });
+        }
+    }
+}
+
+// Enganche con setTheme SIN editar js_Dashboard.js.
+// Ojo con el orden de carga: esta sección se incluye dentro del <body>, así que este
+// script corre ANTES que js_Dashboard.js (que va al final y define setTheme). Por eso
+// no envolvemos aquí — esperamos a DOMContentLoaded, cuando setTheme ya está definido.
+function _pc_engancharTema() {
+    if (window._pc_temaEnganchado) return;
+    if (typeof window.setTheme !== 'function') return;
+    const _setThemeAnterior = window.setTheme;
+    window.setTheme = function (tema) {
+        _setThemeAnterior(tema);
+        setTimeout(_pc_repintarTema, 0);
+    };
+    window._pc_temaEnganchado = true;
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _pc_engancharTema);
+} else {
+    _pc_engancharTema();
 }
 
 /**************************************************************************************************/
@@ -707,10 +739,3 @@ async function actualizarDashboardPoligonoCarga(groupId) {
         });
     }
 }
-
-// NOTA: La inicializacion de esta seccion (fechas, tabs, rutas y listeners de los
-// botones "Consultar") ya NO se dispara aqui en DOMContentLoaded, porque en ese
-// momento el select de corredor todavia no tiene un groupId seleccionado.
-// En su lugar, "actualizarDashboardPoligonoCarga(groupId)" se llama desde
-// cargarCorredores() en js_Sidebar.js, tanto al cargar la pagina como cada vez
-// que el usuario cambia de corredor, para que siempre reciba un groupId valido.

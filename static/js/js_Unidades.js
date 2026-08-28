@@ -4,8 +4,11 @@ let unidadesSeleccionadas = [];
 
 // Colores para los valores de los autobuses
 const PALETA_COLORES = [
-    "#ff0055", "#217dbe", "#2fac2f",
-    "#ffcb20", "#9467bd",
+    "#D02B72", "#217dbe", "#2fac2f",
+    "#ffcb20", "#9467bd", "#d62728", "#8c564b", "#e377c2",
+    "#7f7f7f", "#bcbd22", "#17becf", "#ff7f0e", "#1f77b4", "#aec7e8",
+    "#ffbb78", "#98df8a", "#c5b0d5", "#c49c94", "#f7b6d2", "#dbdb8d",
+    "#9edae5"
 ]
 
 /**********************************************************************************************************************************************************/
@@ -203,7 +206,7 @@ function renderizarGraficaUnidades(data, containerId) {
             name: placa,
             type: 'scatter',
             mode: 'lines+markers',
-            line: { color: color, width: 2.5, shape: 'linear' },
+            line: { color: color, width: 2.5, shape: 'spline', smoothing: 0.5 },
             marker: { color: color, size: 8 },
             connectgaps: true
         };
@@ -234,7 +237,7 @@ function renderizarGraficaUnidades(data, containerId) {
             title: { text: config.xTitle || 'Día', font: { size: 14 } },
             showgrid: false,
             gridcolor: 'rgba(128,128,128,0.1)',
-            tickangle: -30,
+            //tickangle: -30,
             tickfont: { color: getChartFontColor() }
         },
         yaxis: { 
@@ -248,9 +251,10 @@ function renderizarGraficaUnidades(data, containerId) {
     Plotly.newPlot(chartDiv, traces, layout, { 
         responsive: true, 
         displaylogo: false,
-        displayModeBar: true,
-        modeBarButtonsToRemove: ['lasso2d', 'select2d']
+        displayModeBar: 'hover',
+        modeBarButtonsToRemove: ['zoom2d','pan2d','select2d','lasso2d','autoScale2d']
     }).then(() => {
+        chartDiv.classList.add('grafica-multiserie');
         Plotly.Plots.resize(chartDiv);
 
         const resizeObserver = new ResizeObserver(() => {
