@@ -384,7 +384,8 @@ function renderizarGraficaMaster(data, containerId) {
     Plotly.newPlot(chartDiv, [trace], layout, {
         responsive: true,
         displaylogo: false,
-        displayModeBar: false
+        displayModeBar: 'hover',
+        modeBarButtonsToRemove: ['zoom2d','pan2d','select2d','lasso2d','autoScale2d', 'sendDataToCloud']
     }).then(() => {
         Plotly.Plots.resize(chartDiv);
         const resizeObserver = new ResizeObserver(() => {
