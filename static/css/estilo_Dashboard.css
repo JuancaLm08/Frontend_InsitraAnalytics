@@ -1,50 +1,180 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap');
 
-/* -------------------------------- VARIABLES GLOBALES -------------------------------- */
+/* ==========================================================================
+   INSITRA ANALYTICS — ESTILOS GLOBALES
+   Paleta tomada directamente de los mockups (muestreo de píxeles).
+   IMPORTANTE: los alias llevan valores LITERALES en ambos temas. Si se
+   declaran como var(--otro) dentro de :root, el valor se congela con el
+   tema oscuro y el modo claro deja de funcionar.
+   ========================================================================== */
+
+/* -------------------------------- TEMA OSCURO (default) -------------------------------- */
 :root {
-    --sidebar: #062b42;
-    --borde-sidebar: #355A70;
+    /* Superficies */
+    --fondo:            #161616;
+    --superficie:       #202020;   /* tarjetas */
+    --superficie-2:     #202020;   /* barra del expandible */
+    --borde-principal:  #2C2C2C;
+    --borde-suave:      #242424;
+    --sombra-card:      0 1px 4px rgba(0, 0, 0, 0.55);
+    --sombra-card-hover:0 2px 10px rgba(0, 0, 0, 0.65);
 
-    --hover: #0b3c5d;
-    --fondo: #202020;
-    --fondo-filtros: #031E2E;
-    
-    --borde-principal: #4c4c4c;
-    --texto: #ffffff;
-    
-    --accent: #751643;
-    --shadow: #0000004d;
+    /* Texto */
+    --texto:            #FFFFFF;
+    --texto-suave:      #ABABAB;
+    --texto-tenue:      #9C9C9C;
 
-    --borde: #88113e;
-    
-    --input-bg: #1a1a1a;
-    --input-border: #4c4c4c;
+    /* Marca */
+    --accent:           #D02B72;
+    --accent-suave:     #3D202D;
+    --accent-borde:     rgba(208, 43, 114, 0.45);
 
-    --texto-banner: #FFFFC2;
-    --fondo-banner: #4D4D1E;    
+    /* Semánticos */
+    --positivo:         #55EA6F;
+    --positivo-bg:      #243B24;
+    --negativo:         #F35384;
+    --negativo-bg:      #3B1C26;
 
-    --fondo-metrics: #242424;
-    --help-content: #1a1c23;
+    /* Controles (inputs, selects, botones): mismo fondo que la tarjeta + borde 1px */
+    --input-bg:         #202020;
+    --input-border:     #373737;
+    --boton-bg:         #242424;
 
-    --fondo-summary: #272727;
-    --hover-summary: #333333; 
+    /* Relleno sólido de marca (chips, etiquetas) */
+    --accent-solido:    #C1226B;
 
+    /* Series de gráfica y categorías de tarifa */
+    --serie-descensos:  #5B8FD6;
+    --maestra:          #F4C542;
+    --tarifa-normal:    #4A90E2;
+    --tarifa-nocturna:  #A78BFA;
+    --tarifa-especial:  #F59E0B;
+
+    /* Mensajes informativos */
+    --info-bg:          #1C232B;
+    --info-texto:       #7CB2EE;
+    --info-borde:       #2B3947;
+
+    /* Alias de compatibilidad — VALORES LITERALES */
+    --fondo-metrics:  #202020;
+    --help-content:   #202020;
+    --fondo-summary:  #202020;
+    --hover-summary:  #2A2A2A;
+    --borde:          #D02B72;
+    --shadow:         rgba(0, 0, 0, 0.55);
+    --texto-banner:   #F0D98A;
+    --fondo-banner:   #3A3320;
+    --fondo-thead:    #262626;
+
+    /* -------- Barra superior + Sidebar (TEMA OSCURO) --------
+       En esta propuesta el sidebar y la topbar comparten el fondo de la app,
+       así que SÍ cambian entre temas (a diferencia del diseño anterior). */
+    --topbar:                #12161B;
+    --topbar-borde:          #23282F;
+    --sidebar:               #12161B;
+    --sidebar-borde:         #23282F;
+    --sidebar-texto:         #ECEFF1;
+    --sidebar-texto-suave:   #AEB6BF;
+    --sidebar-texto-tenue:   #6B747D;
+    --sidebar-hover:         rgba(255, 255, 255, 0.05);
+    --sidebar-header:        #0C1017;   /* cabecera "Módulos" */
+    --fondo-filtros:         #1A1F25;
+
+    /* Degradado morado→magenta del ítem activo y la cabecera "Módulos" */
+    --grad-ini:              #5D2A86;
+    --grad-fin:              #AE1959;
+    --grad-menu: linear-gradient(90deg, var(--grad-ini) 0%, var(--grad-fin) 100%);
+    --back_modulos:          #042b42;  /* fondo de la cabecera "Módulos" (azul marino) */
+
+    /* Alias que aún usa el CSS antiguo del sidebar */
+    --sidebar-activo:        #153950;
+    --sidebar-accent:        #AE1959;
+    --borde-sidebar:         #23282F;
+    --texto-sidebar:         #ECEFF1;
+    --hover:                 rgba(255, 255, 255, 0.05);
+    --boton:                 #1A1F25;
+
+    /* Geometría y tipografía */
+    --radio:      12px;
+    --radio-sm:   8px;
+    --radio-pill: 999px;
+    --font-display: 'Orbitron', sans-serif;
+    --font-ui:      'Orbitron', sans-serif;
 }
 
+/* -------------------------------- TEMA CLARO -------------------------------- */
 body.light-mode {
-    --fondo: #f5f5f5;
-    --texto: #0f0f0f;
-    --input-bg: #ffffff;
-    --input-border: #cccccc;
-    --fondo-banner: #6B6B2A;
+    --fondo:            #F5F5F5;
+    --superficie:       #FFFFFF;
+    --superficie-2:     #E0DFDF;
+    --borde-principal:  #E4E4E4;
+    --borde-suave:      #EFEFEF;
+    --sombra-card:      0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --sombra-card-hover:0 2px 8px rgba(0, 0, 0, 0.10);
 
-    --fondo-metrics: #ececec;
-    --help-content: #fafafa;
+    --texto:            #0F0F0F;
+    --texto-suave:      #5E5E5E;
+    --texto-tenue:      #949494;
 
-    --fondo-summary: #e0dfdf;
-    --hover-summary: #d1cfcf; 
+    --accent:           #B20A4A;
+    --accent-suave:     #F8E7EC;
+    --accent-borde:     rgba(178, 10, 74, 0.30);
 
-    --borde: #b61754;
+    --positivo:         #499760;
+    --positivo-bg:      #E8F2EB;
+    --negativo:         #D04167;
+    --negativo-bg:      #F9E8ED;
+
+    --input-bg:         #FFFFFF;
+    --input-border:     #D9D9D9;
+    --boton-bg:         #FFFFFF;
+
+    --accent-solido:    #B61754;
+
+    --serie-descensos:  #5B8FD6;
+    --maestra:          #C48A10;
+    --tarifa-normal:    #2B6CB0;
+    --tarifa-nocturna:  #7C5CD6;
+    --tarifa-especial:  #C48A10;
+
+    --info-bg:          #E5EAF0;
+    --info-texto:       #2B6CB0;
+    --info-borde:       #B6CAE0;
+
+    /* Alias — VALORES LITERALES (nunca var()) */
+    --fondo-metrics:  #FFFFFF;
+    --help-content:   #FFFFFF;
+    --fondo-summary:  #E0DFDF;
+    --hover-summary:  #D5D4D4;
+    --borde:          #B20A4A;
+    --shadow:         rgba(0, 0, 0, 0.10);
+    --texto-banner:   #6B5310;
+    --fondo-banner:   #F6EDD2;
+    --fondo-thead:    #E0DFDF;
+
+    /* -------- Barra superior + Sidebar (TEMA CLARO, muestreado de la propuesta) -------- */
+    --topbar:                #E9EBF1;
+    --topbar-borde:          #DADDE4;
+    --sidebar:               #E9EBF1;
+    --sidebar-borde:         #DADDE4;
+    --sidebar-texto:         #1E2334;
+    --sidebar-texto-suave:   #4A5262;
+    --sidebar-texto-tenue:   #8A909C;
+    --sidebar-hover:         rgba(30, 35, 52, 0.05);
+    --sidebar-header:        #121C30;   /* cabecera "Módulos" (azul marino, igual en ambos temas) */
+    --fondo-filtros:         #FFFFFF;
+
+    --grad-ini:              #5D2A86;
+    --grad-fin:              #AE1959;
+    --grad-menu: linear-gradient(90deg, var(--grad-ini) 0%, var(--grad-fin) 100%);
+    --back_modulos:          #042b42;  /* fondo de la cabecera "Módulos" (azul marino, igual en ambos temas) */
+
+    --sidebar-activo:        #153950;
+    --sidebar-accent:        #AE1959;
+    --borde-sidebar:         #DADDE4;
+    --texto-sidebar:         #1E2334;
+    --hover:                 rgba(30, 35, 52, 0.05);
+    --boton:                 #FFFFFF;
 }
 
 /* -------------------------------- RESET Y BASES -------------------------------- */
@@ -52,15 +182,38 @@ body.light-mode {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-ui);
 }
+
+html { -webkit-text-size-adjust: 100%; }
 
 body {
     background-color: var(--fondo);
     color: var(--texto);
-    transition: background-color 0.3s ease;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s ease, color 0.25s ease;
 }
 
+/* ==========================================================================
+   NUEVO LAYOUT: barra superior fija arriba, y debajo sidebar + contenido.
+   .app-shell envuelve todo en columna; .app-body es la fila sidebar+main.
+   ========================================================================== */
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.app-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    align-items: stretch;
+}
+
+/* Se conserva .dashboard por compatibilidad si algún include lo usa */
 .dashboard {
     display: flex;
     min-height: 100vh;
@@ -69,313 +222,532 @@ body {
 
 .content {
     flex-grow: 1;
-    padding: 20px 60px;
-    background-color: var(--fondo); 
+    min-width: 0;
+    padding: 26px clamp(20px, 3vw, 40px) 48px;
+    background-color: var(--fondo);
     overflow-y: auto;
-    transition: all 0.3s ease;
+    transition: padding 0.3s ease;
 }
 
-/* -------------------------------- TIPOGRAFÍA Y TÍTULOS -------------------------------- */
-#view-title {
-    font-size: 2.5rem;
-    margin-top: 0;      
-    margin-bottom: 15px;
-    text-align: center;
+/* ==========================================================================
+   BARRA SUPERIOR
+   ========================================================================== */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    height: 60px;
+    padding: 0 clamp(16px, 2vw, 24px);
+    background-color: var(--topbar);
+    border-bottom: 1px solid var(--topbar-borde);
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    flex-shrink: 0;
 }
 
-.section-subtitle { 
-    margin: 25px 0 15px 0; 
-    font-size: 28px; 
-    text-align: left;
-    display: inline-block;
-    width: auto;
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
 }
 
-.section-subtitle::after {
-    content: "";
-    display: table;
-    clear: both;
+/* Botón hamburguesa: solo visible en móvil */
+.topbar-burger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--topbar-borde);
+    background: transparent;
+    border-radius: var(--radio-sm);
+    color: var(--sidebar-texto);
+    cursor: pointer;
+    font-size: 18px;
+    flex-shrink: 0;
 }
 
-/* -------------------------------- ESPACIO PARA EL LOGO DEL DASHBOARD -------------------------------- */
-.top-logo-container {
-    display: block;
-    text-align: left;
-    margin-bottom: 5px;
-    width: 100%;
+.topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
 }
 
-
-.logo-top-nav {
-    height: 40px;       
+.topbar-logo {
+    height: 30px;
     width: auto;
     display: block;
     object-fit: contain;
-    transition: filter 0.3s ease; /* Suaviza el cambio en la imagen del logo */
 }
 
-/* Solo ocultar en escritorio si el sidebar está expandido */
-@media (min-width: 769px) {
-    .sidebar:not(.collapsed) ~ .content .top-logo-container {
-        display: none;
-    }
+.topbar-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: var(--sidebar-texto);
+    white-space: nowrap;
 }
 
-/* -------------------------------- COMPONENTES DE FILTROS -------------------------------- */
-/* Contenedor de fechas */
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Botón "Tema" */
+.topbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px;
+    background-color: var(--boton);
+    border: 1px solid var(--topbar-borde);
+    border-radius: var(--radio-sm);
+    color: var(--sidebar-texto);
+    font-family: var(--font-ui);
+    font-size: 0.78rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.topbar-btn:hover { border-color: var(--sidebar-accent); }
+
+.topbar-btn svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Chip de usuario */
+.topbar-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 12px 0 8px;
+    border-radius: var(--radio-pill);
+    color: var(--sidebar-texto-suave);
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.topbar-user-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background-color: var(--sidebar-hover);
+    color: var(--sidebar-texto-suave);
+}
+
+.topbar-user-avatar svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+.topbar-user b { color: var(--sidebar-texto); font-weight: 600; }
+
+/* Botón "Cerrar sesión": relleno con el degradado de marca */
+.topbar-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 16px;
+    border: none;
+    border-radius: var(--radio-sm);
+    background-image: var(--grad-menu);
+    color: #FFFFFF;
+    font-family: var(--font-ui);
+    font-size: 0.78rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+.topbar-logout:hover { filter: brightness(1.08); }
+.topbar-logout:active { transform: scale(0.98); }
+
+.topbar-logout svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* -------------------------------- CABECERA DE VISTA -------------------------------- */
+.view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 4px;
+}
+
+#view-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-align: left;
+    margin: 0;
+    color: var(--texto);
+}
+
+.section-subtitle {
+    margin: 24px 0 14px 0;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--texto);
+    text-align: left;
+    display: block;
+    width: auto;
+}
+
+.section-subtitle b { font-weight: 500; }
+
+/* -------------------------------- LOGO SUPERIOR (ya no se usa; oculto) -------------------------------- */
+.top-logo-container { display: none; }
+
+/* -------------------------------- BOTÓN ACTUALIZAR SECCIÓN -------------------------------- */
+.btn-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background-color: var(--boton-bg);
+    border: 1px solid var(--input-border);
+    color: var(--texto);
+    border-radius: var(--radio-sm);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.78rem;
+    letter-spacing: 0.01em;
+    font-weight: bold;
+    white-space: nowrap;
+    transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-refresh:hover { border-color: var(--accent-borde); }
+.btn-refresh:active { transform: scale(0.985); }
+
+.btn-refresh svg {
+    width: 14px;
+    height: 14px;
+    stroke: var(--texto);
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.5s ease;
+}
+
+.btn-refresh:hover svg { transform: rotate(120deg); }
+
+/* -------------------------------- FILTROS -------------------------------- */
 .date-filter-container {
     display: flex;
-    gap: 20px;          /* Espacio entre los dos filtros */
-    flex-wrap: nowrap;  /* Forzamos a que se mantengan en la misma línea */
-    margin-bottom: 5px;
-    width: 100%;        /* Ocupa todo el ancho de la sección */
+    gap: 16px;
+    flex-wrap: nowrap;
+    margin-bottom: 8px;
+    width: 100%;
 }
 
 .date-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     text-align: left;
-    flex: 1;            /* HACE QUE CADA UNO OCUPE EL 50% (menos el gap) */
+    flex: 1;
 }
 
-.date-group input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--borde);
-}
-
-.date-group label {
-    font-size: 0.9rem;
-    color: var(--texto);
-    opacity: 0.8;
+.date-group label,
+.filter-label,
+.campo-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--texto-tenue);
+    margin-bottom: 0;
 }
 
 input[type="date"], .custom-select, select {
     background-color: var(--input-bg);
     border: 1px solid var(--input-border);
     color: var(--texto);
-    padding: 10px 15px;
-    border-radius: 6px;
+    padding: 10px 13px;
+    border-radius: var(--radio-sm);
     outline: none;
-    font-size: 0.9rem;
-    width: 100%;        /* Asegura que el input llene su date-group */
-    box-sizing: border-box; 
-}
-
-/* Invertir el icono del calendario para que se vea sobre fondo oscuro */
-input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(0.9);
-    cursor: pointer;
-    opacity: 0.8;
-}
-
-body.light-mode input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: none;
-    opacity: 0.7;
-}
-
-/* -------------------------------- CONTENEDORES DE DATOS Y GRÁFICAS -------------------------------- */
-.js-plotly-plot, 
-.plot-container {
+    font-size: 0.85rem;
     width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.chart-box {
-    padding: 20px;
-    margin-bottom: 10px;
+input[type="date"]:focus, .custom-select:focus, select:focus,
+.date-group input:focus {
+    outline: none;
+    border-color: var(--accent-borde);
+    box-shadow: 0 0 0 3px var(--accent-suave);
+}
+
+/* El calendario nativo se sustituye por js_DatePicker.js: se oculta la UI nativa
+   en todos los navegadores y se dibuja un icono propio como background-image. */
+
+/* Base cross-browser: quita la apariencia nativa del control.
+   Firefox SÍ respeta appearance:none aquí, a diferencia de los pseudo-elementos
+   ::-webkit-*, que solo existen en Chrome/Safari. */
+input[type="date"] {
+    -webkit-appearance: none;
+    -moz-appearance: textfield;   /* Firefox: lo trata como campo de texto, sin su icono de calendario */
+    appearance: none;
+    padding-right: 38px;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%23949494' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='5' width='18' height='16' rx='2'/><line x1='3' y1='10' x2='21' y2='10'/><line x1='8' y1='3' x2='8' y2='6'/><line x1='16' y1='3' x2='16' y2='6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+/* Chrome / Safari: ocultar el indicador y los botones nativos */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+    display: none;
+    -webkit-appearance: none;
+}
+
+/* Firefox: por si alguna versión aún pinta el indicador, se anula su ancho */
+input[type="date"]::-moz-calendar-picker-indicator {
+    display: none;
+    opacity: 0;
+    width: 0;
+}
+
+/* -------------------------------- SEPARADORES DE SECCIÓN -------------------------------- */
+.content hr {
+    border: none;
+    border-top: 1px solid var(--borde-principal);
+    margin: 30px 0 4px;
+}
+
+/* -------------------------------- TARJETAS DE GRÁFICA --------------------------------
+   El selector lleva .content a propósito: estilo_PoligonoCarga.css define
+   .chart-box sin acotar y se carga después, así que ganaba siempre.
+   -------------------------------------------------------------------------- */
+.js-plotly-plot, .plot-container { width: 100%; }
+
+.content .chart-box {
+    background-color: var(--superficie);
+    border: none;
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    padding: 18px 20px 14px;
+    margin-bottom: 12px;
     width: 100%;
     display: block;
     box-sizing: border-box;
     min-width: 0;
 }
 
-.chart-box h2{
-    text-align: center;
+.content .chart-box h2 {
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--texto);
+    margin-bottom: 10px;
 }
 
-/* -------------------------------- TABLAS Y EXPANDIBLES -------------------------------- */
+.chart-disclaimer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -6px;
+}
+
+/* -------------------------------- TABLAS -------------------------------- */
 table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     text-align: left;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     table-layout: auto;
 }
 
 .table-container {
     width: 100%;
-    max-height: 413px; /* Altura máxima antes de mostrar el scroll vertical */
-    overflow-y: auto; 
+    max-height: 413px;
+    overflow-y: auto;
     overflow-x: auto;
-    margin-top: 15px;
+    margin-top: 10px;
+    background-color: var(--superficie);
     border: 1px solid var(--borde-principal);
-    border-radius: 4px;
+    border-radius: var(--radio-sm);
 }
 
 th {
     position: sticky;
     top: 0;
-    background-color: var(--fondo-summary);
+    background-color: var(--fondo-thead);
     z-index: 2;
-    color: var(--texto);
-    /* text-transform: uppercase; */
-    letter-spacing: 1px;
-    padding: 12px;
+    color: var(--texto-suave);
+    font-weight: 500;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 11px 14px;
     border-bottom: 1px solid var(--borde-principal);
-    border-right: 1px solid var(--borde-principal);
+    white-space: nowrap;
 }
 
 td {
-    padding: 12px;
-    border-bottom: 1px solid var(--borde-principal);
-    border-right: 1px solid var(--borde-principal);
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--borde-suave);
+    color: var(--texto);
     box-sizing: border-box;
 }
 
-th:last-child, td:last-child {
-    border-right: none;
-}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr { transition: background-color 0.15s ease; }
+tbody tr:hover td { background-color: var(--borde-suave); }
 
-.table-container::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
+td.row-index { color: var(--texto-tenue); font-size: 0.75rem; }
 
+.table-container::-webkit-scrollbar { width: 8px; height: 8px; }
 .table-container::-webkit-scrollbar-thumb {
     background: var(--input-border);
     border-radius: 10px;
 }
+.table-container::-webkit-scrollbar-track { background: transparent; }
 
-.table-container::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.1);
-}
-
+/* -------------------------------- EXPANDIBLE DE DATOS -------------------------------- */
 .data-expander {
-    margin-top: 15px;
+    margin: 0 0 22px;
     cursor: pointer;
     position: relative;
 }
 
 .data-expander summary {
-    padding: 10px;
-    background: var(--fondo-summary);
-    border-radius: 6px;
+    padding: 12px 40px 12px 15px;
+    background: var(--superficie-2);
+    border: none;
+    border-radius: var(--radio-sm);
     list-style: none;
-    border: 1px solid var(--input-border);
-    transition: 0.3s;
+    color: var(--texto-suave);
+    font-size: 0.8rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    position: relative;
 }
+
+.data-expander summary::-webkit-details-marker { display: none; }
 
 .data-expander summary:hover {
     background: var(--hover-summary);
+    color: var(--texto);
 }
 
-/* -------------------------------- DESCARGAR CONTENIDO DE TABLAS -------------------------------- */
+.data-expander summary::after {
+    content: "";
+    position: absolute;
+    right: 17px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: translateY(-70%) rotate(45deg);
+    transition: transform 0.25s ease;
+}
+
+.data-expander[open] summary::after { transform: translateY(-25%) rotate(-135deg); }
+
+.data-expander[open] summary {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* -------------------------------- DESCARGA DE TABLAS -------------------------------- */
 .btn-download {
     position: absolute;
-    right: 10px;      
-    top: 45px;        
+    right: 48px;
+    top: 7px;
     z-index: 10;
-    
+
     display: flex;
     align-items: center;
     justify-content: center;
-    
-    width: 40px;
-    height: 40px;
-    padding: 8px;
-    
-    background-color: var(--fondo-summary);
+
+    width: 30px;
+    height: 30px;
+    padding: 6px;
+
+    background-color: var(--superficie);
     border: 1px solid var(--borde-principal);
-    border-radius: 30%; 
+    border-radius: var(--radio-sm);
     cursor: pointer;
-    
+
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .download-icon {
-    width: 20px;
-    height: 20px;
-    stroke: var(--texto);   
-    transition: stroke 0.3s ease;
+    width: 15px;
+    height: 15px;
+    stroke: var(--texto-suave);
+    transition: stroke 0.2s ease;
 }
 
-.data-expander:hover .btn-download {
-    opacity: 1;
-    visibility: visible;
-}
+.data-expander:hover .btn-download,
+.data-expander:focus-within .btn-download { opacity: 1; visibility: visible; }
 
-.btn-download:hover {
-    transform: translateY(-2px);
-}
+.btn-download:hover { border-color: var(--accent-borde); }
+.btn-download:hover .download-icon { stroke: var(--accent); }
 
-.btn-download:active {
-    transform: scale(1);
-}
-
-/* -------------------------------- ESTADOS Y ALERTAS -------------------------------- */
+/* -------------------------------- BANNERS DE ESTADO -------------------------------- */
 .status-banner {
     background-color: var(--fondo-banner);
     color: var(--texto-banner);
-    padding: 10px 15px;
-    border-radius: 6px;
+    border: none;
+    padding: 11px 15px;
+    border-radius: var(--radio-sm);
     text-align: left;
-    font-size: 1rem;
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-
-/* -------------------------------- BOTON DE REFRESH SECCION -------------------------------- */
-.btn-refresh {
-    padding: 10px;
-    background-color: var(--fondo-summary);
-    border: 1px solid var(--borde-principal);
-    color: var(--texto);
-    border-radius: 7px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    float: right;
-    margin-top: 22px; 
-    font-family: 'Orbitron', sans-serif;
     font-size: 0.85rem;
-    transition: all 0.3s ease;
-    gap: 5px;
-    position: relative;
-    z-index: 100;
+    margin: 0 0 12px;
 }
 
-.btn-refresh:hover {
-    background-color: var(--hover-summary); 
-}
-
-/* -------------------------------- TEXTO PARA EL TOTAL DE PASAJEROS/KM -------------------------------- */
+/* -------------------------------- TOTALES EN TEXTO -------------------------------- */
 .total-row {
-    display: flex;         
-    align-items: baseline; 
-    gap: 8px;             
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
 }
 
 .total-row p, .total-row h3 {
-    font-size: 20px; 
-    margin: 0;             
+    font-size: 1rem;
+    margin: 0;
     padding: 0;
 }
 
-.total-row h3 {
-    color: var(--texto); 
-    font-weight: bold;
-}
+.total-row h3 { color: var(--texto); font-weight: 600; }
 
-
-/* -------------------------------- EFECTO DE CARGA CON LOTTIE -------------------------------- */
+/* -------------------------------- CARGA (LOTTIE) -------------------------------- */
 .loading-blur {
-    filter: blur(6px); /* Intensidad del blur */
-    pointer-events: none; 
+    filter: blur(5px);
+    opacity: 0.6;
+    pointer-events: none;
     user-select: none;
-    transition: filter 0.3s ease;
+    transition: filter 0.3s ease, opacity 0.3s ease;
 }
 
 #section-inicio, #section-totales, #section-unidades, #section-ruta {
@@ -383,9 +755,7 @@ th:last-child, td:last-child {
     min-height: 300px;
 }
 
-#inicio-content {
-    transition: filter 0.3s ease;
-}
+#inicio-content { transition: filter 0.3s ease, opacity 0.3s ease; }
 
 .section-loader {
     position: fixed;
@@ -397,63 +767,326 @@ th:last-child, td:last-child {
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 12px;
-    pointer-events: none; 
+    pointer-events: none;
 }
 
-.lottie-anim-canvas {
-    width: 180px; 
-    height: 180px;
-    filter: drop-shadow(0 0 10px rgba(0,0,0,0.1));
+.lottie-anim-canvas { width: 160px; height: 160px; }
+
+/* -------------------------------- ACCESIBILIDAD -------------------------------- */
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
-.fade-in {
-    animation: fadeIn 0.4s ease-out forwards;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-
-/* -------------------------------- RESPONSIVE DESIGN -------------------------------- */
-@media (max-width: 1024px) {
-    .content {
-        padding: 30px 40px;
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
     }
 }
 
+/* -------------------------------- RESPONSIVE -------------------------------- */
 @media (max-width: 768px) {
-    .dashboard {
+    .dashboard { flex-direction: column; }
+
+    .content { padding: 16px 16px 40px; }
+
+    .view-header {
         flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
     }
 
-    .content {
-        padding: 20px;
-        margin-top: 20px;
+    #view-title { font-size: 1.3rem; }
+
+    .date-filter-container { flex-direction: column; gap: 12px; }
+    .date-group, input[type="date"] { width: 100%; }
+
+    .content .chart-box { padding: 16px 14px 12px; }
+
+    /* Ocultar textos: dejar solo iconos en la barra superior */
+    .topbar-btn span,
+    .topbar-logout span,
+    .topbar-user b { display: none; }
+
+    /* Los botones quedan cuadrados, centrados al icono */
+    .topbar-btn,
+    .topbar-logout {
+        padding: 0;
+        width: 38px;
+        justify-content: center;
     }
 
-    #view-title {
-        font-size: 1.8rem;
-    }
+    /* El chip de usuario se reduce al avatar */
+    .topbar-user { padding: 0; gap: 0; }
 
-    .date-filter-container {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .date-group, input[type="date"] {
-        width: 100%;
-    }
+    /* Menos separación entre iconos en pantallas chicas */
+    .topbar-right { gap: 8px; }
 }
 
 /* -------------------------------- ANIMACIONES -------------------------------- */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-.section-active {
-    animation: fadeIn 0.4s ease-out forwards;
+.fade-in, .section-active { animation: fadeIn 0.35s ease-out forwards; }
+
+/* ==========================================================================
+   CALENDARIO PROPIO (js_DatePicker.js)
+   Sustituye al desplegable nativo del navegador.
+   ========================================================================== */
+.dp-panel {
+    position: absolute;
+    z-index: 4000;
+    width: 268px;
+    padding: 12px;
+    background-color: var(--superficie);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radio);
+    box-shadow: 0 12px 32px var(--shadow);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+    font-family: var(--font-ui);
+    user-select: none;
+}
+
+.dp-panel.esta-abierto {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* --- Cabecera --- */
+.dp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.dp-titulo {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--texto);
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: bold;
+    letter-spacing: 0.01em;
+    padding: 6px 8px;
+    border-radius: var(--radio-sm);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.dp-titulo:hover { background-color: var(--borde-suave); }
+
+.dp-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: none;
+    border: none;
+    border-radius: var(--radio-sm);
+    color: var(--texto-suave);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dp-nav:hover { background-color: var(--borde-suave); color: var(--texto); }
+
+.dp-nav svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* --- Días de la semana --- */
+.dp-semana {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 4px;
+}
+
+.dp-semana span {
+    text-align: center;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--texto-tenue);
+    padding: 4px 0;
+}
+
+/* --- Rejilla de días --- */
+.dp-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.dp-dia {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: 7px;
+    color: var(--texto);
+    font-family: var(--font-ui);
+    font-size: 0.74rem;
+    cursor: pointer;
+    transition: background-color 0.13s ease, color 0.13s ease;
+}
+
+.dp-dia:hover:not(:disabled) { background-color: var(--borde-suave); }
+
+.dp-dia.es-otro-mes { color: var(--texto-tenue); opacity: 0.45; }
+
+.dp-dia.es-hoy {
+    box-shadow: inset 0 0 0 1px var(--input-border);
+    font-weight: 600;
+}
+
+.dp-dia.es-elegido,
+.dp-dia.es-elegido:hover {
+    background-color: var(--accent-solido);
+    color: #FFFFFF;
+    font-weight: 600;
+    box-shadow: none;
+    opacity: 1;
+}
+
+.dp-dia:disabled {
+    color: var(--texto-tenue);
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+/* --- Vista de meses --- */
+.dp-grid--meses {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 4px 0;
+}
+
+.dp-mes {
+    padding: 12px 0;
+    background: none;
+    border: none;
+    border-radius: var(--radio-sm);
+    color: var(--texto);
+    font-family: var(--font-ui);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.13s ease;
+}
+
+.dp-mes:hover { background-color: var(--borde-suave); }
+
+.dp-mes.es-actual {
+    background-color: var(--accent-solido);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+/* --- Pie --- */
+.dp-pie {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--borde-suave);
+}
+
+.dp-accion {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.dp-accion:hover { background-color: var(--accent-suave); }
+
+/* ==========================================================================
+   MENSAJES INFORMATIVOS (compartido)
+   ========================================================================== */
+.info-message-blue {
+    background-color: var(--info-bg);
+    color: var(--info-texto);
+    border: 1px solid var(--info-borde);
+    padding: 14px 18px;
+    border-radius: var(--radio-sm);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   BOTONES SECUNDARIOS (compartido: reset horas, limpiar selección, etc.)
+   ========================================================================== */
+.btn-suave {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 15px;
+    background-color: var(--boton-bg);
+    border: 1px solid var(--input-border);
+    color: var(--texto);
+    border-radius: var(--radio-sm);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.76rem;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    transition: border-color 0.2s ease, transform 0.15s ease;
+    flex-shrink: 0;
+}
+
+.btn-suave:hover { border-color: var(--accent-borde); }
+.btn-suave:active { transform: scale(0.985); }
+
+.btn-suave svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.45s ease;
+}
+
+/* Cambiar el color de fondo de la barra de herramientas */
+.js-plotly-plot .plot-container .modebar-container {
+  border-radius: 4px;
+  padding: 2px;
+}
+
+/* Cambiar el color de los iconos (por defecto y al pasar el cursor) */
+.js-plotly-plot .plot-container .modebar-btn path {
+  fill: #4A5568 !important; /* Gris oscuro */
+}
+
+.js-plotly-plot .plot-container .modebar-btn:hover path {
+  fill: #3182CE !important; /* Azul al hacer hover */
 }
