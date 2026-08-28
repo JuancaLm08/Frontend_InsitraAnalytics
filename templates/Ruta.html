@@ -7,7 +7,7 @@
         <div class="lottie-anim-canvas"></div>
     </div>
 
-    <p class="section-subtitle"><b>Cuenca de Servicio</b></p>
+    <p class="section-subtitle">Cuenca de servicio</p>
 
     <!----- FILTROS POR FECHA Y RANGO DE HORAS ----->
     <div class="date-filter-header">
@@ -17,7 +17,7 @@
                 <input type="date" id="fecha-ruta">
             </div>
             <div class="date-group">
-                <label>Hora Inicio</label>
+                <label class="filter-label">Hora inicio</label>
                 <div class="time-select-group">
                     <select id="hora-inicio-h-ruta" aria-label="Hora inicio - horas"></select>
                     <span class="time-separator">:</span>
@@ -25,7 +25,7 @@
                 </div>
             </div>
             <div class="date-group">
-                <label>Hora Final</label>
+                <label class="filter-label">Hora final</label>
                 <div class="time-select-group">
                     <select id="hora-final-h-ruta" aria-label="Hora final - horas"></select>
                     <span class="time-separator">:</span>
@@ -34,19 +34,21 @@
             </div>
         </div>
         <button id="btn-reset-horas-ruta" class="btn-reset-horas" title="Restaurar rango horario a 00:00 – 23:59">
-            <span>↺</span> Resetear horas
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            <span>Resetear horas</span>
         </button>
         <button id="btn-consultar-ruta" class="btn-consultar" title="Ejecutar la consulta con los filtros actuales">
             <span>🔍</span> Consultar
-        </button>
+        </button>  
     </div>
 
     <div id="no-data-banner-ruta" class="status-banner">No hay datos para los filtros seleccionados.</div>
 
     <div id="ruta-content" style="display: none;">
         <div class="map-header">
-            <p class="section-subtitle"><b>Resultados en la zona dibujada</b></p>
-            <button id="btn-limpiar" class="btn-limpiar" style="display: none;"><span>🧹</span> Limpiar selección</button>
+            <p class="section-subtitle">Resultados en la zona dibujada</p>
+            <button id="btn-limpiar" class="btn-limpiar" style="display: none;"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L20 8l-4-4L4 16z"/><line x1="14" y1="6" x2="18" y2="10"/></svg>
+                <span>Limpiar selección</span></button>
         </div>
 
         <div class="map-metrics">
@@ -59,7 +61,7 @@
                 <p id="map-descensos-val">—</p>
             </div>
         </div>
-        
+
         <div class="map-block">
             <div class="map-toolbar">
                 <span class="map-toolbar-label">Capa de calor</span>
@@ -97,4 +99,4 @@
 <br>
 
 <!-- JavaScript de la Seccion Ruta -->
-<script src="../static/js/js_Ruta.js"></script> 
+<script src="../static/js/js_Ruta.js"></script>
