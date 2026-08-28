@@ -6,7 +6,7 @@
 .horaria-filters {
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 22px;
     margin-bottom: 24px;
 }
 
@@ -17,18 +17,17 @@
 }
 
 .horaria-step-title {
-    font-size: 1.35rem;
-    font-weight: bold;
+    font-size: 1.02rem;
+    font-weight: 600;
     color: var(--texto);
     margin: 0;
 }
 
 .horaria-counter {
-    font-size: 0.8rem;
-    font-weight: normal;
-    color: var(--texto);
-    opacity: 0.6;
-    margin-left: 6px;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--accent);
+    margin-left: 4px;
 }
 
 /* ---- Selector de compañía (reutiliza clases de Unidades) ---- */
@@ -45,11 +44,12 @@
 
 /* ---- Calendario ---- */
 .horaria-calendar {
-    background-color: var(--input-bg);
-    border: 1px solid var(--input-border);
-    border-radius: 10px;
+    background-color: var(--superficie);
+    border: none;
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
     padding: 14px;
-    width: 270px;
+    width: 258px;
     flex-shrink: 0;
     user-select: none;
 }
@@ -62,8 +62,8 @@
 }
 
 .horaria-cal-title {
-    font-size: 0.9rem;
-    font-weight: bold;
+    font-size: 0.85rem;
+    font-weight: 500;
     color: var(--texto);
     text-transform: capitalize;
 }
@@ -71,8 +71,8 @@
 .horaria-cal-nav {
     background: none;
     border: none;
-    color: var(--texto);
-    font-size: 1.4rem;
+    color: var(--texto-tenue);
+    font-size: 1.2rem;
     cursor: pointer;
     line-height: 1;
     padding: 0 6px;
@@ -92,10 +92,9 @@
 }
 
 .horaria-cal-weekdays span {
-    font-size: 0.7rem;
-    color: var(--texto);
-    opacity: 0.55;
-    padding: 2px 0;
+    font-size: 0.66rem;
+    color: var(--texto-tenue);
+    padding: 3px 0;
 }
 
 .horaria-cal-days {
@@ -121,13 +120,13 @@
 }
 
 .horaria-cal-day.selected {
-    background-color: var(--accent);
+    background-color: var(--accent-solido);
     color: #fff;
-    font-weight: bold;
+    font-weight: 600;
 }
 
 .horaria-cal-day.today:not(.selected) {
-    border: 1px solid var(--borde);
+    box-shadow: inset 0 0 0 1px var(--input-border);
     color: var(--texto);
 }
 
@@ -164,15 +163,16 @@
 }
 
 .horaria-day-tag {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    background-color: var(--accent);
+    background-color: var(--accent-solido);
     color: #fff;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    border: 1px solid rgba(255,255,255,0.15);
+    padding: 7px 14px;
+    border-radius: var(--radio-sm);
+    font-size: 0.82rem;
+    border: none;
     animation: horaria-tag-in 0.18s ease;
 }
 
@@ -205,18 +205,19 @@
     align-items: center;
     gap: 14px;
     flex-wrap: wrap;
-    background-color: var(--fondo-summary);
-    border: 1px solid var(--input-border);
-    border-radius: 8px;
-    padding: 12px 16px;
+    background-color: var(--superficie);
+    border: none;
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    padding: 14px 18px;
     animation: horaria-tag-in 0.2s ease;
 }
 
 .horaria-day-hours-label {
-    font-size: 1rem;
-    font-weight: bold;
+    font-size: 0.9rem;
+    font-weight: 500;
     color: var(--texto);
-    min-width: 110px;
+    min-width: 120px;
 }
 
 .horaria-hours-selects {
@@ -233,9 +234,8 @@
 }
 
 .horaria-time-group label {
-    font-size: 0.75rem;
-    opacity: 0.65;
-    color: var(--texto);
+    font-size: 0.7rem;
+    color: var(--texto-tenue);
 }
 
 .horaria-time-group .time-select-group {
@@ -244,25 +244,31 @@
 
 /* ---- Botón generar ---- */
 .horaria-action-row {
-    margin-top: 4px;
+    margin-top: 10px;
     margin-bottom: 20px;
 }
 
 .btn-generar-horaria {
-    padding: 10px 22px;
-    background-color: var(--fondo-summary);
-    border: 1px solid var(--borde-principal);
-    color: var(--texto);
-    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    background-image: var(--grad-menu);
+    border: none;
+    color: #FFFFFF;
+    border-radius: var(--radio-sm);
     cursor: pointer;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.88rem;
-    transition: all 0.3s ease;
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: filter 0.2s ease, transform 0.15s ease;
 }
 
 .btn-generar-horaria:hover:not(:disabled) {
-    background-color: var(--hover-summary);
+    filter: brightness(1.12);
 }
+
+.btn-generar-horaria:active:not(:disabled) { transform: scale(0.985); }
 
 .btn-generar-horaria:disabled {
     opacity: 0.4;
@@ -271,9 +277,9 @@
 
 /* ---- Banner de error (variante roja) ---- */
 .status-banner--error {
-    background-color: rgba(255, 60, 60, 0.12);
-    color: #ff6b6b;
-    border-color: rgba(255, 60, 60, 0.35);
+    background-color: var(--negativo-bg);
+    color: var(--negativo);
+    border: none;
 }
 
 /* ---- Bloque de tarifas ---- */
@@ -281,10 +287,11 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 14px 16px;
-    background-color: var(--fondo-summary);
-    border: 1px solid var(--input-border);
-    border-radius: 8px;
+    padding: 16px 18px;
+    background-color: var(--superficie);
+    border: none;
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
 }
 
 .horaria-tarifa-toggle-row {
@@ -296,13 +303,13 @@
 }
 
 .horaria-tarifa-label {
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 500;
     color: var(--texto);
 }
 
 .horaria-required {
-    color: #ff6b6b;
+    color: var(--accent);
     margin-left: 2px;
 }
 
@@ -310,18 +317,19 @@
     background-color: var(--input-bg);
     border: 1px solid var(--input-border);
     color: var(--texto);
-    padding: 10px 14px;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    padding: 10px 13px;
+    border-radius: var(--radio-sm);
+    font-size: 0.85rem;
     width: 180px;
     outline: none;
-    transition: border-color 0.2s;
+    font-family: var(--font-ui);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     box-sizing: border-box;
 }
 
 .horaria-tarifa-input:focus {
-    border-color: var(--borde);
-    box-shadow: 0 0 0 2px rgba(136, 17, 62, 0.2);
+    border-color: var(--accent-borde);
+    box-shadow: 0 0 0 3px var(--accent-suave);
 }
 
 /* Quitar flechas del input number en Chrome/Safari/Edge */
@@ -369,8 +377,8 @@
 }
 
 .horaria-opt-toggle input:checked ~ .horaria-opt-track {
-    background-color: var(--accent);
-    border-color: var(--borde);
+    background-color: var(--accent-solido);
+    border-color: var(--accent-solido);
 }
 
 .horaria-opt-toggle input:checked ~ .horaria-opt-track .horaria-opt-knob {
@@ -379,9 +387,8 @@
 }
 
 .horaria-opt-badge {
-    font-size: 0.72rem;
-    opacity: 0.55;
-    color: var(--texto);
+    font-size: 0.7rem;
+    color: var(--texto-tenue);
 }
 
 /* ---- Detalle extra (tarifa + sub-opciones) ---- */
@@ -468,9 +475,9 @@
     flex: 1;
     min-width: 200px;
     height: 380px;
-    background-color: var(--input-bg);
-    border: 1px solid var(--input-border);
-    border-radius: 10px;
+    background-color: var(--superficie);
+    border: 1px solid var(--borde-principal);
+    border-radius: var(--radio);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -485,7 +492,7 @@
     font-size: 0.88rem;
     font-weight: 600;
     color: var(--texto);
-    background-color: var(--fondo-summary);
+    background-color: var(--superficie-2);
     flex-shrink: 0;
 }
 
@@ -531,7 +538,7 @@
 
 .horaria-zona-item.activo {
     border-color: var(--accent);
-    background-color: rgba(117, 22, 67, 0.15);
+    background-color: var(--accent-suave);
 }
 
 .horaria-zona-item-name {
@@ -548,8 +555,8 @@
 }
 
 .horaria-zona-item.en-edicion {
-    border-color: #f59e0b;
-    background-color: rgba(245, 158, 11, 0.1);
+    border-color: var(--tarifa-especial);
+    background-color: rgba(245, 158, 11, 0.10);
 }
 
 /* Badge servidor / local */
@@ -607,24 +614,24 @@
 }
 
 .horaria-zona-menu-opt.danger {
-    color: #ff6b6b;
+    color: var(--negativo);
 }
 
 .horaria-zona-menu-opt.danger:hover {
-    background-color: rgba(255, 60, 60, 0.12);
+    background-color: var(--negativo-bg);
 }
 
 /* Botón guardar zona */
 .btn-horaria-guardar-zona {
     margin: 10px;
-    padding: 8px 12px;
-    background-color: var(--fondo-summary);
-    border: 1px solid var(--borde-principal);
+    padding: 9px 12px;
+    background-color: var(--boton-bg);
+    border: 1px solid var(--input-border);
     color: var(--texto);
-    border-radius: 6px;
+    border-radius: var(--radio-sm);
     cursor: pointer;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.78rem;
+    font-family: var(--font-ui);
+    font-size: 0.76rem;
     text-align: center;
     transition: all 0.2s ease;
     flex-shrink: 0;
@@ -641,96 +648,99 @@
 
 /* ---- Resultados ---- */
 #horaria-content {
-    margin-top: 28px;
+    margin-top: 24px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 14px;
 }
 
 /* Tarjetas de totales */
 .horaria-summary-cards {
     display: flex;
-    gap: 24px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
 .horaria-summary-card {
     flex: 1;
     min-width: 160px;
-    background-color: var(--fondo-summary);
-    border: 1px solid var(--borde-principal);
-    border-radius: 10px;
-    padding: 22px 28px;
+    background-color: var(--superficie);
+    border: none;
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    padding: 18px 22px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin-bottom: 15px;
 }
 
 .horaria-card-label {
-    font-size: 0.78rem;
-    opacity: 0.6;
-    color: var(--texto);
+    font-size: 0.7rem;
+    color: var(--texto-tenue);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.07em;
 }
 
 .horaria-card-value {
-    font-size: 1.6rem;
-    font-weight: bold;
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    font-weight: 500;
+    letter-spacing: -0.015em;
     color: var(--texto);
-    line-height: 1;
+    line-height: 1.1;
 }
 
 .horaria-card-sub {
-    font-size: 0.8rem;
-    opacity: 0.5;
-    color: var(--texto);
+    font-size: 0.72rem;
+    color: var(--texto-tenue);
 }
 
 /* Desglose por tarifa */
 .horaria-tarifa-breakdown {
     display: flex;
-    margin-top: 15px;
-    gap: 20px;
+    margin-top: 0;
+    gap: 12px;
     flex-wrap: wrap;
+    margin-bottom: 20px;
 }
 
 .horaria-breakdown-item {
     flex: 1;
     min-width: 140px;
-    background-color: var(--fondo-summary);
-    border: 1px solid var(--input-border);
-    border-radius: 8px;
-    padding: 16px 22px;
+    background-color: var(--superficie);
+    border: none;
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    padding: 14px 18px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    border-left: 3px solid var(--borde);
+    gap: 6px;
+    border-left: 3px solid var(--accent-solido);
 }
 
-.horaria-breakdown-item.tarifa-normal   { border-left-color: #4a90e2; }
-.horaria-breakdown-item.tarifa-nocturna { border-left-color: #a78bfa; }
-.horaria-breakdown-item.tarifa-especial { border-left-color: #f59e0b; }
+.horaria-breakdown-item.tarifa-normal   { border-left-color: var(--tarifa-normal); }
+.horaria-breakdown-item.tarifa-nocturna { border-left-color: var(--tarifa-nocturna); }
+.horaria-breakdown-item.tarifa-especial { border-left-color: var(--tarifa-especial); }
 
 .horaria-breakdown-title {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    opacity: 0.7;
-    color: var(--texto);
+    letter-spacing: 0.07em;
+    color: var(--texto-tenue);
 }
 
 .horaria-breakdown-asc {
-    font-size: 1.1rem;
-    font-weight: bold;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 500;
     color: var(--texto);
 }
 
 .horaria-breakdown-rec {
-    font-size: 0.85rem;
-    opacity: 0.65;
-    color: var(--texto);
+    font-size: 0.78rem;
+    color: var(--texto-tenue);
 }
 
 /* ---- Responsive ---- */
@@ -747,3 +757,16 @@
     .horaria-zona-map-col         { flex: none; width: 100%; }
     .horaria-zona-panel           { width: 100%; height: 260px; }
 }
+/* ---- Icono SVG dentro del botón generar ---- */
+.btn-generar-horaria svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ---- El chevron del multiselect de Horaria reutiliza el de Unidades ---- */
+#horaria-bus-container.esta-abierto .arrow { transform: translateY(-50%) rotate(180deg); }

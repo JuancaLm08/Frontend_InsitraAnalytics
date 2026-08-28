@@ -1,24 +1,25 @@
 /* ------------------ CONFIGURACION CSS PARA LA SECCION TOTALES ------------------ */
 
-/* RESPONSIVE TOTALES */
-@media (max-width: 768px) {
-    .date-filter-container {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .charts-grid-totales {
-        grid-template-columns: 1fr;
-    }
+/* Los filtros de fecha comparten estilos con el resto del dashboard
+   (estilo_Dashboard.css). Aquí solo van los ajustes propios de la sección. */
 
-    .date-group label {
-        font-size: 0.9rem;
-    }
+#section-totales .date-filter-container {
+    margin-bottom: 18px;
+    max-width: 100%;   /* dos campos de fecha no necesitan todo el ancho */
 }
 
-/* 6. ESTADO DE CARGA LOCAL */
+/* ESTADO DE CARGA LOCAL */
 #section-totales .loading-blur {
-    filter: blur(4px);
+    filter: blur(5px);
     pointer-events: none;
-    opacity: 0.7;
-}           
+    opacity: 0.6;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    #section-totales .date-filter-container {
+        flex-direction: column;
+        gap: 12px;
+        max-width: none;
+    }
+}

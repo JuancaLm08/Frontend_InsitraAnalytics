@@ -1,200 +1,235 @@
 /* ------------------ CONFIGURACION CSS PARA LA SECCION RUTA ------------------ */
 
 #ruta-content .section-subtitle {
-    margin: 10px 0 5px 0 !important; 
-    font-size: 24px; 
-}
-
-/* HEADER DE MAPA Y BOTONES */
-.map-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.btn-limpiar {
-    padding: 8px 17px;
-    background-color: var(--fondo-summary);
-    border: 1px solid var(--borde-principal);
-    color: var(--texto);
-    border-radius: 7px;
-    cursor: pointer;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.85rem;
-    transition: all 0.3s ease;
-}
-
-.btn-limpiar:hover {
-    background-color: var(--hover-summary); 
-}
-
-/* MÉTRICAS RÁPIDAS SOBRE EL MAPA */
-.map-metrics {
-    display: flex;
-    gap: 30px;
-    padding: 5px 15px !important;
-}
-
-.map-metric-item label {
-    display: block;
+    margin: 22px 0 12px 0 !important;
     font-size: 1rem;
 }
 
-.map-metric-item p {
-    font-size: 1.4rem;
-    font-weight: bold;
-    color: var(--texto);
-}
-
-/* CONTENEDOR DEL MAPA */
-.map-container {
-    margin-top: 5px;
-    width: 100%;
-    height: 525px;
-    border: 1px solid var(--input-border);
-    border-radius: 10px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
-}
-
-#map-canvas {
-    background-color: #f8f9fa;
-}
-
-/* Ajuste para Leaflet */
-.leaflet-container {
-    height: 100% !important;
-    width: 100% !important;
-    z-index: 1; 
-    background: #1a1a1a;
-}
-
-/* MENSAJES INFORMATIVOS */
-.info-message-blue {
-    background-color: rgba(0, 170, 255, 0.1);
-    color: #00aaff;
-    padding: 15px 20px;
-    border-radius: 6px;
-    border: 1px solid rgba(0, 170, 255, 0.3);
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.info-message-blue::before {
-    font-weight: bold;
-    font-size: 1.2rem;
-}
-
-#ruta-content .data-expander {
-    margin-top: 0px !important; 
-}
-
-/* WRAPPER FILTROS + BOTÓN RESET */
+/* ---------------- FILTROS: FECHA + RANGO DE HORAS + RESET ---------------- */
 .date-filter-header {
     display: flex;
     align-items: flex-end;
     gap: 12px;
     flex-wrap: wrap;
+    margin-bottom: 6px;
 }
 
 .date-filter-header .date-filter-container {
     flex: 1;
     margin-bottom: 0;
+    align-items: flex-end;
 }
 
-.btn-reset-horas {
-    padding: 8px 14px;
-    background-color: var(--fondo-summary);
-    border: 1px solid var(--borde-principal);
-    color: var(--texto);
-    border-radius: 7px;
+/* La fecha ocupa el espacio libre; las horas van compactas */
+.date-filter-header .date-group { flex: 0 0 auto; }
+.date-filter-header .date-group:first-child { flex: 1 1 auto; min-width: 220px; }
+
+/* SELECTORES DE HORA (HH MM) */
+.time-select-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.time-select-group select {
+    width: 48px;
+    flex: 0 0 auto;
+    padding: 10px 4px;
+    text-align: center;
+    text-align-last: center;
+    min-width: 0;
     cursor: pointer;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.8rem;
+    background-image: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+/* En el diseño no hay dos puntos entre las cajas: la etiqueta ya dice qué es */
+.time-separator { display: none; }
+
+/* ---------------- BOTONES SECUNDARIOS ---------------- */
+.btn-reset-horas,
+.btn-limpiar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 15px;
+    background-color: var(--boton-bg);
+    border: 1px solid var(--input-border);
+    color: var(--texto);
+    border-radius: var(--radio-sm);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.76rem;
+    letter-spacing: 0.01em;
     white-space: nowrap;
-    transition: all 0.3s ease;
+    transition: border-color 0.2s ease, transform 0.15s ease;
     flex-shrink: 0;
-    align-self: flex-end;
 }
 
-.btn-reset-horas span {
-    font-size: 1rem;
-    display: inline-block;
-    transition: transform 0.4s ease;
+.btn-reset-horas { align-self: flex-end; }
+
+.btn-reset-horas:hover,
+.btn-limpiar:hover { border-color: var(--accent-borde); }
+
+.btn-reset-horas:active,
+.btn-limpiar:active { transform: scale(0.985); }
+
+.btn-reset-horas svg,
+.btn-limpiar svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.45s ease;
 }
 
-.btn-reset-horas:hover {
-    background-color: var(--hover-summary);
+.btn-reset-horas:hover svg { transform: rotate(-360deg); }
+
+/* ---------------- CABECERA DEL MAPA ---------------- */
+.map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
 }
 
-.btn-reset-horas:hover span {
-    transform: rotate(-360deg);
+/* ---------------- MÉTRICA DE LA ZONA DIBUJADA ---------------- */
+.map-metrics {
+    display: flex;
+    gap: 12px;
+    padding: 0 !important;
+    margin-bottom: 14px;
 }
 
-/* RESPONSIVE: el botón baja debajo de los filtros en móvil */
+.map-metric-item {
+    background-color: var(--superficie);
+    border: none;
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    padding: 14px 18px;
+    min-width: 122px;
+}
+
+.map-metric-item label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--texto-tenue);
+    margin-bottom: 6px;
+}
+
+.map-metric-item p {
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--texto);
+}
+
+/* ---------------- CONTENEDOR DEL MAPA ---------------- */
+.map-container {
+    margin-top: 0;
+    width: 100%;
+    height: 525px;
+    border: none;
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    overflow: hidden;
+    position: relative;
+}
+
+#map-canvas { background-color: var(--superficie-2); }
+
+.leaflet-container {
+    height: 100% !important;
+    width: 100% !important;
+    z-index: 1;
+    background: var(--superficie-2);
+    font-family: var(--font-ui);
+}
+
+/* Controles de Leaflet integrados al tema */
+.leaflet-bar,
+.leaflet-control-layers {
+    border: 1px solid var(--input-border) !important;
+    border-radius: var(--radio-sm) !important;
+    box-shadow: 0 2px 8px var(--shadow) !important;
+    overflow: hidden;
+}
+
+.leaflet-bar a,
+.leaflet-bar a:hover,
+.leaflet-control-layers-toggle {
+    background-color: var(--boton-bg) !important;
+    color: var(--texto) !important;
+    border-bottom: 1px solid var(--borde-suave) !important;
+    width: 28px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+}
+
+.leaflet-bar a:hover { background-color: var(--hover-summary) !important; }
+.leaflet-bar a:last-child { border-bottom: none !important; }
+
+.leaflet-control-layers-expanded {
+    background-color: var(--superficie) !important;
+    color: var(--texto) !important;
+    padding: 10px 12px !important;
+    font-size: 0.78rem;
+}
+
+.leaflet-control-attribution {
+    background: transparent !important;
+    color: var(--texto-tenue) !important;
+    font-size: 0.62rem !important;
+}
+
+.leaflet-control-attribution a { color: var(--texto-suave) !important; }
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+    background: var(--superficie) !important;
+    color: var(--texto) !important;
+    border-radius: var(--radio-sm) !important;
+    box-shadow: 0 8px 24px var(--shadow) !important;
+}
+
+/* El expandible de puntos va pegado al banner informativo */
+#ruta-content .data-expander { margin-top: 0 !important; }
+
+/* ---------------- RESPONSIVE ---------------- */
 @media (max-width: 768px) {
     .date-filter-header {
         flex-direction: column;
         align-items: stretch;
     }
-    .btn-reset-horas {
-        align-self: flex-start;
-    }
+
+    .btn-reset-horas { align-self: flex-start; }
+
+    .date-filter-header .date-filter-container { flex-wrap: wrap; }
+    .date-filter-header .date-group:first-child { min-width: 100%; }
 
     .map-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 15px;
+        gap: 12px;
     }
 
-    .map-metrics {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .map-container {
-        height: 400px;
-    }
-}
-
-/* SELECTORES DE HORA (HH:MM) - dos <select> en línea con separador */
-.time-select-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-}
-
-.time-select-group select {
-    flex: 1;
-    padding: 10px 8px;
-    text-align: center;
-    text-align-last: center;     /* centra el texto del valor seleccionado en algunos navegadores */
-    min-width: 0;                /* permite que el select se reduzca dentro del flex */
-    cursor: pointer;
-}
-
-.time-select-group select:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--borde);
-}
-
-.time-separator {
-    color: var(--texto);
-    font-size: 1.1rem;
-    font-weight: bold;
-    user-select: none;
-    opacity: 0.85;
+    .map-metrics { flex-direction: column; }
+    .map-container { height: 400px; }
 }
 
 /* BOTÓN DE CONSULTA */
 .btn-consultar {
     padding: 8px 18px;
-    background-color: var(--fondo-summary);
+    background-image: var(--grad-menu);
     border: 1px solid var(--borde-principal);
     color: var(--texto) !important;
     border-radius: 7px;

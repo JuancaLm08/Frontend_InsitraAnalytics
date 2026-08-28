@@ -1,107 +1,192 @@
-/* ------------------------------ MÉTRICAS ESPECÍFICAS DE INICIO ------------------------------ */
+/* ==========================================================================
+   INSITRA ANALYTICS — SECCIÓN INICIO
+   ========================================================================== */
+
+/* ------------------------------ GRID DE MÉTRICAS ------------------------------ */
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 22px;
 }
 
 .metric-card {
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--borde-principal);
+    padding: 16px 16px 15px;
+    border-radius: var(--radio);
+    border: none;
+    box-shadow: var(--sombra-card);
+    background-color: var(--superficie);
     text-align: left;
-    background-color: var(--fondo-metrics);
-}
-
-.metric-label { 
     display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9rem; 
-    color: var(--texto); 
-    margin-bottom: 10px; 
-    min-height: 30px; 
+    flex-direction: column;
+    transition: box-shadow 0.2s ease;
 }
 
-.metric-card h2 { font-weight: 400; font-size: 1.8rem; margin-bottom: 8px;}
+.metric-card:hover {
+    box-shadow: var(--sombra-card-hover);
+}
 
-/* INDICADORES DEL DIA (DELTAS) */
+/* ------------------------------ ETIQUETA + ICONO ------------------------------ */
+.metric-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--texto-suave);
+    margin-bottom: 14px;
+    min-height: 34px;
+}
+
+.metric-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background-color: var(--accent-suave);
+    color: var(--accent);
+    margin-top: -3px;
+}
+
+.metric-icon svg {
+    width: 13px;
+    height: 13px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Texto de la etiqueta: ocupa el espacio restante */
+.metric-label > span:not(.metric-icon):not(.help-icon) { flex: 1; min-width: 0; }
+
+/* ------------------------------ NÚMERO PRINCIPAL ------------------------------ */
+.metric-card h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 1.7rem;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--texto);
+    margin-bottom: 10px;
+}
+
+/* Nota bajo la predicción */
+.metric-card .metric-label:last-child {
+    margin-bottom: 0;
+    min-height: 0;
+    font-size: 0.66rem;
+    color: var(--texto-tenue);
+}
+
+/* ------------------------------ PÍLDORAS DE VARIACIÓN ------------------------------ */
 .delta {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: bold;
+    gap: 4px;
+    align-self: flex-start;
+    padding: 3px 10px;
+    border-radius: var(--radio-pill);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    border: none;
+    color: var(--texto-suave);
+    background-color: var(--borde-suave);
 }
 
 .delta.up {
-    color: #44ff44 !important;
-    background-color: rgba(0, 128, 0, 0.5);
-    border: 1px solid rgba(0, 255, 149, 0.5);
+    color: var(--positivo) !important;
+    background-color: var(--positivo-bg);
 }
 
 .delta.down {
-    color: #ff0055 !important;
-    background-color: rgba(128, 0, 0, 0.2);
-    border: 1px solid rgba(255, 68, 68, 0.5);
+    color: var(--negativo) !important;
+    background-color: var(--negativo-bg);
 }
 
-/* TOOLTIPS / HELP ICON */
+.delta span { font-size: 0.75rem; line-height: 1; }
+
+/* ------------------------------ TOOLTIPS DE AYUDA ------------------------------ */
+/* Aparecen al pasar el cursor por la tarjeta: mantienen la vista limpia */
 .help-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--texto);
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    border: 1px solid var(--borde-principal);
     border-radius: 50%;
-    font-size: 10px;
-    cursor: pointer;
+    font-size: 9px;
+    color: var(--texto-tenue);
+    cursor: help;
     position: relative;
+    opacity: 0;
+    transition: opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.metric-card:hover .help-icon,
+.help-icon:focus-visible,
+.chart-disclaimer .help-icon { opacity: 1; }
+
+.help-icon:hover {
+    color: var(--accent);
+    border-color: var(--accent-borde);
+}
+
+/* En dispositivos táctiles siempre visibles */
+@media (hover: none) {
+    .help-icon { opacity: 1; }
 }
 
 .help-icon::after {
     content: attr(data-help);
     white-space: pre-wrap;
     position: absolute;
-    top: 130%;      
-    left: 0;       
+    top: 150%;
+    left: 0;
     transform: translateX(-34%);
-    width: 180px;
-    background-color: var(--help-content); 
+    width: 190px;
+    background-color: var(--help-content);
+    box-shadow: 0 8px 24px var(--shadow);
     color: var(--texto);
-    text-align: justify;
-    padding: 10px;
-    border-radius: 6px;
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: var(--radio-sm);
     border: 1px solid var(--borde-principal);
-    font-size: 0.75rem;
-    z-index: 1000; 
+    font-size: 0.7rem;
+    font-weight: 400;
+    z-index: 1000;
     opacity: 0;
     visibility: hidden;
-    transition: 0.3s;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
     pointer-events: none;
-    line-height: 1.4;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.2);
+    line-height: 1.5;
 }
 
-.help-icon:hover::after {
+.help-icon:hover::after,
+.help-icon:focus-visible::after {
     opacity: 1;
     visibility: visible;
 }
 
-.help-icon.help-left::after {
-    transform: translateX(-75%); 
+.help-icon.help-left::after { transform: translateX(-78%); }
+
+/* ------------------------------ RESPONSIVE ------------------------------ */
+@media (max-width: 1400px) {
+    .metrics-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* RESPONSIVE */
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
     .metrics-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 560px) {
     .metrics-grid { grid-template-columns: 1fr; }
     .metric-card h2 { font-size: 1.5rem; }
 }

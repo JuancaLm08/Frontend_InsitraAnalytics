@@ -1,10 +1,68 @@
+/* ==========================================================================
+   INSITRA ANALYTICS — SECCIÓN POLÍGONO DE CARGA
+   Reescrito sobre los tokens del tema. Antes este archivo tenía colores fijos
+   (#333, #888, #f8f9fa, blanco) que no respondían al modo claro/oscuro, y una
+   regla .chart-box sin acotar que pisaba a todas las demás secciones porque
+   se carga la última. Ahora todo va acotado a #section-poligono-carga.
+   ========================================================================== */
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+.tabs-poligono {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--borde-principal);
+}
+
+.tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: 1px solid transparent;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--texto-tenue);
+    cursor: pointer;
+    margin-bottom: -1px;
+    border-radius: var(--radio-sm) var(--radio-sm) 0 0;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.tab-btn svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.tab-btn:hover {
+    color: var(--texto);
+    background: var(--borde-suave);
+}
+
+.tab-btn.active {
+    color: var(--texto);
+    background: var(--superficie);
+    border-color: var(--borde-principal);
+    border-bottom-color: var(--accent-solido);
+}
+
+.tab-btn.active svg { color: var(--accent); }
+
 /* ── Filtros superiores ────────────────────────────────────── */
 .filtros-poligono {
     display: flex;
     align-items: flex-end;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 24px;
+    margin-bottom: 18px;
 }
 
 .filtro-grupo {
@@ -14,361 +72,229 @@
 }
 
 .filtro-grupo label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary, #666);
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--texto-tenue);
 }
 
 .filtro-input {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    min-width: 180px;
-    background: white;
+    padding: 10px 13px;
+    border: 1px solid var(--input-border);
+    border-radius: var(--radio-sm);
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    min-width: 170px;
+    background-color: var(--input-bg);
+    color: var(--texto);
     cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .filtro-input:focus {
-    outline: none;
-    border-color: #378ADD;
+    border-color: var(--accent-borde);
+    box-shadow: 0 0 0 3px var(--accent-suave);
 }
 
+/* La fecha no necesita tanto ancho como la ruta */
+#fecha-franja, #fecha-estacion { min-width: 130px; }
+
+/* Botón principal: relleno sólido de marca, como en el diseño */
 .btn-consultar {
-    padding: 8px 20px;
-    background:var(--fondo-summary);
-    color: white;
-    border: 1px solid var(--borde-principal);
-    border-radius: 5px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-    height: 38px;
-}
-
-.tab-btn:hover {
-    color: #950c4b;
-    background: rgba(55, 138, 221, 0.08);   /* ← fondo suave al pasar */
-    border-radius: 8px 8px 0 0;
-}
-
-/* ── Tabs ──────────────────────────────────────────────────── */
-.tabs-poligono {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 0;
-}
-
-.tab-btn {
-    padding: 10px 20px;
+    padding: 10px 22px;
+    background-image: var(--grad-menu);
+    color: #FFFFFF;
     border: none;
-    background: none;
-    font-size: 18px;
+    border-radius: var(--radio-sm);
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
     font-weight: 500;
-    color: #0c0c0c;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    transition: all 0.2s;
-    border-radius: 8px 8px 0 0;
+    height: 40px;
+    transition: filter 0.2s ease, transform 0.15s ease;
 }
 
-.tab-btn:hover {
-    color: var(--texto);
-    background: rgba(0, 0, 0, 0.06);   /* ← gris neutro suave */
-    border-radius: 8px 8px 0 0;
+.btn-consultar:hover { filter: brightness(1.12); }
+.btn-consultar:active { transform: scale(0.985); }
+
+.btn-consultar:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: none;
 }
 
-.tab-btn.active {
-    color: #080808c9;
-    border-bottom-color: #c2bbbe42;
-    background: rgba(223, 217, 220, 0.12);
-}
 /* ── Slider de horas ───────────────────────────────────────── */
 .slider-container {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin-bottom: 24px;
+    background-color: var(--superficie);
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    padding: 16px 20px 14px;
+    margin-bottom: 14px;
 }
 
 .slider-container label {
     display: block;
-    font-size: 15px;
+    font-size: 0.85rem;
     font-weight: 500;
-    margin-bottom: 12px;
-    color: #333;
+    margin-bottom: 14px;
+    color: var(--texto);
 }
 
 .hora-slider {
+    -webkit-appearance: none;
+    appearance: none;
     width: 100%;
-    accent-color: #378ADD;
+    height: 3px;
+    border-radius: var(--radio-pill);
+    background: var(--borde-principal);
     cursor: pointer;
+    outline: none;
+}
+
+.hora-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-solido);
+    border: none;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+}
+
+.hora-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-solido);
+    border: none;
+    cursor: pointer;
+}
+
+.hora-slider:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px var(--accent-suave);
 }
 
 .slider-marcas {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
-    color: #888;
-    margin-top: 6px;
+    font-size: 0.68rem;
+    color: var(--texto-tenue);
+    margin-top: 8px;
 }
 
-/* ── Gráficas ──────────────────────────────────────────────── */
-.chart-box {
-    background: var(--fondo-summary);
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-
-.chart-box h2 {
-    font-size: 15px;
-    font-weight: 500;
-    margin-bottom: 4px;
-    color: #333;
-}
-
-.chart-hint {
-    font-size: 12px;
-    color: #888;
+/* ── Tarjeta de gráfica (acotada a esta sección) ───────────── */
+#section-poligono-carga .chart-box {
+    background-color: var(--superficie);
+    border: none;
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    padding: 18px 20px 14px;
     margin-bottom: 12px;
 }
 
-/* ── Modo oscuro ─────────────────────────────────────────────── */
-body:not(.light-mode) .filtro-input {
-    background: #111118;
-    color: #ffffff;
-    border-color: #444;
+#section-poligono-carga .chart-box h2 {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--texto);
+    text-align: center;
 }
 
-body:not(.light-mode) .slider-container {
-    background: #2a2a3a;
-    color: #ffffff;
+.chart-hint {
+    font-size: 0.7rem;
+    color: var(--texto-tenue);
+    margin-bottom: 10px;
 }
 
-body:not(.light-mode) .slider-container label {
-    color: #ffffff;
+/* ── Detalle de estación (tab 2) ───────────────────────────── */
+.estacion-detalle-box {
+    background-color: var(--superficie);
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    padding: 18px 20px;
+    margin-bottom: 18px;
 }
-
-body:not(.light-mode) .slider-marcas span {
-    color: #aaaaaa;
-}
-
-body:not(.light-mode) .chart-box {
-    background:  var(--fondo);
-    color: #ffffff;
-}
-
-body:not(.light-mode) .chart-box h2 {
-    color: #ffffff;
-}
-
-body:not(.light-mode) .tab-btn {
-    color: #aaaaaa;
-}
-
-body:not(.light-mode) .tab-btn.active {
-    color: #ffffff;
-}
-
-
 
 #detalle-placeholder {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 300px;
-    gap: 16px;
-    opacity: 0.9;
+    height: 280px;
+    gap: 14px;
 }
 
 #img-placeholder-estacion {
-    width: 140px;
-    filter: grayscale(30%);
+    width: 84px;
+    opacity: 0.35;
+    filter: grayscale(100%);
 }
 
 #detalle-placeholder p {
-    font-size: 13px;
-    color: var(--texto);
+    font-size: 0.82rem;
+    color: var(--texto-tenue);
     text-align: center;
 }
 
-/* ── Layout estación maestra ─────────────────────────────────── */
-.estacion-maestra-grid {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 16px;
-    align-items: start;
-}
-
-.estacion-lista-box {
-    background: transparent;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-
-.estacion-lista-box h3 {
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 4px;
-}
-
-.estacion-lista-box {
-    background: transparent;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    min-width: 320px;
-}
-
-
-.estacion-item:hover {
-    background: #f0f7ff;
-}
-
-.estacion-item.active {
-    background: #e6f1fb;
-    font-weight: 500;
-    color: #185FA5;
-}
-
-.estacion-item .ocu-badge {
-    background: #378ADD;
-    color: white;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 12px;
-}
-
-.estacion-detalle-box {
-    background: transparent;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-
-.estacion-detalle-box h3 {
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 16px;
-}
-
-body:not(.light-mode) .estacion-lista-box,
-body:not(.light-mode) .estacion-detalle-box {
-    background: transparent;
-    color: #ffffff;
-}
-
-body:not(.light-mode) .estacion-item {
-    border-bottom-color: #333;
-}
-
-body:not(.light-mode) .estacion-item:hover {
-    background: #2a3a4a;
-}
-
-body:not(.light-mode) .estacion-item.active {
-    background: #1a3a5a;
-    color: #7ab8f5;
-}
-
-@media (max-width: 768px) {
-    .estacion-maestra-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.estacion-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-}
-
-.estacion-nombre {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--texto);
-}
-
-.estacion-franjas {
-    font-size: 11px;
-    color: #888;
-    line-height: 1.4;
-}
-
-body:not(.light-mode) .estacion-franjas {
-    color: #aaaaaa;
-}
-
-.estacion-ocupacion {
-    font-size: 13px;
-    color: var(--texto);
-    opacity: 0.8;
-}
-
 #titulo-detalle-estacion {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 16px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 14px;
     color: var(--texto);
 }
 
-/* ── Grid de tarjetas estación maestra ──────────────────────── */
+/* ── Grid de tarjetas de estación maestra ──────────────────── */
 .grid-titulo {
-    font-size: 15px;
+    font-size: 0.95rem;
     font-weight: 500;
-    margin: 24px 0 12px;
+    margin: 20px 0 12px;
     color: var(--texto);
 }
 
 .estacion-maestra-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
 .estacion-card {
-    background: var(--fondo-summary);
-    border-radius: 12px;
-    padding: 16px 20px;
+    background-color: var(--superficie);
+    box-shadow: var(--sombra-card);
+    border: none;
+    border-left: 3px solid transparent;
+    border-radius: var(--radio);
+    padding: 14px 16px;
     cursor: pointer;
-    transition: background 0.15s, box-shadow 0.15s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    border: 1px solid rgba(255,255,255,0.08);
+    gap: 5px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .estacion-card:hover {
-    background: #e8f3fc;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border: 1px solid #378ADD;
+    box-shadow: var(--sombra-card-hover);
+    border-left-color: var(--accent-borde);
 }
 
 .estacion-card.active {
-    background: #d4eaf9;
-    border-left: 3px solid #378ADD;
+    border-left-color: var(--accent-solido);
+    box-shadow: var(--sombra-card-hover);
 }
 
 .estacion-card-hora {
-    font-size: 11px;
-    font-weight: 600;
-    color: #378ADD;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--accent);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.06em;
 }
 
 .estacion-card-nombre {
-    font-size: 14px;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--texto);
     line-height: 1.3;
@@ -376,58 +302,111 @@ body:not(.light-mode) .estacion-franjas {
 }
 
 .estacion-card-ocupacion {
-    font-size: 13px;
-    color: var(--texto);
-    opacity: 0.7;
+    font-size: 0.78rem;
+    color: var(--texto-suave);
 }
 
+/* Distintivo de estación maestra: mismo ámbar que la gráfica */
 .estacion-card-badge {
     display: inline-block;
-    background: #950c4b;
-    color: white;
-    font-size: 12px;
+    background-color: var(--maestra);
+    color: #1A1A1A;
+    font-size: 0.68rem;
     font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 12px;
+    padding: 2px 9px;
+    border-radius: var(--radio-pill);
     margin-top: 4px;
     align-self: flex-start;
 }
 
-body:not(.light-mode) .estacion-card {
-    background: var(--fondo);
+/* ── Lista de estaciones (layout alterno, se conserva) ─────── */
+.estacion-maestra-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 14px;
+    align-items: start;
 }
 
-body:not(.light-mode) .estacion-card:hover {
-    background: #1a2a3a;
+.estacion-lista-box {
+    background-color: var(--superficie);
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    padding: 14px;
+    min-width: 300px;
 }
 
-body:not(.light-mode) .estacion-card.active {
-    background: #1a3a5a;
-    border-left-color: #7ab8f5;
+.estacion-lista-box h3 {
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--texto);
 }
 
-body:not(.light-mode) .estacion-card-hora {
-    color: #7ab8f5;
+.estacion-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: var(--radio-sm);
+    border-bottom: 1px solid var(--borde-suave);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
 }
 
-body:not(.light-mode) .estacion-card {
-    background: var(--fondo);
-    border: 1px solid rgba(255,255,255,0.08);
+.estacion-item:hover { background-color: var(--borde-suave); }
+
+.estacion-item.active {
+    background-color: var(--accent-suave);
+    color: var(--accent);
+    font-weight: 500;
 }
 
-body:not(.light-mode) .estacion-card:hover {
-    background: #1a2a3a;
-    border: 1px solid #7ab8f5;
+.estacion-item .ocu-badge {
+    background-color: var(--accent-solido);
+    color: #FFFFFF;
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: var(--radio-pill);
 }
 
+.estacion-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}
+
+.estacion-nombre {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--texto);
+}
+
+.estacion-franjas {
+    font-size: 0.7rem;
+    color: var(--texto-tenue);
+    line-height: 1.4;
+}
+
+.estacion-ocupacion {
+    font-size: 0.78rem;
+    color: var(--texto-suave);
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 900px) {
-    .estacion-maestra-cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    .estacion-maestra-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .estacion-maestra-grid { grid-template-columns: 1fr; }
+    .filtros-poligono { align-items: stretch; }
+    .filtro-grupo, .filtro-input { width: 100%; }
+    .btn-consultar { width: 100%; }
+    .tabs-poligono { overflow-x: auto; }
+    .tab-btn { white-space: nowrap; }
 }
 
 @media (max-width: 600px) {
-    .estacion-maestra-cards {
-        grid-template-columns: 1fr;
-    }
+    .estacion-maestra-cards { grid-template-columns: 1fr; }
 }
