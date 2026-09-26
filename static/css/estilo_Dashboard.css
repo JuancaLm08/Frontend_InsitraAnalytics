@@ -412,6 +412,11 @@ body {
 
 .section-subtitle b { font-weight: 500; }
 
+#view-content .section-subtitle:first-child,
+.tab-content > .section-subtitle:first-child {
+    margin-top: 6px;
+}
+
 /* -------------------------------- LOGO SUPERIOR (ya no se usa; oculto) -------------------------------- */
 .top-logo-container { display: none; }
 
@@ -807,6 +812,7 @@ td.row-index { color: var(--texto-tenue); font-size: 0.75rem; }
     /* Ocultar textos: dejar solo iconos en la barra superior */
     .topbar-btn span,
     .topbar-logout span,
+    .topbar-brand span,
     .topbar-user b { display: none; }
 
     /* Los botones quedan cuadrados, centrados al icono */

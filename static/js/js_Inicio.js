@@ -1,4 +1,7 @@
 /**********************************************************************************************************************************************************/
+
+
+
 // FUNCION PARA DEFINIR EL TIPO DE FLECHA EN LAS METRICAS DE INICIO
 const updateDeltaBadge = (id, valor, clase) => {
     const el = document.getElementById(id);

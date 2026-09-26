@@ -14,7 +14,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    
     <title id="titulo-general">Insitra Analytics: Inicio</title>
+
+    <script src="../static/js/js_SessionGuard.js"></script>
+
     <link rel="icon" type="image/png" href="../static/images/insitra_logo_mini.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -22,7 +26,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script> <!-- Para ver la animacion de carga -->
-        <script src="https://cdn.plot.ly/plotly-4.0.0.min.js"></script> <!-- Para mostrar las graficas (>=2.27 para fillgradient) -->
+        <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script> <!-- Para mostrar las graficas (>=2.27 para fillgradient) -->
 
     <!-- Elementos css generales de Analytics -->
     <link rel="stylesheet" href="../static/css/estilo_Dashboard.css">
@@ -36,13 +40,20 @@
             <div class="topbar-left">
                 <!-- Hamburguesa: solo se muestra en móvil; usa el mismo toggleSidebar() -->
                 <button class="topbar-burger" onclick="toggleSidebar()" aria-label="Abrir o cerrar el menú">☰</button>
-                <a class="topbar-brand" >
+                <a class="topbar-brand">
                     <img src="../static/images/insitra_logo.png" class="topbar-logo" alt="">
                     <span class="topbar-title">Insitra Analytics</span>
                 </a>
             </div>
 
             <div class="topbar-right">
+                <!-- Actualizar la sección activa. Conserva id="btn-refresh":
+                     el listener de js_Dashboard.js lo engancha por id, no por
+                     posición, así que sigue funcionando desde aquí. -->
+                <button type="button" class="topbar-btn" id="btn-refresh">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                </button>
+
                 <!-- Botón "Tema": alterna claro/oscuro. Mantiene el input oculto
                      que ya usa setTheme() como fuente de verdad del estado. -->
                 <button type="button" class="topbar-btn" id="btn-tema"
@@ -71,16 +82,12 @@
 
         <!------------------------------------------ CONTENIDO PRINCIPAL ----------------------------------------->
         <main class="content">
-            <!-- Cabecera: el titulo se actualiza segun la seccion activa -->
-            <header class="view-header">
-                <h1 id="view-title">---</h1>
-
-                <!-- Actualizar la seccion actual -->
-                <button id="btn-refresh" class="btn-refresh">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                    <span>Actualizar sección</span>
-                </button>
-            </header>
+            <!-- El título de sección se movió a la pestaña del navegador; el botón
+                 "Actualizar sección" vive ahora en la barra superior. Se conserva
+                 este #view-title OCULTO porque changeView() (js_Sidebar.js) le
+                 escribe innerText en cada cambio de vista: si no existiera, daría
+                 error. Oculto con hidden, no ocupa espacio. -->
+            <h1 id="view-title" hidden></h1>
 
             <div id="view-content">
                 <!--------------------- SECCIÓN DE INICIO (id = 1) --------------------->
