@@ -36,7 +36,7 @@ URL_LOGIN = os.environ["URL_LOGIN"]
 URL_LOGIN_MATRIZ = os.environ["URL_LOGIN_MATRIZ"]
 ID_EMPRESA_ADMIN = 1
 RUTAS_SIN_GRUPO = {'/api/grupos'}
-RUTAS_PUBLICAS = {'index', 'login', 'access', 'logout', 'static'}
+RUTAS_PUBLICAS = {'access', 'logout', 'static'}
 _mapa_cache = {"data": None, "expira": 0}
 MAPA_TTL = 300
 
@@ -174,34 +174,12 @@ except:
 # INICIAR SESION
 @app.route('/')
 def index():
-    return render_template('IniciarSesion.html') # Definir IniciarSesion.html como la vista inicial
+    return redirect(URL_LOGIN_MATRIZ)
 
 @app.route('/login', methods=['POST'])
 def login():
-    datos = request.json
-    email = datos.get('email') or datos.get('usuario')   # tu form manda 'usuario'
-    password = datos.get('password')
+    return jsonify({"success": False, "redirect": URL_LOGIN_MATRIZ}), 410
 
-    # 1) credenciales -> token, contra la matriz
-    try:
-        r = requests.post(URL_LOGIN, json={"email": email, "password": password}, timeout=10)
-    except requests.RequestException:
-        return jsonify({"success": False, "message": "No se pudo contactar al servicio de autenticación."})
-
-    if r.status_code != 200:
-        return jsonify({"success": False, "message": "Correo o contraseña incorrectos."})
-
-    token = r.json().get("token")
-    if not token:
-        return jsonify({"success": False, "message": "Respuesta inválida del servicio."})
-
-    # 2) misma puerta de sesión que /access (usa SOLO el token)
-    try:
-        iniciar_sesion_con_token(token)
-    except TokenInvalido:
-        return jsonify({"success": False, "message": "No se pudo validar la sesión."})
-
-    return jsonify({"success": True, "redirect": url_for('dashboard')})
 ##############################################################################################################################################################
 # ENDPOINT  PARA VERIFICAR EL TOKEN JWT DEL USUARIO Y DAR ACCESO A LA SECCION DE DASHBOARD
 @app.route('/access')
@@ -219,7 +197,7 @@ def access():
 @app.route('/Dashboard')
 def dashboard():
     if 'user_key' not in session:
-        return redirect(url_for('index'))
+        return salir_a_matriz()
     usuario = session.get('user_name')
     roles_usuario = session.get('roles', [])
     try:
