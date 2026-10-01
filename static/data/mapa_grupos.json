@@ -1,9 +1,0 @@
-[
-  { "idEmpresa": 3, "group_id": 11, "nombre": "COREVSA" },
-  { "idEmpresa": 4, "group_id": 10, "nombre": "CODIVERSA" },
-  { "idEmpresa": 5, "group_id": 12, "nombre": "COPESA" },
-  { "idEmpresa": 7, "group_id": 27, "nombre": "SITRAQ" },
-  { "idEmpresa": 9, "group_id": 7,  "nombre": "ZOXO" },
-  { "idEmpresa": 14, "group_id":19, "nombre": "AUISA" },
-  { "idEmpresa": 15, "group_id":49, "nombre": "CONGESA"} 
-] 
