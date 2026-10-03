@@ -176,9 +176,6 @@ except:
 def index():
     return redirect(URL_LOGIN_MATRIZ)
 
-@app.route('/login', methods=['POST'])
-def login():
-    return jsonify({"success": False, "redirect": URL_LOGIN_MATRIZ}), 410
 
 ##############################################################################################################################################################
 # ENDPOINT  PARA VERIFICAR EL TOKEN JWT DEL USUARIO Y DAR ACCESO A LA SECCION DE DASHBOARD
