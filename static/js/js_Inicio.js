@@ -15,8 +15,37 @@ const updateDeltaBadge = (id, valor, clase) => {
 
 /**********************************************************************************************************************************************************/
 // FUNCION PARA MOSTRAR LOS INDICADORES DEL DIA
+const METRICAS_INICIO = ['metric-pasajeros-dia', 'metric-pasajeros-hora', 'metric-total-pasajeros', 'metric-ultima-hora-total', 'metric-prediccion-pasajeros'];
+const HELP_PREDICCION_BASE = 'Este indicador muestra una predicción de la cantidad de pasajeros estimados al final del día de hoy.';
+
+// Regresa los indicadores a su estado inicial ('--')
+function limpiarMetricas() {
+    METRICAS_INICIO.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = '--';
+    });
+    ['delta-pasajeros-dia', 'delta-pasajeros-hora'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.innerHTML = '--'; el.className = 'delta'; }
+    });
+    const labelDia = document.getElementById('label-comparativa-dia');
+    if (labelDia) labelDia.innerText = 'Vs. mismo día';
+}
+
+// Deja toda la sección sin rastro del corredor anterior
+function limpiarInicio() {
+    limpiarMetricas();
+    const vacio = { values: [], rows: [] };
+    [['chart-pasajeros-hora', 'tabla-pasajeros-hora'], ['chart-kilometros-hora', 'tabla-kilometros-hora'], ['chart-IPK', 'tabla-IPK']].forEach(([chart, tabla]) => {
+        renderizarGraficaMaster(vacio, chart);
+        renderizarTablaMaster(vacio, tabla);
+    });
+}
+
+const serieConDatos = s => !!(s && s.grafica && Array.isArray(s.grafica.values) && s.grafica.values.length > 0);
+
 function renderizarMetricas(data) {
-    if (data.error) return;
+    if (!data || data.error) { limpiarMetricas(); return; }
 
     const labelDia = document.getElementById('label-comparativa-dia');
     if (labelDia) labelDia.innerText = `Pasajeros desde el último ${data.nombre_dia}`;
@@ -40,7 +69,12 @@ async function actualizarDashboardInicio(groupId) {
         const response = await fetch(`/api/inicio-data?groupid=${groupId}`);
         const data = await response.json();
 
-        if (!data.success) {
+        // "Sin datos" = el backend lo dice (success false) o responde success
+        // true pero con las tres series vacías.
+        const hayDatos = data.success && [data.pasajeros, data.kilometros, data.IPK].some(serieConDatos);
+
+        if (!hayDatos) {
+            limpiarInicio();
             if (noDataBanner) noDataBanner.style.display = 'block';
             if (content) content.style.display = 'none';
             return;
@@ -52,6 +86,11 @@ async function actualizarDashboardInicio(groupId) {
         renderizarMetricas(data.metricas);
 
         try {
+            // Se resetea primero: si el corredor no tiene fila en el CSV no debe
+            // heredar la precisión/variación del corredor anterior.
+            const helpIcon = document.querySelector('#metric-prediccion-pasajeros').parentElement.querySelector('.help-icon');
+            if (helpIcon) helpIcon.setAttribute('data-help', HELP_PREDICCION_BASE);
+
             const csvRes = await fetch('/static/data/DescripcionModelos.csv');
             const csvText = await csvRes.text();
             
@@ -63,29 +102,24 @@ async function actualizarDashboardInicio(groupId) {
                 const precision = columnas[1]?.trim();
                 const variacion = columnas[2]?.trim();
 
-                const helpIcon = document.querySelector('#metric-prediccion-pasajeros').parentElement.querySelector('.help-icon');
-                if (helpIcon) {
-                    helpIcon.setAttribute('data-help', `Este indicador muestra una predicción de la cantidad de pasajeros estimados al final del día de hoy.\n` +
-                                                       `Precisión: ${precision}%\n` +
-                                                       `Variación: ±${variacion} pax.`
-                    );
-                }
+                if (helpIcon) helpIcon.setAttribute('data-help', `${HELP_PREDICCION_BASE}\nPrecisión: ${precision}%\nVariación: ±${variacion} pax.`);
             }
         } catch (csvErr) {
             console.warn("Error:", csvErr);
         }
 
-        renderizarGraficaMaster(data.pasajeros.grafica, 'chart-pasajeros-hora');
-        renderizarTablaMaster(data.pasajeros.tabla, 'tabla-pasajeros-hora');
+        renderizarGraficaMaster(data.pasajeros?.grafica, 'chart-pasajeros-hora');
+        renderizarTablaMaster(data.pasajeros?.tabla, 'tabla-pasajeros-hora');
 
-        renderizarGraficaMaster(data.kilometros.grafica, 'chart-kilometros-hora');
-        renderizarTablaMaster(data.kilometros.tabla, 'tabla-kilometros-hora');
+        renderizarGraficaMaster(data.kilometros?.grafica, 'chart-kilometros-hora');
+        renderizarTablaMaster(data.kilometros?.tabla, 'tabla-kilometros-hora');
 
-        renderizarGraficaMaster(data.IPK.grafica, 'chart-IPK');
-        renderizarTablaMaster(data.IPK.tabla, 'tabla-IPK');
+        renderizarGraficaMaster(data.IPK?.grafica, 'chart-IPK');
+        renderizarTablaMaster(data.IPK?.tabla, 'tabla-IPK');
 
     } catch (error) {
         console.error("Error:", error);
+        limpiarInicio();
         if (noDataBanner) noDataBanner.style.display = 'block';
         if (content) content.style.display = 'none';
     } finally {

@@ -267,30 +267,48 @@ function renderizarTablaMaster(data, tableId) {
 
     // 1. Renderizar Cabeceras
     const thead = table.querySelector('thead');
-    if (thead && data.headers) {
+    if (thead && data && data.headers) {
         thead.innerHTML = `<tr><th style="width: 30px;">#</th>${data.headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
     }
 
     // 2. Renderizar Filas (N columnas)
+    //    Siempre se reescribe el tbody: si no hay filas se vacía, para no
+    //    dejar visibles las del corredor/consulta anterior.
     const tbody = table.querySelector('tbody');
-    if (tbody && data.rows && data.rows.length > 0) {
-        tbody.innerHTML = data.rows.map((row, i) => {
-            const celdasDinamicas = Object.values(row).map(val => `<td>${val}</td>`).join('');
+    if (!tbody) return;
 
-            return `
-                <tr>
-                    <td class="row-index">${i + 1}</td>
-                    ${celdasDinamicas}
-                </tr>`;
-        }).join('');
-    }
+    const rows = (data && Array.isArray(data.rows)) ? data.rows : [];
+    tbody.innerHTML = rows.map((row, i) => {
+        const celdasDinamicas = Object.values(row).map(val => `<td>${val}</td>`).join('');
+
+        return `
+            <tr>
+                <td class="row-index">${i + 1}</td>
+                ${celdasDinamicas}
+            </tr>`;
+    }).join('');
 }
 
 /**********************************************************************************************************************************************************/
 // FUNCION MODULARIZADA PARA MOSTRAR UNA GRAFICA SEGUN LOS DATOS RECIBIDOS
 function renderizarGraficaMaster(data, containerId) {
     const chartDiv = document.getElementById(containerId);
-    if (!chartDiv || !data.values || data.values.length === 0) return;
+    if (!chartDiv) return;
+
+    // Sin datos: se destruye la gráfica previa en lugar de salir sin tocar el
+    // contenedor (antes se quedaba pintada la del corredor/consulta anterior).
+    if (!data || !Array.isArray(data.values) || data.values.length === 0) {
+        if (typeof Plotly !== 'undefined') Plotly.purge(chartDiv);
+        chartDiv.innerHTML = '<p class="chart-empty">Sin datos para mostrar.</p>';
+        chartDiv.dataset.vacio = '1';
+        return;
+    }
+
+    // Venimos de un estado vacío: quitar el mensaje antes de volver a graficar
+    if (chartDiv.dataset.vacio) {
+        chartDiv.innerHTML = '';
+        delete chartDiv.dataset.vacio;
+    }
 
     const config = data.config || {};
     const t = temaGrafica();
@@ -388,9 +406,12 @@ function renderizarGraficaMaster(data, containerId) {
         modeBarButtonsToRemove: ['zoom2d','pan2d','select2d','lasso2d','autoScale2d', 'sendDataToCloud']
     }).then(() => {
         Plotly.Plots.resize(chartDiv);
-        const resizeObserver = new ResizeObserver(() => {
-            if (chartDiv.clientWidth > 0) Plotly.Plots.resize(chartDiv);
-        });
-        resizeObserver.observe(chartDiv);
+        // Un solo observer por contenedor (antes se creaba uno nuevo en cada render)
+        if (!chartDiv._resizeObserver) {
+            chartDiv._resizeObserver = new ResizeObserver(() => {
+                if (chartDiv.clientWidth > 0 && !chartDiv.dataset.vacio) Plotly.Plots.resize(chartDiv);
+            });
+            chartDiv._resizeObserver.observe(chartDiv);
+        }
     });
 }
