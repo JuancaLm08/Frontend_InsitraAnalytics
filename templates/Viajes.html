@@ -1,0 +1,161 @@
+<!-- Elementos css de la Seccion Viajes -->
+<link rel="stylesheet" href="../static/css/estilo_Viajes.css">
+
+<!--
+* Sección de Viajes: solo LEE lo que dejó el job del polígono de carga (pc_viaje).
+* Un "viaje" aquí es un tramo tipo 'viaje' con ruta identificada; los viajes sin ruta
+  y las maniobras no entran a la matriz, pero se informan en la tarjeta de viajes totales
+  y aparecen en el detalle si se activa el interruptor.
+-->
+
+<div id="section-viajes" style="display: none;">
+
+    <!-- ANIMACION DE CARGA -->
+    <div id="loader-viajes" class="section-loader" style="display: none;">
+        <div class="lottie-anim-canvas"></div>
+    </div>
+
+    <!----- FILTROS ----->
+    <div class="vj-filtros">
+        <div class="vj-filtro">
+            <label for="fecha-viajes">Fecha</label>
+            <input type="date" id="fecha-viajes">
+        </div>
+        <div class="vj-filtro">
+            <label for="ruta-viajes">Ruta</label>
+            <select id="ruta-viajes">
+                <option value="">Todas</option>
+            </select>
+        </div>
+        <div class="vj-filtro">
+            <label for="unidad-viajes">Unidad</label>
+            <select id="unidad-viajes">
+                <option value="">Todas</option>
+            </select>
+        </div>
+        <button type="button" id="btn-consultar-viajes" class="vj-btn-consultar">Consultar</button>
+    </div>
+
+    <div id="no-data-banner-viajes" class="status-banner" style="display: none;">
+        No hay viajes para los filtros seleccionados.
+    </div>
+
+    <div id="viajes-content" style="display: none;">
+
+        <!----- INDICADORES ----->
+        <div class="vj-metrics">
+            <div class="metric-card">
+                <p class="metric-label">
+                    <span class="metric-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="17 2 21 6 17 10"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><polyline points="7 22 3 18 7 14"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>
+                    </span>
+                    <span>Viajes totales</span>
+                    <span class="help-icon" tabindex="0" data-help="Solo cuenta los viajes con ruta identificada. Los viajes sin ruta y las maniobras se indican aparte, debajo del número.">?</span>
+                </p>
+                <h2 id="metric-viajes-totales">--</h2>
+                <p class="vj-metric-sub" id="metric-viajes-otros"></p>
+            </div>
+
+            <div class="metric-card">
+                <p class="metric-label">
+                    <span class="metric-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><line x1="3" y1="11" x2="21" y2="11"/><circle cx="7.5" cy="19" r="1.6"/><circle cx="16.5" cy="19" r="1.6"/></svg>
+                    </span>
+                    <span>Unidades activas</span>
+                    <span class="help-icon" tabindex="0" data-help="Unidades que hicieron al menos un viaje con ruta identificada.">?</span>
+                </p>
+                <h2 id="metric-viajes-unidades">--</h2>
+                <p class="vj-metric-sub"></p>
+            </div>
+
+            <div class="metric-card">
+                <p class="metric-label">
+                    <span class="metric-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><line x1="5" y1="19" x2="19" y2="5"/></svg>
+                    </span>
+                    <span>Promedio por unidad</span>
+                </p>
+                <h2 id="metric-viajes-promedio">--</h2>
+                <p class="vj-metric-sub"></p>
+            </div>
+
+            <div class="metric-card">
+                <p class="metric-label">
+                    <span class="metric-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 3 14.8 8.7 21 9.6 16.5 14 17.6 20.2 12 17.3 6.4 20.2 7.5 14 3 9.6 9.2 8.7"/></svg>
+                    </span>
+                    <span>Unidad con más viajes</span>
+                    <span class="help-icon help-left" tabindex="0" data-help="Si hay empate se muestra la primera en orden alfabético.">?</span>
+                </p>
+                <h2 id="metric-viajes-top">--</h2>
+                <p class="vj-metric-sub" id="metric-viajes-top-sub"></p>
+            </div>
+        </div>
+
+        <!----- MATRIZ UNIDAD x RUTA + VIAJES POR RUTA ----->
+        <div class="vj-grid">
+
+            <div class="chart-box vj-matriz-box">
+                <div class="vj-box-head">
+                    <h2>Viajes por unidad y ruta</h2>
+                    <div class="vj-leyenda" aria-label="Escala de viajes">
+                        <span class="vj-leyenda-label">Viajes:</span>
+                        <span class="vj-heat vj-h1">1–3</span>
+                        <span class="vj-heat vj-h2">4–6</span>
+                        <span class="vj-heat vj-h3">7–9</span>
+                        <span class="vj-heat vj-h4">10–12</span>
+                        <span class="vj-heat vj-h5">13+</span>
+                    </div>
+                </div>
+                <div class="vj-tabla-wrap">
+                    <table id="tabla-viajes-matriz" class="vj-matriz">
+                        <thead></thead>
+                        <tbody></tbody>
+                        <tfoot></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div class="chart-box vj-rutas-box">
+                <h2>Viajes por ruta</h2>
+                <div id="vj-rutas-barras" class="vj-rutas"></div>
+                <p class="vj-rutas-pie" id="vj-ruta-top"></p>
+            </div>
+
+        </div>
+
+        <!----- DETALLE DE VIAJES (se pide al abrir) ----->
+        <details class="data-expander vj-detalle" id="vj-detalle">
+            <summary>Ver detalle de viajes</summary>
+            <button class="btn-download" onclick="exportTableToCSV('tabla-viajes-detalle')" aria-label="Descargar detalle en CSV">
+                <svg class="download-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+            </button>
+
+            <div class="vj-detalle-barra">
+                <label class="vj-switch">
+                    <input type="checkbox" id="vj-incluir-otros">
+                    <span class="vj-switch-pista" aria-hidden="true"></span>
+                    <span>Incluir maniobras y viajes sin ruta</span>
+                </label>
+                <span class="vj-detalle-conteo" id="vj-detalle-conteo"></span>
+            </div>
+
+            <div id="vj-detalle-estado" class="vj-detalle-estado"></div>
+
+            <div class="table-container">
+                <table id="tabla-viajes-detalle">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </details>
+
+    </div>
+</div>
+
+<!-- JavaScript de la Seccion Viajes -->
+<script src="../static/js/js_Viajes.js"></script>

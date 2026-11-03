@@ -509,5 +509,42 @@ def get_poligono_carga_data():
         print(f"\n[POLIGONO_CARGA] ERROR:\n{traceback.format_exc()}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+""" ################################################################## SECCION DE VIAJES ################################################################# """
+# Solo lee lo que dejó el job del polígono de carga. ruta y unidad son opcionales (vacío = todas).
+VIAJES_PARAMS = ('groupid', 'inicio', 'final', 'ruta', 'unidad')
+
+@app.route('/api/viajes-data')
+def get_viajes_data():
+    params = {k: request.args.get(k) for k in VIAJES_PARAMS if request.args.get(k)}
+
+    if not params.get('groupid') or not params.get('inicio') or not params.get('final'):
+        return jsonify({"success": False, "error": "Faltan parámetros: groupid, inicio, final"}), 400
+
+    try:
+        response = bck("get", "/api/viajes-data", params=params, timeout=60)
+        return jsonify(response.json()), response.status_code
+
+    except Exception as e:
+        import traceback
+        print(f"\n[VIAJES] ERROR en /api/viajes-data:\n{traceback.format_exc()}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/viajes-detalle')
+def get_viajes_detalle():
+    params = {k: request.args.get(k) for k in VIAJES_PARAMS + ('solo_viajes',) if request.args.get(k)}
+
+    if not params.get('groupid') or not params.get('inicio') or not params.get('final'):
+        return jsonify({"success": False, "error": "Faltan parámetros: groupid, inicio, final"}), 400
+
+    try:
+        response = bck("get", "/api/viajes-detalle", params=params, timeout=60)
+        return jsonify(response.json()), response.status_code
+
+    except Exception as e:
+        import traceback
+        print(f"\n[VIAJES] ERROR en /api/viajes-detalle:\n{traceback.format_exc()}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)

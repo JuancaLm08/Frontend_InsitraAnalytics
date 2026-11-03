@@ -45,7 +45,9 @@
 
     /* Series de gráfica y categorías de tarifa */
     --serie-descensos:  #5B8FD6;
+    --serie-ocupacion:  #4CC27A;   /* línea de ocupación (Polígono de Carga) */
     --maestra:          #F4C542;
+    --maestra-banda:    rgba(244, 197, 66, 0.13);   /* bandas de "franja maestra" (Polígono) */
     --tarifa-normal:    #4A90E2;
     --tarifa-nocturna:  #A78BFA;
     --tarifa-especial:  #F59E0B;
@@ -132,7 +134,9 @@ body.light-mode {
     --accent-solido:    #B61754;
 
     --serie-descensos:  #5B8FD6;
+    --serie-ocupacion:  #3A9A5B;
     --maestra:          #C48A10;
+    --maestra-banda:    rgba(240, 196, 70, 0.28);
     --tarifa-normal:    #2B6CB0;
     --tarifa-nocturna:  #7C5CD6;
     --tarifa-especial:  #C48A10;
@@ -1106,3 +1110,195 @@ td.row-index { color: var(--texto-tenue); font-size: 0.75rem; }
     font-size: 0.85rem;
     opacity: 0.6;
 }
+
+/* -------------------------------- SELECTOR ESTILIZADO (js_SelectEstilizado.js) --------------------------------
+   Botón + panel propios sobre un <select> nativo oculto. Lo usan Viajes y Polígono de Carga;
+   cada sección solo ajusta el ancho del botón.
+   -------------------------------------------------------------------------- */
+/* El <select> nativo sigue en el DOM como fuente de verdad, pero oculto */
+.sel-est-nativo {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+.sel-est { position: relative; }
+
+.sel-est-boton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    padding: 0 12px 0 13px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radio-sm);
+    color: var(--texto);
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sel-est-boton:hover { border-color: var(--accent-borde); }
+
+.sel-est-boton:focus-visible,
+.sel-est.esta-abierto .sel-est-boton {
+    border-color: var(--accent-borde);
+    box-shadow: 0 0 0 3px var(--accent-suave);
+}
+
+/* Filtro activo (no "Todas"): el valor toma el color de marca */
+.sel-est-boton.sel-est-filtrado .sel-est-valor { color: var(--accent); font-weight: 500; }
+
+.sel-est-valor {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sel-est-chevron {
+    display: inline-flex;
+    color: var(--texto-tenue);
+    transition: transform 0.25s ease;
+}
+
+.sel-est-chevron svg,
+.sel-est-buscador svg,
+.sel-est-op svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+.sel-est.esta-abierto .sel-est-chevron { transform: rotate(180deg); }
+
+.sel-est-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 1200;
+    min-width: 100%;
+    width: max-content;
+    max-width: 300px;
+    background-color: var(--superficie);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radio-sm);
+    box-shadow: 0 12px 32px var(--shadow);
+    overflow: hidden;
+    animation: selEstEntrada 0.14s ease-out;
+}
+
+.sel-est-panel[hidden] { display: none; }
+
+@keyframes selEstEntrada {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.sel-est-buscador {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--borde-suave);
+    color: var(--texto-tenue);
+}
+
+.sel-est-buscador[hidden] { display: none; }
+
+.sel-est-buscador input {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    padding: 2px 0;
+    border: none;
+    background: transparent;
+    color: var(--texto);
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    outline: none;
+    box-shadow: none;
+}
+
+.sel-est-buscador input::placeholder { color: var(--texto-tenue); }
+
+.sel-est-lista {
+    list-style: none;
+    margin: 0;
+    padding: 4px;
+    max-height: 264px;
+    overflow-y: auto;
+}
+
+.sel-est-lista::-webkit-scrollbar { width: 6px; }
+.sel-est-lista::-webkit-scrollbar-thumb { background: var(--input-border); border-radius: 10px; }
+.sel-est-lista::-webkit-scrollbar-track { background: transparent; }
+
+.sel-est-op {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--texto);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.12s ease;
+}
+
+.sel-est-op.es-resaltado { background-color: var(--borde-suave); }
+
+.sel-est-op.es-activo {
+    background-color: var(--accent-suave);
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.sel-est-op.es-activo.es-resaltado { box-shadow: inset 2px 0 0 var(--accent); }
+
+/* "Todas" separada del resto de opciones */
+.sel-est-op.es-todas {
+    color: var(--texto-suave);
+    margin-bottom: 4px;
+    position: relative;
+}
+
+.sel-est-op.es-todas::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: -3px;
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+.sel-est-op.es-todas.es-activo { color: var(--accent); }
+
+.sel-est-vacio {
+    padding: 14px 10px;
+    font-size: 0.78rem;
+    color: var(--texto-tenue);
+    text-align: center;
+}
+
+/* "Selecciona…" sin valor elegido */
+.sel-est-boton.sel-est-placeholder .sel-est-valor { color: var(--texto-tenue); }
+
+.sel-est-boton:disabled { opacity: 0.55; cursor: not-allowed; }

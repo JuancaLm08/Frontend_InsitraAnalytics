@@ -19,6 +19,8 @@ PERMISO_A_SECCION = {
     "VER_UNIDADES": 3,
     "VER_RUTA":     4,
     "VER_HORARIO":  5,
+    "V_POLIGONO":   6,
+    "V_VIAJES":     7,
 }
 
 

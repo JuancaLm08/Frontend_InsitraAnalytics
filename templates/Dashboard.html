@@ -117,6 +117,11 @@
                 {% if 6 in permisos %}
                     {% include 'PoligonoCarga.html' %}
                 {% endif %}
+
+                <!-------------------- SECCIÓN DE VIAJES (id = 7) -------------------->
+                {% if 7 in permisos %}
+                    {% include 'Viajes.html' %}
+                {% endif %}
             </div>
         </main>
         </div><!-- /.app-body -->
@@ -130,6 +135,7 @@
 
     <!-- JavaScript general de Analitycs -->
     <script src="../static/js/js_DatePicker.js"></script>
+    <script src="../static/js/js_SelectEstilizado.js"></script>
     <script src="../static/js/js_MultiselectSearch.js"></script>
     <script src="../static/js/js_Dashboard.js"></script>
 
