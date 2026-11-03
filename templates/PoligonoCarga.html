@@ -1,15 +1,18 @@
 <!-- Elementos css de la Seccion Poligono de Carga -->
 <link rel="stylesheet" href="../static/css/estilo_PoligonoCarga.css">
 
+<!--
+* Polígono de Carga. UNA sola consulta (/api/poligono-carga-data) alimenta las dos pestañas:
+  - "Por franja horaria":    franjas[] (+ variaciones[] para las anotaciones)
+  - "Por estación maestra":  estaciones_maestras[]
+  Por eso los filtros van arriba de las pestañas y son los mismos para ambas.
+-->
+
 <div id="section-poligono-carga" style="display: none;">
 
     <!-- ANIMACION DE CARGA -->
     <div id="loader-poligono-carga" class="section-loader" style="display: none;">
         <div class="lottie-anim-canvas"></div>
-    </div>
-
-    <div id="no-data-banner-poligono-carga" class="status-banner" style="display:none;">
-        No hay datos para los filtros seleccionados.
     </div>
 
     <div id="poligono-carga-content">
@@ -26,29 +29,37 @@
             </button>
         </div>
 
+        <!-- FILTROS (compartidos por ambas pestañas) -->
+        <div class="filtros-poligono">
+            <div class="filtro-grupo">
+                <label for="fecha-franja">Fecha</label>
+                <input type="date" id="fecha-franja" class="filtro-input" max="">
+            </div>
+            <div class="filtro-grupo">
+                <label for="ruta-franja">Ruta</label>
+                <select id="ruta-franja" class="filtro-input">
+                    <option value="">Selecciona una ruta</option>
+                </select>
+            </div>
+            <button id="btn-consultar-franja" class="btn-consultar">
+                Consultar
+            </button>
+        </div>
+
+        <div id="no-data-banner-poligono-carga" class="status-banner" style="display:none;">
+            No hay datos para los filtros seleccionados.
+        </div>
+
         <!-- TAB 1: POR FRANJA HORARIA -->
         <div id="tab-franja-horaria" class="tab-content">
 
-            <!-- Filtros tab 1 -->
-            <div class="filtros-poligono">
-                <div class="filtro-grupo">
-                    <label for="fecha-franja">Fecha</label>
-                    <input type="date" id="fecha-franja" class="filtro-input" max="">
-                </div>
-                <div class="filtro-grupo">
-                    <label for="ruta-franja">Ruta</label>
-                    <select id="ruta-franja" class="filtro-input">
-                        <option value="">-- Selecciona una ruta --</option>
-                    </select>
-                </div>
-                <button id="btn-consultar-franja" class="btn-consultar">
-                    Consultar
-                </button>
-            </div>
-
-            <!-- Slider de horas -->
-            <div class="slider-container" id="slider-box" style="display:none;">
-                <label id="label-hora-slider">Franja horaria: 06:00 - 07:00</label>
+            <!-- Slider de horas + anotaciones de la franja.
+                 #slider-box se muestra/oculta completo desde el JS; la rejilla va en un div
+                 interno para no pelear con el display:block que pone el JS. -->
+            <div id="slider-box" style="display:none;">
+            <div class="pc-fila-franja">
+            <div class="slider-container">
+                <label id="label-hora-slider">Franja horaria: <b class="pc-franja-hora">06:00 - 07:00</b></label>
                 <input type="range" id="slider-hora"
                        min="6" max="22" step="1" value="6"
                        class="hora-slider">
@@ -60,6 +71,19 @@
                 </div>
             </div>
 
+            <!-- Anotaciones: descripción de la variación de ruta que se usó en la franja -->
+            <aside class="pc-anotaciones" id="pc-anotaciones" aria-live="polite">
+                <p class="pc-anot-eyebrow">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+                    Anotaciones
+                </p>
+                <h3 id="pc-anot-titulo">—</h3>
+                <p id="pc-anot-texto" class="pc-anot-texto"></p>
+                <p id="pc-anot-meta" class="pc-anot-meta"></p>
+            </aside>
+            </div>
+            </div>
+
             <!-- Gráfica polígono de carga -->
             <div class="chart-box" id="chart-franja-box" style="display:none;">
                 <h2 id="titulo-grafica-franja">Polígono de carga</h2>
@@ -68,47 +92,35 @@
 
         </div>
 
-<!-- TAB 2: POR ESTACIÓN MAESTRA -->
-<div id="tab-estacion-maestra" class="tab-content" style="display:none;">
+        <!-- TAB 2: POR ESTACIÓN MAESTRA -->
+        <div id="tab-estacion-maestra" class="tab-content" style="display:none;">
 
-    <!-- Filtros tab 2 -->
-    <div class="filtros-poligono">
-        <div class="filtro-grupo">
-            <label for="fecha-estacion">Fecha</label>
-            <input type="date" id="fecha-estacion" class="filtro-input">
-        </div>
-        <div class="filtro-grupo">
-            <label for="ruta-estacion">Ruta</label>
-            <select id="ruta-estacion" class="filtro-input">
-                <option value="">-- Selecciona una ruta --</option>
-            </select>
-        </div>
-        <button id="btn-consultar-estacion" class="btn-consultar">
-            Consultar
-        </button>
-    </div>
+            <p class="pc-vacio" id="pc-maestras-vacio">
+                Consulta una fecha y una ruta para ver sus estaciones maestras.
+            </p>
 
-    <div id="estacion-maestra-layout" style="display:none;">
+            <div id="estacion-maestra-layout" style="display:none;">
+                <p class="pc-eyebrow">Estaciones maestras del día</p>
+                <div id="grid-estaciones-maestras" class="pc-maestras-grid" role="listbox"
+                     aria-label="Estaciones maestras del día"></div>
 
-        <!-- Gráfica arriba a ancho completo -->
-        <div class="estacion-detalle-box" id="detalle-estacion-box">
-            <div id="detalle-placeholder" style="display:flex;">
-                <img src="../static/images/insitra_logo.png"
-                     id="img-placeholder-estacion"
-                     alt="Selecciona una estación">
-                <p>Selecciona una estación de la lista para ver su detalle</p>
+                <div class="chart-box pc-detalle-box" id="detalle-estacion-box">
+                    <div class="pc-detalle-head">
+                        <div class="pc-detalle-titulos">
+                            <h3 id="titulo-detalle-estacion"></h3>
+                            <p id="subtitulo-detalle-estacion"></p>
+                        </div>
+                        <div class="pc-leyenda" aria-hidden="true">
+                            <span><i class="pc-ley-cuadro pc-ley-ascensos"></i>Ascensos</span>
+                            <span><i class="pc-ley-cuadro pc-ley-descensos"></i>Descensos</span>
+                            <span><i class="pc-ley-linea"></i>Ocupación</span>
+                            <span><i class="pc-ley-cuadro pc-ley-banda"></i>Franja maestra</span>
+                        </div>
+                    </div>
+                    <div id="chart-detalle-estacion" style="height: 300px;"></div>
+                </div>
             </div>
-            <h3 id="titulo-detalle-estacion" style="display:none;"></h3>
-            <div id="chart-detalle-estacion" style="height: 350px; display:none;"></div>
         </div>
-
-        <!-- Grid de tarjetas abajo -->
-        <h3 class="grid-titulo">Estaciones maestras por franja horaria</h3>
-        <div id="grid-estaciones-maestras" class="estacion-maestra-cards"></div>
-
-    </div>
-</div>
-    <!-- cierre de #tab-estacion-maestra -->
 
     </div>
     <!-- cierre de #poligono-carga-content -->

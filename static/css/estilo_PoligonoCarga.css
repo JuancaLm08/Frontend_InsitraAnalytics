@@ -99,7 +99,7 @@
 }
 
 /* La fecha no necesita tanto ancho como la ruta */
-#fecha-franja, #fecha-estacion { min-width: 130px; }
+#fecha-franja { min-width: 130px; }
 
 /* Botón principal: relleno sólido de marca, como en el diseño */
 .btn-consultar {
@@ -119,11 +119,98 @@
 .btn-consultar:hover { filter: brightness(1.12); }
 .btn-consultar:active { transform: scale(0.985); }
 
+/* estilo_Ruta.css define .btn-consultar SIN acotar y con color: var(--texto) !important,
+   así que en tema claro el texto de este botón salía negro. Aquí se acota y se gana. */
+#section-poligono-carga .btn-consultar {
+    color: #FFFFFF !important;
+    border: none;
+    border-radius: var(--radio-sm);
+    font-weight: 500;
+}
+
 .btn-consultar:disabled {
     opacity: 0.45;
     cursor: not-allowed;
     filter: none;
 }
+
+/* Selector de ruta (componente compartido): ancho para nombres tipo "Mercados → Santiago" */
+#section-poligono-carga .sel-est-boton { width: 260px; }
+
+/* ── Fila: slider de horas + anotaciones ───────────────────── */
+#section-poligono-carga .pc-fila-franja {
+    display: grid;
+    grid-template-columns: minmax(0, 1.85fr) minmax(240px, 1fr);
+    gap: 14px;
+    align-items: stretch;
+    margin-bottom: 14px;
+}
+
+#section-poligono-carga .pc-fila-franja .slider-container {
+    margin-bottom: 0;
+    display: flex;              /* la tarjeta se estira a la altura de anotaciones: centrar el slider */
+    flex-direction: column;
+    justify-content: center;
+}
+
+#section-poligono-carga .pc-franja-hora { color: var(--accent); font-weight: 600; }
+
+#section-poligono-carga .pc-anotaciones {
+    background-color: var(--superficie);
+    box-shadow: var(--sombra-card);
+    border-radius: var(--radio);
+    padding: 16px 20px;
+    min-width: 0;
+}
+
+#section-poligono-carga .pc-anot-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--texto-tenue);
+    margin-bottom: 8px;
+}
+
+#section-poligono-carga .pc-anot-eyebrow svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+#section-poligono-carga .pc-anotaciones h3 {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--texto);
+    margin-bottom: 6px;
+}
+
+#section-poligono-carga .pc-anot-texto {
+    font-size: 0.76rem;
+    line-height: 1.55;
+    color: var(--texto-suave);
+    overflow-wrap: anywhere;
+}
+
+#section-poligono-carga .pc-anot-est { color: var(--accent); font-weight: 500; }
+
+#section-poligono-carga .pc-anot-meta {
+    margin-top: 8px;
+    font-size: 0.68rem;
+    color: var(--texto-tenue);
+}
+
+#section-poligono-carga .pc-anot-meta:empty { display: none; }
+
+/* El expander de datos ahora va debajo de la tarjeta de la gráfica */
+#section-poligono-carga #chart-franja-box + .data-expander { margin-top: 2px; }
 
 /* ── Slider de horas ───────────────────────────────────────── */
 .slider-container {
@@ -142,13 +229,21 @@
     color: var(--texto);
 }
 
+/* Riel grueso con la parte recorrida rellena en color de marca. El relleno sale de --pct,
+   que pone el JS (_pc_pintarSlider) al mover el slider: Chrome/Edge no tienen un
+   pseudo-elemento de "progreso" como Firefox (::-moz-range-progress). */
 .hora-slider {
+    --pct: 0%;
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 3px;
+    height: 10px;
+    margin: 4px 0;
     border-radius: var(--radio-pill);
-    background: var(--borde-principal);
+    background: linear-gradient(to right,
+        var(--accent-solido) 0, var(--accent-solido) var(--pct),
+        var(--borde-principal) var(--pct), var(--borde-principal) 100%);
+    box-shadow: inset 0 0 0 1px var(--input-border);
     cursor: pointer;
     outline: none;
 }
@@ -156,26 +251,45 @@
 .hora-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: var(--accent-solido);
     border: none;
     cursor: pointer;
-    transition: box-shadow 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
 }
 
 .hora-slider::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: var(--accent-solido);
     border: none;
     cursor: pointer;
 }
 
+/* Firefox: el riel lo dibuja el pseudo-elemento, no el input */
+.hora-slider::-moz-range-track {
+    height: 10px;
+    border-radius: var(--radio-pill);
+    background: var(--borde-principal);
+}
+
+.hora-slider::-moz-range-progress {
+    height: 10px;
+    border-radius: var(--radio-pill);
+    background: var(--accent-solido);
+}
+
+.hora-slider:hover::-webkit-slider-thumb { transform: scale(1.08); }
+
 .hora-slider:focus-visible::-webkit-slider-thumb {
-    box-shadow: 0 0 0 4px var(--accent-suave);
+    box-shadow: 0 0 0 5px var(--accent-suave);
+}
+
+.hora-slider:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 5px var(--accent-suave);
 }
 
 .slider-marcas {
@@ -210,196 +324,199 @@
     margin-bottom: 10px;
 }
 
-/* ── Detalle de estación (tab 2) ───────────────────────────── */
-.estacion-detalle-box {
-    background-color: var(--superficie);
-    box-shadow: var(--sombra-card);
-    border-radius: var(--radio);
-    padding: 18px 20px;
+/* ── Pestaña 2: estaciones maestras ────────────────────────── */
+#section-poligono-carga .pc-vacio {
+    padding: 28px 0;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--texto-tenue);
+}
+
+#section-poligono-carga .pc-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--texto-tenue);
+    margin: 0 0 10px;
+}
+
+#section-poligono-carga .pc-maestras-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
     margin-bottom: 18px;
 }
 
-#detalle-placeholder {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 280px;
-    gap: 14px;
-}
-
-#img-placeholder-estacion {
-    width: 84px;
-    opacity: 0.35;
-    filter: grayscale(100%);
-}
-
-#detalle-placeholder p {
-    font-size: 0.82rem;
-    color: var(--texto-tenue);
-    text-align: center;
-}
-
-#titulo-detalle-estacion {
-    font-size: 0.95rem;
-    font-weight: 500;
-    margin-bottom: 14px;
-    color: var(--texto);
-}
-
-/* ── Grid de tarjetas de estación maestra ──────────────────── */
-.grid-titulo {
-    font-size: 0.95rem;
-    font-weight: 500;
-    margin: 20px 0 12px;
-    color: var(--texto);
-}
-
-.estacion-maestra-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.estacion-card {
-    background-color: var(--superficie);
-    box-shadow: var(--sombra-card);
-    border: none;
-    border-left: 3px solid transparent;
-    border-radius: var(--radio);
-    padding: 14px 16px;
-    cursor: pointer;
+#section-poligono-carga .pc-maestra-card {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 16px 18px;
+    background-color: var(--superficie);
+    border: 1.5px solid transparent;
+    border-radius: var(--radio);
+    box-shadow: var(--sombra-card);
+    text-align: left;
+    font-family: var(--font-ui);
+    color: var(--texto);
+    cursor: pointer;
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.estacion-card:hover {
-    box-shadow: var(--sombra-card-hover);
-    border-left-color: var(--accent-borde);
+#section-poligono-carga .pc-maestra-card:hover { box-shadow: var(--sombra-card-hover); }
+
+/* Elegida: borde ámbar (mismo color que las bandas de "franja maestra" de la gráfica) */
+#section-poligono-carga .pc-maestra-card.es-activa { border-color: var(--maestra); }
+
+/* Icono + nombre juntos; el chip de horas se queda a la derecha si cabe y, si el nombre es
+   largo, baja a la siguiente línea (como el diseño). El nombre se parte solo en _ y / (<wbr>). */
+#section-poligono-carga .pc-maestra-cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 10px;
+    width: 100%;
 }
 
-.estacion-card.active {
-    border-left-color: var(--accent-solido);
-    box-shadow: var(--sombra-card-hover);
-}
-
-.estacion-card-hora {
-    font-size: 0.68rem;
-    font-weight: 500;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-
-.estacion-card-nombre {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--texto);
-    line-height: 1.3;
-    word-break: break-word;
-}
-
-.estacion-card-ocupacion {
-    font-size: 0.78rem;
-    color: var(--texto-suave);
-}
-
-/* Distintivo de estación maestra: mismo ámbar que la gráfica */
-.estacion-card-badge {
-    display: inline-block;
-    background-color: var(--maestra);
-    color: #1A1A1A;
-    font-size: 0.68rem;
-    font-weight: 600;
-    padding: 2px 9px;
-    border-radius: var(--radio-pill);
-    margin-top: 4px;
-    align-self: flex-start;
-}
-
-/* ── Lista de estaciones (layout alterno, se conserva) ─────── */
-.estacion-maestra-grid {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 14px;
-    align-items: start;
-}
-
-.estacion-lista-box {
-    background-color: var(--superficie);
-    box-shadow: var(--sombra-card);
-    border-radius: var(--radio);
-    padding: 14px;
-    min-width: 300px;
-}
-
-.estacion-lista-box h3 {
-    font-size: 0.88rem;
-    font-weight: 500;
-    margin-bottom: 6px;
-    color: var(--texto);
-}
-
-.estacion-item {
+#section-poligono-carga .pc-maestra-id {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 9px 10px;
-    border-radius: var(--radio-sm);
-    border-bottom: 1px solid var(--borde-suave);
-    cursor: pointer;
-    transition: background-color 0.15s ease;
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
-.estacion-item:hover { background-color: var(--borde-suave); }
-
-.estacion-item.active {
+#section-poligono-carga .pc-maestra-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
     background-color: var(--accent-suave);
     color: var(--accent);
-    font-weight: 500;
+    flex-shrink: 0;
 }
 
-.estacion-item .ocu-badge {
+#section-poligono-carga .pc-maestra-icono svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+}
+
+#section-poligono-carga .pc-maestra-card.es-activa .pc-maestra-icono {
     background-color: var(--accent-solido);
     color: #FFFFFF;
-    font-size: 0.68rem;
-    padding: 2px 8px;
-    border-radius: var(--radio-pill);
 }
 
-.estacion-info {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    flex: 1;
-}
-
-.estacion-nombre {
-    font-size: 0.85rem;
+#section-poligono-carga .pc-maestra-nombre {
+    font-size: 0.82rem;
     font-weight: 600;
-    color: var(--texto);
+    letter-spacing: 0.01em;
+    overflow-wrap: break-word;   /* solo corta a la mitad si no hay otro remedio */
+    line-height: 1.35;
+    min-width: 0;
 }
 
-.estacion-franjas {
+#section-poligono-carga .pc-maestra-chip {
+    padding: 2px 9px;
+    border-radius: 6px;
+    background-color: var(--borde-suave);
+    color: var(--texto-suave);
+    font-size: 0.66rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+#section-poligono-carga .pc-maestra-rangos {
     font-size: 0.7rem;
     color: var(--texto-tenue);
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
-.estacion-ocupacion {
-    font-size: 0.78rem;
+#section-poligono-carga .pc-maestra-aviso {
+    font-size: 0.64rem;
+    color: var(--texto-banner);
+    background-color: var(--fondo-banner);
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+/* Tarjeta del detalle */
+#section-poligono-carga .pc-detalle-box { padding-bottom: 8px; }
+
+#section-poligono-carga .pc-detalle-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+#section-poligono-carga .pc-detalle-titulos { min-width: 0; }
+
+#section-poligono-carga .pc-detalle-titulos h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--texto);
+    overflow-wrap: anywhere;
+}
+
+#section-poligono-carga .pc-detalle-titulos p {
+    margin-top: 3px;
+    font-size: 0.7rem;
+    color: var(--texto-tenue);
+}
+
+/* Leyenda en HTML (Plotly no la pone junto al título como el diseño) */
+#section-poligono-carga .pc-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 0.72rem;
     color: var(--texto-suave);
 }
 
+#section-poligono-carga .pc-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+
+#section-poligono-carga .pc-ley-cuadro {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+}
+
+#section-poligono-carga .pc-ley-ascensos  { background-color: var(--accent-solido); }
+#section-poligono-carga .pc-ley-descensos { background-color: var(--serie-descensos); }
+#section-poligono-carga .pc-ley-banda     { background-color: var(--maestra-banda); outline: 1px solid var(--maestra); outline-offset: -1px; }
+
+#section-poligono-carga .pc-ley-linea {
+    display: inline-block;
+    width: 16px;
+    height: 2.5px;
+    border-radius: 2px;
+    background-color: var(--serie-ocupacion);
+}
+
 /* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+    #section-poligono-carga .pc-maestras-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 @media (max-width: 900px) {
-    .estacion-maestra-cards { grid-template-columns: repeat(2, 1fr); }
+    #section-poligono-carga .pc-fila-franja { grid-template-columns: 1fr; }
+    #section-poligono-carga .pc-maestras-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 768px) {
-    .estacion-maestra-grid { grid-template-columns: 1fr; }
+    #section-poligono-carga .sel-est-boton { width: 100%; }
     .filtros-poligono { align-items: stretch; }
     .filtro-grupo, .filtro-input { width: 100%; }
     .btn-consultar { width: 100%; }
@@ -408,5 +525,5 @@
 }
 
 @media (max-width: 600px) {
-    .estacion-maestra-cards { grid-template-columns: 1fr; }
+    #section-poligono-carga .pc-maestras-grid { grid-template-columns: 1fr; }
 }

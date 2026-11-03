@@ -1,40 +1,66 @@
-/**************************************************************************************************/
-// ESTADO GLOBAL
-/**************************************************************************************************/
-let _pc_franjasPorHora = {};
-let _pc_estacionActual = null;   // última estación maestra abierta (para repintar al cambiar de tema)
-let _pc_rutaActual     = null;
-let _pc_maxY = null;
-window._pc_maestrasData = null;
+/* ==========================================================================================
+   INSITRA ANALYTICS — SECCIÓN POLÍGONO DE CARGA
 
+   UNA consulta (/api/poligono-carga-data) alimenta las dos pestañas:
+     - Por franja horaria:   franjas[] → slider + gráfica por estación; variaciones[] → anotaciones
+     - Por estación maestra: estaciones_maestras[] → tarjetas + comportamiento de la estación en el día
 
+   Decisiones:
+   - Filtros arriba de las pestañas y compartidos: los datos de ambas salen de la misma respuesta,
+     así que no tiene sentido tener dos juegos de filtros que se puedan desincronizar.
+   - Las gráficas se dibujan solo cuando su pestaña está visible. Plotly mide el contenedor al
+     dibujar: en una pestaña oculta (display:none) mide 0 px y la gráfica sale aplastada.
+     Si la pestaña está oculta se marca "pendiente" y se dibuja al abrirla.
+   - Una consulta nueva cancela a la anterior (AbortController + token), como en Viajes.
+   ========================================================================================== */
+
+/**************************************************************************************************/
+// ESTADO
+/**************************************************************************************************/
+const _pc = {
+    token: 0,
+    ctrl: null,
+    ruta: null,              // id de la ruta consultada
+    rutaNombre: null,        // "Mercados → Santiago"
+    franjasPorHora: {},      // "06:00-07:00" -> estaciones[]
+    franjaInfo: {},          // "06:00-07:00" -> {n_viajes, variacion_id, descripcion?}
+    variaciones: {},         // variacion_id -> {descripcion, es_principal, n_viajes, n_poligonos}
+    maestras: [],            // estaciones_maestras[]
+    maestraSel: -1,          // índice de la tarjeta elegida
+    graficaFranjaLista: false,
+    pendiente: { franja: false, maestra: false },
+    listo: false
+};
+
+/**************************************************************************************************/
+// PALETA Y LAYOUT
+/**************************************************************************************************/
 function _pc_paleta() {
     const css = getComputedStyle(document.body);
     const v = (n, f) => css.getPropertyValue(n).trim() || f;
     return {
-        ascensos:      v('--accent-solido', '#C1226B'),
-        descensos:     v('--serie-descensos', '#5B8FD6'),
-        ocupacion:     v('--accent', '#D02B72'),
-        maestra:       v('--maestra', '#F4C542'),
-        maestraSuave:  v('--tarifa-especial', '#F59E0B')
+        ascensos:     v('--accent-solido', '#C1226B'),
+        descensos:    v('--serie-descensos', '#5B8FD6'),
+        ocupacion:    v('--serie-ocupacion', '#3A9A5B'),
+        maestra:      v('--maestra', '#F4C542'),
+        maestraBanda: v('--maestra-banda', 'rgba(244, 197, 66, 0.18)')
     };
 }
- 
+
 /* Layout compartido por las dos gráficas de la sección */
-function _pc_layout({ barras = true, rangoY = null, tickangle = -45, marginB = 110 } = {}) {
+function _pc_layout({ rangoY = null, tickangle = -45, marginB = 110 } = {}) {
     const t = temaGrafica();
     const p = _pc_paleta();
- 
+
     return {
-        barmode: barras ? 'group' : undefined,
+        barmode: 'group',
         bargap: 0.35,
         bargroupgap: 0.15,
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
         font: { color: t.suave, family: "'Orbitron', sans-serif", size: 11 },
- 
         xaxis: {
-            tickangle: tickangle,          // ← nombres de estación abajo
+            tickangle: tickangle,
             tickfont: { size: 9, color: t.suave },
             showgrid: false,
             zeroline: false,
@@ -55,14 +81,12 @@ function _pc_layout({ barras = true, rangoY = null, tickangle = -45, marginB = 1
             nticks: 5,
             automargin: true
         },
- 
         legend: {
             orientation: 'h',
             y: 1.12, x: 0.5, xanchor: 'center',
             font: { size: 10, color: t.suave }
         },
         margin: { t: 34, r: 14, b: marginB, l: 44 },
- 
         hoverlabel: {
             bgcolor: t.superficie,
             bordercolor: conAlpha(p.ascensos, 0.5),
@@ -72,25 +96,73 @@ function _pc_layout({ barras = true, rangoY = null, tickangle = -45, marginB = 1
     };
 }
 
+const _PC_PLOTLY_CONFIG = {
+    responsive: true,
+    displaylogo: false,
+    displayModeBar: 'hover',
+    modeBarButtonsToRemove: ['zoom2d', 'pan2d', 'select2d', 'lasso2d', 'autoScale2d']
+};
+
 /**************************************************************************************************/
-// BLOQUEAR FECHAS FUTURAS Y HOY + PRESET EN AYER
+// TOPE DEL EJE Y: redondeado a un número "bonito" (1, 2, 2.5, 5 × 10^k) para que las marcas
+// del eje queden limpias (0, 10, 20, 30, 40) en vez de 0, 7.3, 14.6…
+/**************************************************************************************************/
+function _pc_topeEje(maximo) {
+    const m = Math.max(Number(maximo) || 0, 0) * 1.08;   // 8 % de aire arriba
+    if (m <= 5) return { tope: 5, paso: 1 };               // casi vacío: escala mínima legible
+    const pasoCrudo = m / 4;                               // ~4 divisiones
+    const mag = Math.pow(10, Math.floor(Math.log10(pasoCrudo)));
+    const paso = [1, 2, 2.5, 5, 10].map(f => f * mag).find(p => p >= pasoCrudo);
+    return { tope: Math.ceil(m / paso) * paso, paso };
+}
+
+/**************************************************************************************************/
+// UTILIDADES
+/**************************************************************************************************/
+function _pc_escHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+const _pc_hh = (h) => String(h).padStart(2, '0');
+const _pc_fmt = (n, dec = 2) => (n === null || n === undefined) ? '–'
+    : Number(n).toLocaleString('es-MX', { maximumFractionDigits: dec });
+
+function _pc_tabActiva() {
+    const b = document.querySelector('#section-poligono-carga .tab-btn.active');
+    return b ? b.dataset.tab : 'franja-horaria';
+}
+
+function _pc_toggleLoader(mostrar) {
+    const loader = document.getElementById('loader-poligono-carga');
+    if (loader) loader.style.display = mostrar ? 'flex' : 'none';
+    // "animations" vive en js_Sidebar.js (mismo scope global de scripts clásicos)
+    if (typeof animations !== 'undefined' && animations['loader-poligono-carga']) {
+        if (mostrar) animations['loader-poligono-carga'].play();
+        else animations['loader-poligono-carga'].stop();
+    }
+}
+
+function _pc_banner(msj) {
+    const banner = document.getElementById('no-data-banner-poligono-carga');
+    if (!banner) return;
+    banner.textContent = msj || '';
+    banner.style.display = msj ? 'block' : 'none';
+}
+
+/**************************************************************************************************/
+// FECHA: MÁXIMO Y PRESET EN AYER (el job procesa ayer/antier; hoy nunca tiene datos)
 /**************************************************************************************************/
 function setMaxFechaAyer() {
     const ayer = new Date();
     ayer.setDate(ayer.getDate() - 1);
-    const yyyy = ayer.getFullYear();
-    const mm   = String(ayer.getMonth() + 1).padStart(2, '0');
-    const dd   = String(ayer.getDate()).padStart(2, '0');
-    const fechaAyer = `${yyyy}-${mm}-${dd}`;
-
-    document.getElementById('fecha-franja').max     = fechaAyer;
-    document.getElementById('fecha-estacion').max   = fechaAyer;
-    document.getElementById('fecha-franja').value   = fechaAyer;
-    document.getElementById('fecha-estacion').value = fechaAyer;
+    const fechaAyer = `${ayer.getFullYear()}-${_pc_hh(ayer.getMonth() + 1)}-${_pc_hh(ayer.getDate())}`;
+    const input = document.getElementById('fecha-franja');
+    input.max = fechaAyer;
+    if (!input.value || input.value > fechaAyer) input.value = fechaAyer;
 }
 
 /**************************************************************************************************/
-// CARGAR RUTAS DEL CORREDOR
+// RUTAS DEL CORREDOR
 /**************************************************************************************************/
 async function cargarRutasPoligono(groupId) {
     try {
@@ -103,55 +175,47 @@ async function cargarRutasPoligono(groupId) {
     }
 }
 
-/**************************************************************************************************/
-// LLENAR SELECTORES DE RUTA
-/**************************************************************************************************/
 function llenarSelectoresRuta(rutas) {
-    ['ruta-franja', 'ruta-estacion'].forEach(id => {
-        const select = document.getElementById(id);
-        select.innerHTML = '<option value="">-- Selecciona una ruta --</option>';
-        rutas.forEach(r => {
-            const opt = document.createElement('option');
-            opt.value = r.id;
-            opt.textContent = r.nombre;
-            select.appendChild(opt);
-        });
+    const select = document.getElementById('ruta-franja');
+    const previo = select.value;
+    select.innerHTML = '<option value="">Selecciona una ruta</option>';
+    rutas.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = r.nombre;
+        select.appendChild(opt);
     });
+    select.value = rutas.some(r => String(r.id) === previo) ? previo : '';
+    if (typeof syncSelect === 'function') syncSelect(select);
 }
 
 /**************************************************************************************************/
-// TABS
+// PESTAÑAS
 /**************************************************************************************************/
 function inicializarTabs() {
     document.querySelectorAll('#section-poligono-carga .tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('#section-poligono-carga .tab-btn')
-                    .forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('#section-poligono-carga .tab-content')
-                    .forEach(c => c.style.display = 'none');
+            document.querySelectorAll('#section-poligono-carga .tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#section-poligono-carga .tab-content').forEach(c => c.style.display = 'none');
             btn.classList.add('active');
             document.getElementById(`tab-${btn.dataset.tab}`).style.display = 'block';
-
-            // Al cambiar a Tab 2, sincronizar filtros y renderizar si ya hay datos
-            if (btn.dataset.tab === 'estacion-maestra') {
-                const fechaFranja = document.getElementById('fecha-franja').value;
-                const rutaFranja  = document.getElementById('ruta-franja').value;
-                if (fechaFranja) document.getElementById('fecha-estacion').value = fechaFranja;
-                if (rutaFranja)  document.getElementById('ruta-estacion').value  = rutaFranja;
-
-                // Si ya tenemos datos en memoria, renderizar directo
-                const cache = window._pc_maestrasData;
-                if (cache && cache.fecha === fechaFranja && cache.ruta === rutaFranja) {
-                    const estaciones = cache.maestras.map(m => ({
-                        nombre:        m.estacion_maestra,
-                        ocupacion_max: m.ocupacion_max,
-                        franja:        m.franja
-                    }));
-                    renderizarEstacionesMaestras({ estaciones });
-                }
-            }
+            _pc_dibujarPendientes();
         });
     });
+}
+
+// Dibuja (o redimensiona) la gráfica de la pestaña que se acaba de mostrar
+function _pc_dibujarPendientes() {
+    const tab = _pc_tabActiva();
+    if (tab === 'franja-horaria' && _pc.pendiente.franja) {
+        const slider = document.getElementById('slider-hora');
+        _pc_mostrarFranja(parseInt(slider.value, 10));
+    } else if (tab === 'estacion-maestra' && _pc.pendiente.maestra && _pc.maestraSel >= 0) {
+        renderizarDetalleEstacion(_pc.maestras[_pc.maestraSel]);
+    }
+    const id = tab === 'franja-horaria' ? 'chart-poligono-franja' : 'chart-detalle-estacion';
+    const g = document.getElementById(id);
+    if (g && g.data) Plotly.Plots.resize(g);
 }
 
 /**************************************************************************************************/
@@ -159,472 +223,405 @@ function inicializarTabs() {
 /**************************************************************************************************/
 function inicializarSlider(hora_inicio, hora_fin) {
     let slider = document.getElementById('slider-hora');
-    slider.replaceWith(slider.cloneNode(true));
+    slider.replaceWith(slider.cloneNode(true));          // quita listeners de consultas previas
     slider = document.getElementById('slider-hora');
-
-    const label       = document.getElementById('label-hora-slider');
-    const marcaInicio = document.getElementById('slider-marca-inicio');
-    const marcaFin    = document.getElementById('slider-marca-fin');
 
     slider.min   = hora_inicio;
     slider.max   = hora_fin;
     slider.value = hora_inicio;
+    document.getElementById('slider-marca-inicio').textContent = `${_pc_hh(hora_inicio)}:00`;
+    document.getElementById('slider-marca-fin').textContent    = `${_pc_hh(hora_fin)}:00`;
 
-    marcaInicio.textContent = `${String(hora_inicio).padStart(2,'0')}:00`;
-    marcaFin.textContent    = `${String(hora_fin).padStart(2,'0')}:00`;
-    label.textContent = `Franja horaria: ${String(hora_inicio).padStart(2,'0')}:00 - ${String(hora_inicio+1).padStart(2,'0')}:00`;
-
-    slider.addEventListener('input', () => {
-        _pc_mostrarFranja(parseInt(slider.value));
-    });
-
+    slider.addEventListener('input', () => _pc_mostrarFranja(parseInt(slider.value, 10)));
     document.getElementById('slider-box').style.display = 'block';
 }
 
 /**************************************************************************************************/
-// CONTROL DEL LOADER (MOSTRAR/OCULTAR + REPRODUCIR/DETENER LA ANIMACION LOTTIE)
+// CONSULTA (alimenta ambas pestañas)
 /**************************************************************************************************/
-function _pc_toggleLoader(mostrar) {
-    const loader = document.getElementById('loader-poligono-carga');
-    if (loader) loader.style.display = mostrar ? 'flex' : 'none';
-
-    // "animations" se inicializa en js_Sidebar.js (una instancia de Lottie por cada
-    // .section-loader, indexada por su id). Como ambos scripts son scripts clasicos
-    // cargados en la misma pagina, comparten el mismo scope global, por lo que la
-    // variable es visible aqui sin necesidad de exponerla en "window".
-    if (typeof animations !== 'undefined' && animations['loader-poligono-carga']) {
-        if (mostrar) animations['loader-poligono-carga'].play();
-        else animations['loader-poligono-carga'].stop();
-    }
+function _pc_limpiarResultados() {
+    document.getElementById('slider-box').style.display       = 'none';
+    document.getElementById('chart-franja-box').style.display = 'none';
+    document.getElementById('estacion-maestra-layout').style.display = 'none';
+    const vacio = document.getElementById('pc-maestras-vacio');
+    vacio.textContent = 'Consulta una fecha y una ruta para ver sus estaciones maestras.';
+    vacio.style.display = 'block';
+    // Los expanders viven fuera de las tarjetas: no se ocultan con ellas
+    ['expander-chart-poligono-franja', 'expander-chart-detalle-estacion'].forEach(id => {
+        const e = document.getElementById(id);
+        if (e) e.remove();
+    });
+    _pc.maestras = [];
+    _pc.maestraSel = -1;
+    _pc.pendiente = { franja: false, maestra: false };
 }
 
-/**************************************************************************************************/
-// TAB 1 — CONSULTAR POLÍGONO POR FRANJA HORARIA
-/**************************************************************************************************/
-async function consultarFranja(groupId) {
+async function consultarPoligono(groupId) {
     const fecha = document.getElementById('fecha-franja').value;
     const ruta  = document.getElementById('ruta-franja').value;
+    if (!groupId) return;
     if (!fecha || !ruta) {
-        alert('Selecciona una fecha y una ruta para continuar.');
+        _pc_banner('Selecciona una fecha y una ruta para continuar.');
         return;
     }
 
-    const banner = document.getElementById('no-data-banner-poligono-carga');
-    if (banner) banner.style.display = 'none';
+    if (_pc.ctrl) _pc.ctrl.abort();
+    const ctrl = new AbortController();
+    _pc.ctrl = ctrl;
+    const token = ++_pc.token;
+
+    _pc_banner('');
     _pc_toggleLoader(true);
+    const btn = document.getElementById('btn-consultar-franja');
+    if (btn) btn.disabled = true;
 
     try {
-        const url = `/api/poligono-carga-data?groupid=${groupId}` +
-                    `&inicio=${fecha} 00:00:00` +
-                    `&final=${fecha} 23:59:59` +
-                    `&ruta=${encodeURIComponent(ruta)}`;
-        const resp = await fetch(url);
+        const qs = new URLSearchParams({ groupid: groupId, inicio: `${fecha} 00:00:00`, final: `${fecha} 23:59:59`, ruta });
+        const resp = await fetch(`/api/poligono-carga-data?${qs}`, { signal: ctrl.signal });
         const data = await resp.json();
+        if (token !== _pc.token) return;            // llegó tarde: ya hay otra consulta
 
-        const ocultar = () => {
-            document.getElementById('slider-box').style.display       = 'none';
-            document.getElementById('chart-franja-box').style.display = 'none';
-        };
+        _pc_limpiarResultados();
 
         if (!data || !data.success) {
-            if (banner) { banner.textContent = (data && data.error) || 'Error al consultar.'; banner.style.display = 'block'; }
-            ocultar();
+            _pc_banner((data && data.error) || 'Error al consultar.');
             return;
         }
-
         const franjas = data.franjas || [];
         if (franjas.length === 0) {
-            if (banner) { banner.textContent = 'No hay datos para los filtros seleccionados.'; banner.style.display = 'block'; }
-            ocultar();
+            _pc_banner('No hay datos para los filtros seleccionados.');
+            document.getElementById('pc-maestras-vacio').style.display = 'none';
             return;
         }
 
-        // Tab 1 — franjas horarias
-        _pc_franjasPorHora = {};
-        franjas.forEach(f => { _pc_franjasPorHora[f.franja] = f.estaciones; });
-        _pc_rutaActual = ruta;
-
-        // Calcular máximo global del día
-        let maxGlobal = 0;
+        // ── Pestaña 1: franjas ──
+        _pc.franjasPorHora = {};
+        _pc.franjaInfo = {};
         franjas.forEach(f => {
-            f.estaciones.forEach(e => {
-                maxGlobal = Math.max(maxGlobal, e.ocupacion || 0, e.ascensos || 0, e.descensos || 0);
-            });
+            _pc.franjasPorHora[f.franja] = f.estaciones;
+            _pc.franjaInfo[f.franja] = { n_viajes: f.n_viajes, variacion_id: f.variacion_id, descripcion: f.descripcion };
         });
-        _pc_maxY = Math.ceil(maxGlobal * 1.1);
-
-        // Tab 2 — guardar maestras y series en memoria
-        window._pc_maestrasData = {
-            groupId,
-            fecha,
-            ruta,
-            series:   data.series_por_estacion || {},
-            maestras: data.maestras || []
-        };
+        _pc.variaciones = {};
+        (data.variaciones || []).forEach(v => { _pc.variaciones[v.variacion_id] = v; });
+        _pc.ruta = ruta;
+        // Nombre legible para títulos: el del back o, si no viene, el de la opción elegida
+        const opt = document.querySelector(`#ruta-franja option[value="${CSS.escape(ruta)}"]`);
+        _pc.rutaNombre = data.ruta_nombre || (opt && opt.textContent) || ruta;
 
         const rango = data.rango || { hora_inicio: 6, hora_fin: 22 };
-        _pc_graficaInicializada = false;
+        _pc.graficaFranjaLista = false;
         inicializarSlider(rango.hora_inicio, rango.hora_fin);
-
         const primeraHora = parseInt(franjas[0].franja.slice(0, 2), 10);
         document.getElementById('slider-hora').value = primeraHora;
         _pc_mostrarFranja(primeraHora);
 
+        // ── Pestaña 2: estaciones maestras ──
+        _pc.maestras = data.estaciones_maestras || [];
+        renderizarEstacionesMaestras();
+
     } catch (e) {
+        if (e.name === 'AbortError') return;
         console.error('Error consultando polígono de carga:', e);
-        if (banner) { banner.textContent = 'Error de red al consultar.'; banner.style.display = 'block'; }
+        if (token === _pc.token) _pc_banner('Error de red al consultar.');
     } finally {
-        _pc_toggleLoader(false);
+        if (token === _pc.token) {
+            _pc_toggleLoader(false);
+            if (btn) btn.disabled = false;
+        }
     }
 }
-let _pc_graficaInicializada = false;
+
+/**************************************************************************************************/
+// PESTAÑA 1 — FRANJA HORARIA
+/**************************************************************************************************/
+// Porcentaje recorrido del slider → variable CSS --pct (relleno del riel en Chrome/Edge)
+function _pc_pintarSlider() {
+    const s = document.getElementById('slider-hora');
+    if (!s) return;
+    const min = Number(s.min), max = Number(s.max), v = Number(s.value);
+    const pct = max > min ? ((v - min) / (max - min)) * 100 : 0;
+    s.style.setProperty('--pct', `${pct}%`);
+}
 
 function _pc_mostrarFranja(h) {
-    const franja     = `${String(h).padStart(2, '0')}:00-${String(h + 1).padStart(2, '0')}:00`;
-    const label      = document.getElementById('label-hora-slider');
-    if (label) label.textContent = `Franja horaria: ${String(h).padStart(2,'0')}:00 - ${String(h+1).padStart(2,'0')}:00`;
-    const estaciones = _pc_franjasPorHora[franja] || [];
-    renderizarPoligonoCarga({ ruta: _pc_rutaActual, franja, estaciones });
+    _pc_pintarSlider();   // aquí pasan todos los cambios: arrastre, consulta nueva y cambio de pestaña
+    const franja = `${_pc_hh(h)}:00-${_pc_hh(h + 1)}:00`;
+    const label = document.getElementById('label-hora-slider');
+    if (label) label.innerHTML = `Franja horaria: <b class="pc-franja-hora">${_pc_hh(h)}:00 - ${_pc_hh(h + 1)}:00</b>`;
+    _pc_renderAnotaciones(franja);
+
+    // La gráfica solo se dibuja con la pestaña visible (ver cabecera del archivo)
+    if (_pc_tabActiva() !== 'franja-horaria') { _pc.pendiente.franja = true; return; }
+    _pc.pendiente.franja = false;
+    renderizarPoligonoCarga({ franja, estaciones: _pc.franjasPorHora[franja] || [] });
 }
 
-/**************************************************************************************************/
-// GRAFICA: POLÍGONO DE CARGA POR FRANJA
-/**************************************************************************************************/
+/* Anotaciones: descripción de la variación de ruta usada en la franja.
+   Si algún día la franja trae su propia `descripcion`, gana esa. */
+function _pc_renderAnotaciones(franja) {
+    const titulo = document.getElementById('pc-anot-titulo');
+    const texto  = document.getElementById('pc-anot-texto');
+    const meta   = document.getElementById('pc-anot-meta');
+    if (!titulo || !texto || !meta) return;
+
+    const info = _pc.franjaInfo[franja];
+    if (!info) {
+        titulo.textContent = 'Sin viajes en esta franja';
+        texto.textContent  = 'No hubo viajes identificados de esta ruta en este horario.';
+        meta.textContent   = '';
+        return;
+    }
+
+    const v = _pc.variaciones[info.variacion_id];
+    // El título ya dice si es principal o alterna: se quita ese prefijo del texto
+    const descripcion = (info.descripcion || (v && v.descripcion) || '')
+        .replace(/^\s*(alterna|principal)\s*:\s*/i, '')
+        .replace(/^./, c => c.toUpperCase());
+
+    titulo.textContent = v ? (v.es_principal ? 'Recorrido principal' : 'Variación alterna') : 'Recorrido';
+    // Los nombres de estación (MAYÚSCULAS_CON_GUIONES) se resaltan para leerlos rápido
+    texto.innerHTML = descripcion
+        ? _pc_escHtml(descripcion).replace(/[A-Z0-9][A-Z0-9_\/.]*_[A-Z0-9_\/.]+|[A-Z]{4,}/g, m => `<span class="pc-anot-est">${m}</span>`)
+        : 'Sin descripción para esta variación.';
+
+    const n = info.n_viajes || 0;
+    const partes = [`${n} ${n === 1 ? 'viaje' : 'viajes'} en esta franja`];
+    if (v && v.n_poligonos) partes.push(`${v.n_poligonos} paradas`);
+    meta.textContent = partes.join(' · ');
+}
+
 function renderizarPoligonoCarga(data) {
-    const nombres   = data.estaciones.map(e => e.nombre);
-    const ascensos  = data.estaciones.map(e => e.ascensos);
-    const descensos = data.estaciones.map(e => e.descensos);
-    const ocupacion = data.estaciones.map(e => e.ocupacion);
-    const unidades  = data.estaciones.map(e => e.unidades || 0);
-
-    // Identificar estación maestra de esta franja
-    const maestraDeEstaFranja = window._pc_maestrasData?.maestras?.find(
-        m => m.franja === data.franja
-    )?.estacion_maestra || null;
-
-    // Color especial para la estación maestra
+    const est       = data.estaciones;
+    const nombres   = est.map(e => e.nombre);
+    const ascensos  = est.map(e => e.ascensos);
+    const descensos = est.map(e => e.descensos);
+    const ocupacion = est.map(e => e.ocupacion);
+    const maestra   = est.map(e => !!e.es_maestra);   // el back marca la(s) estación(es) de máxima carga
     const p = _pc_paleta();
-    const coloresAscensos  = nombres.map(n => n === maestraDeEstaFranja ? p.maestra      : p.ascensos);
-    const coloresDescensos = nombres.map(n => n === maestraDeEstaFranja ? p.maestraSuave : p.descensos);
+
+    const custom = est.map(e => ({ unidades: e.unidades || 0, nota: e.es_maestra ? '<br>⭐ Estación maestra' : '' }));
+    const hover = (campo) => `<b>%{x}</b><br>${campo}: %{y}<br>Unidades: %{customdata.unidades}%{customdata.nota}<extra></extra>`;
 
     const trazas = [
         {
-            name: 'Ascensos',
-            x: nombres, y: ascensos,
-            type: 'bar',
-            marker: { color: coloresAscensos, opacity: 0.85 },
-            customdata: nombres.map((n, i) => ({
-                unidades: unidades[i],
-                maestra: n === maestraDeEstaFranja
-            })),
-            hovertemplate:
-                '<b>%{x}</b><br>' +
-                'Ascensos: %{y}<br>' +
-                'Unidades: %{customdata.unidades}' +
-                '%{customdata.maestra ? "<br>⭐ Estación maestra" : ""}' +
-                '<extra></extra>'
+            name: 'Ascensos', x: nombres, y: ascensos, type: 'bar',
+            marker: { color: maestra.map(m => m ? p.maestra : p.ascensos), opacity: 0.85 },
+            customdata: custom, hovertemplate: hover('Ascensos')
         },
         {
-            name: 'Descensos',
-            x: nombres, y: descensos,
-            type: 'bar',
-            marker: { color: coloresDescensos, opacity: 0.85 },
-            customdata: nombres.map((n, i) => ({
-                unidades: unidades[i],
-                maestra: n === maestraDeEstaFranja
-            })),
-            hovertemplate:
-                '<b>%{x}</b><br>' +
-                'Descensos: %{y}<br>' +
-                'Unidades: %{customdata.unidades}' +
-                '%{customdata.maestra ? "<br>⭐ Estación maestra" : ""}' +
-                '<extra></extra>'
+            name: 'Descensos', x: nombres, y: descensos, type: 'bar',
+            marker: { color: p.descensos, opacity: 0.85 },
+            customdata: custom, hovertemplate: hover('Descensos')
         },
         {
-            name: 'Ocupación',
-            x: nombres, y: ocupacion,
+            name: 'Ocupación', x: nombres, y: ocupacion,
             type: 'scatter', mode: 'lines+markers',
-            line:   { color: '#950c4b', width: 2.5, shape: 'spline' },
-            marker: { 
-                size:  nombres.map(n => n === maestraDeEstaFranja ? 10 : 5),
-                color: nombres.map(n => n === maestraDeEstaFranja ? p.maestra : p.ocupacion),
-                symbol: nombres.map(n => n === maestraDeEstaFranja ? 'star' : 'circle')
-            },
-            customdata: nombres.map((n, i) => ({
-                unidades: unidades[i],
-                maestra: n === maestraDeEstaFranja
-            })),
-            hovertemplate:
-                '<b>%{x}</b><br>' +
-                'Ocupación: %{y}<br>' +
-                'Unidades: %{customdata.unidades}' +
-                '%{customdata.maestra ? "<br>⭐ Estación maestra" : ""}' +
-                '<extra></extra>'
+            line: { color: p.ocupacion, width: 2.5, shape: 'spline', smoothing: 0.5 },   // mismo suavizado que las demás gráficas
+            // Sin marcadores, salvo una estrella en las estaciones maestras
+            marker: { size: maestra.map(m => m ? 11 : 0), color: p.maestra, symbol: 'star', line: { width: 0 } },
+            customdata: custom, hovertemplate: hover('Ocupación')
         }
     ];
 
-    // Calcular rango del eje Y basado en la franja actual
-    const maxOcupacion = Math.max(...ocupacion, 0);
-    const maxFlujo     = Math.max(...ascensos, ...descensos, 0);
-    const maxY         = Math.ceil(Math.max(maxOcupacion, maxFlujo) * 1.1);
+    // Escala por franja: el eje se ajusta a la franja visible y se anima al mover el slider
+    const { tope, paso } = _pc_topeEje(Math.max(0, ...ocupacion, ...ascensos, ...descensos));
+    const layout = _pc_layout({ rangoY: [0, tope], marginB: 120 });
+    layout.yaxis.dtick = paso;
+    // Solo se anima al moverse DENTRO de una consulta; ni la primera gráfica ni el repintado por
+    // tema (setTheme() hace un relayout sobre la misma gráfica y una transición en curso choca).
+    if (_pc.graficaFranjaLista && !data.sinTransicion) {
+        layout.transition = { duration: 350, easing: 'cubic-in-out' };
+    }
 
-    const layout = _pc_layout({ rangoY: [0, _pc_maxY], marginB: 120 });
-
-    document.getElementById('titulo-grafica-franja').textContent =
-        `${data.ruta} | ${data.franja}`;
+    document.getElementById('titulo-grafica-franja').textContent = `${_pc.rutaNombre || _pc.ruta} | ${data.franja}`;
     document.getElementById('chart-franja-box').style.display = 'block';
-    if (_pc_graficaInicializada) {
-    Plotly.react('chart-poligono-franja', trazas, layout, { 
-        responsive: true,
-        displaylogo: false,
-        displayModeBar: 'hover',
-        modeBarButtonsToRemove: ['zoom2d','pan2d','select2d','lasso2d','autoScale2d']
-    });
-        } else {
-    Plotly.newPlot('chart-poligono-franja', trazas, layout, { 
-            responsive: true,
-            displaylogo: false,
-            displayModeBar: 'hover',
-            modeBarButtonsToRemove: ['zoom2d','pan2d','select2d','lasso2d','autoScale2d'] 
-        });
-    _pc_graficaInicializada = true;
-        }
+
+    // Siempre react (no newPlot): newPlot destruye el DOM y una transición a medio camino truena
+    Plotly.react('chart-poligono-franja', trazas, layout, _PC_PLOTLY_CONFIG);
+    _pc.graficaFranjaLista = true;
     document.getElementById('chart-poligono-franja').classList.add('pc-chart');
 
-    const datosExpander = data.estaciones.map(e => ({
+    crearExpander('chart-poligono-franja', est.map(e => ({
         Franja:    data.franja,
         Estación:  e.nombre,
-        Maestra:   e.nombre === maestraDeEstaFranja ? 'Sí' : 'No',
+        Maestra:   e.es_maestra ? 'Sí' : 'No',
         Ascensos:  e.ascensos,
         Descensos: e.descensos,
-        Ocupación: e.ocupacion
-    }));
-    crearExpander('chart-poligono-franja', datosExpander, `poligono_carga_${data.franja}`);
+        Ocupación: e.ocupacion,
+        Unidades:  e.unidades || 0
+    })), `poligono_carga_${data.franja}`);
 }
 
 /**************************************************************************************************/
-// TAB 2 — CONSULTAR ESTACIONES MAESTRAS
+// PESTAÑA 2 — ESTACIONES MAESTRAS
 /**************************************************************************************************/
-async function consultarEstacionesMaestras(groupId, fecha, ruta) {
-    const banner = document.getElementById('no-data-banner-poligono-carga');
-    if (banner) banner.style.display = 'none';
+const _PC_ICONO_BANDERA = '<svg viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="22" x2="5" y2="3"/><path d="M5 4h12l-2.5 4L17 12H5z"/></svg>';
 
-    // Si ya tenemos datos para la misma fecha y ruta, no llamamos al backend
-    const cache = window._pc_maestrasData;
-    if (cache && cache.fecha === fecha && cache.ruta === ruta) {
-        const estaciones = cache.maestras.map(m => ({
-            nombre:        m.estacion_maestra,
-            ocupacion_max: m.ocupacion_max,
-            franja:        m.franja
-        }));
-        renderizarEstacionesMaestras({ estaciones });
+function renderizarEstacionesMaestras() {
+    const lista  = _pc.maestras;
+    const grid   = document.getElementById('grid-estaciones-maestras');
+    const layout = document.getElementById('estacion-maestra-layout');
+    const vacio  = document.getElementById('pc-maestras-vacio');
+
+    if (!lista.length) {
+        layout.style.display = 'none';
+        vacio.textContent = 'No se identificaron estaciones maestras para esta ruta en el día.';
+        vacio.style.display = 'block';
         return;
     }
+    vacio.style.display = 'none';
+    layout.style.display = 'block';
 
-    // Si no, hacemos la llamada al backend
-    _pc_toggleLoader(true);
+    // Orden del back (de la que fue maestra más horas a la que menos)
+    grid.innerHTML = lista.map((m, i) => {
+        const horas = m.n_franjas === 1 ? '1 hora' : `${m.n_franjas} horas`;
+        const pocos = (m.horas_pocos_viajes || []).length
+            ? `<span class="pc-maestra-aviso" title="Franjas con pocos viajes: el promedio es menos confiable">Pocos viajes en ${m.horas_pocos_viajes.map(h => `${_pc_hh(h)}:00`).join(', ')}</span>`
+            : '';
+        return `
+            <button type="button" class="pc-maestra-card" role="option" aria-selected="false" data-i="${i}"
+                    title="Pico de ${_pc_fmt(m.ocupacion_pico)} a bordo en ${_pc_escHtml(m.franja_pico)}">
+                <span class="pc-maestra-cabeza">
+                    <span class="pc-maestra-id">
+                        <span class="pc-maestra-icono">${_PC_ICONO_BANDERA}</span>
+                        <span class="pc-maestra-nombre">${_pc_escHtml(m.nombre).replace(/([_\/])/g, '$1<wbr>')}</span>
+                    </span>
+                    <span class="pc-maestra-chip">${horas}</span>
+                </span>
+                <span class="pc-maestra-rangos">${_pc_escHtml(m.etiqueta)}</span>
+                ${pocos}
+            </button>`;
+    }).join('');
 
-    try {
-        const url = `/api/poligono-carga-data?groupid=${groupId}` +
-                    `&inicio=${fecha} 00:00:00` +
-                    `&final=${fecha} 23:59:59` +
-                    `&ruta=${encodeURIComponent(ruta)}`;
-        const resp = await fetch(url);
-        const data = await resp.json();
-
-        if (!data || !data.success) {
-            if (banner) { banner.textContent = (data && data.error) || 'Error al consultar.'; banner.style.display = 'block'; }
-            return;
-        }
-
-        window._pc_maestrasData = {
-            groupId,
-            fecha,
-            ruta,
-            series:   data.series_por_estacion || {},
-            maestras: data.maestras || []
-        };
-
-        const estaciones = data.maestras.map(m => ({
-            nombre:        m.estacion_maestra,
-            ocupacion_max: m.ocupacion_max,
-            franja:        m.franja
-        }));
-
-        renderizarEstacionesMaestras({ estaciones });
-
-    } catch (e) {
-        console.error('Error consultando estaciones maestras:', e);
-        if (banner) { banner.textContent = 'Error de red al consultar.'; banner.style.display = 'block'; }
-    } finally {
-        _pc_toggleLoader(false);
-    }
-}
-/**************************************************************************************************/
-// LISTA: ESTACIONES MAESTRAS
-/**************************************************************************************************/
-function renderizarEstacionesMaestras(data) {
-    const grid = document.getElementById('grid-estaciones-maestras');
-    grid.innerHTML = '';
-
-    // Agrupar por nombre de estación
-    const agrupado = {};
-    data.estaciones.forEach(e => {
-        if (!agrupado[e.nombre]) {
-            agrupado[e.nombre] = {
-                nombre:        e.nombre,
-                ocupacion_max: e.ocupacion_max,
-                hora_max:      e.franja || '99:00',
-                franjas:       []
-            };
-        }
-        if (e.franja) agrupado[e.nombre].franjas.push(e.franja);
-        if (e.ocupacion_max > agrupado[e.nombre].ocupacion_max) {
-            agrupado[e.nombre].ocupacion_max = e.ocupacion_max;
-            agrupado[e.nombre].hora_max = e.franja;
-        }
-    });
-
-    // Ordenar cronológicamente por la franja de mayor ocupación
-    const estaciones = Object.values(agrupado).sort((a, b) => {
-        const horaA = parseInt(a.hora_max.slice(0, 2), 10);
-        const horaB = parseInt(b.hora_max.slice(0, 2), 10);
-        return horaA - horaB;
-    });
-
-    estaciones.forEach(e => {
-        const franjasTexto = e.franjas.join(', ');
-        const card = document.createElement('div');
-        card.className = 'estacion-card';
-        card.innerHTML = `
-            <span class="estacion-card-hora">${e.hora_max}</span>
-            <span class="estacion-card-nombre">${e.nombre}</span>
-            <span class="estacion-card-ocupacion">${franjasTexto}</span>
-            <span class="estacion-card-badge">${Math.round(e.ocupacion_max)} 👤</span>
-        `;
-        card.addEventListener('click', async () => {
-            document.querySelectorAll('.estacion-card')
-                    .forEach(c => c.classList.remove('active'));
-            card.classList.add('active');
-            await consultarDetalleEstacion(e.nombre);
-        });
-        grid.appendChild(card);
-    });
-
-    document.getElementById('estacion-maestra-layout').style.display = 'block';
-    document.getElementById('detalle-placeholder').style.display     = 'flex';
-    document.getElementById('titulo-detalle-estacion').style.display = 'none';
-    document.getElementById('chart-detalle-estacion').style.display  = 'none';
+    _pc_seleccionarMaestra(0);
 }
 
-/**************************************************************************************************/
-// TAB 2 — CONSULTAR DETALLE DE ESTACIÓN
-/**************************************************************************************************/
-async function consultarDetalleEstacion(nombreEstacion) {
-    const { series } = window._pc_maestrasData;
+function _pc_seleccionarMaestra(i) {
+    _pc.maestraSel = i;
+    document.querySelectorAll('#grid-estaciones-maestras .pc-maestra-card').forEach(c => {
+        const sel = Number(c.dataset.i) === i;
+        c.classList.toggle('es-activa', sel);
+        c.setAttribute('aria-selected', String(sel));
+    });
 
-    const serie = series[nombreEstacion];
-    if (!serie || serie.length === 0) {
-        console.error('Sin datos para estación:', nombreEstacion);
-        return;
-    }
+    const m = _pc.maestras[i];
+    document.getElementById('titulo-detalle-estacion').textContent = m.nombre;
+    document.getElementById('subtitulo-detalle-estacion').textContent =
+        `Comportamiento durante el día · Estación maestra en ${m.etiqueta}`;
 
-    _pc_estacionActual = nombreEstacion;
-    renderizarDetalleEstacion(nombreEstacion, { serie });
+    if (_pc_tabActiva() !== 'estacion-maestra') { _pc.pendiente.maestra = true; return; }
+    renderizarDetalleEstacion(m);
 }
 
-/**************************************************************************************************/
-// GRAFICA: DETALLE DE ESTACIÓN MAESTRA
-/**************************************************************************************************/
-function renderizarDetalleEstacion(nombreEstacion, data) {
-    const horas     = data.serie.map(s => s.hora);
-    const ocupacion = data.serie.map(s => s.ocupacion);
-    const ascensos  = data.serie.map(s => s.ascensos  || 0);
-    const descensos = data.serie.map(s => s.descensos || 0);
- 
+function renderizarDetalleEstacion(m, { sinTransicion = false } = {}) {
+    if (!m) return;
+    _pc.pendiente.maestra = false;
     const p = _pc_paleta();
- 
+    const serie = m.serie || [];
+
+    const horas     = serie.map(s => s.hora);
+    // Eje X categórico con la franja completa ("08:00-09:00"): así la etiqueta del hover dice la
+    // franja; las marcas del eje muestran solo la hora ("08"), como el diseño.
+    const franjas   = serie.map(s => s.franja);
+    const ascensos  = serie.map(s => s.ascensos);
+    const descensos = serie.map(s => s.descensos);
+    const ocupacion = serie.map(s => s.ocupacion);
+    // Franjas con pocos viajes: barras más tenues (el promedio sale de muy pocos recorridos)
+    const opac = serie.map(s => s.pocos_viajes ? 0.4 : 0.9);
+    const custom = serie.map(s => ({
+        viajes: s.n_viajes,
+        nota: (s.es_maestra ? '<br>⭐ Franja maestra' : '') + (s.pocos_viajes ? '<br>⚠ Pocos viajes' : '')
+    }));
+
     const trazas = [
         {
-            name: 'Ascensos',
-            x: horas, y: ascensos,
-            type: 'bar',
-            marker: { color: p.ascensos }
+            name: 'Ascensos', x: franjas, y: ascensos, type: 'bar',
+            marker: { color: p.ascensos, opacity: opac }, customdata: custom,
+            hovertemplate: 'Ascensos: %{y}<extra></extra>'
         },
         {
-            name: 'Descensos',
-            x: horas, y: descensos,
-            type: 'bar',
-            marker: { color: p.descensos }
+            name: 'Descensos', x: franjas, y: descensos, type: 'bar',
+            marker: { color: p.descensos, opacity: opac }, customdata: custom,
+            hovertemplate: 'Descensos: %{y}<extra></extra>'
         },
         {
-            name: 'Ocupación',
-            x: horas, y: ocupacion,
-            type: 'scatter', mode: 'lines+markers',
-            line:      { color: p.ocupacion, width: 2, shape: 'spline' },
-            marker:    { size: 5, color: p.ocupacion },
-            fill:      'tozeroy',
-            fillgradient: {
-                type: 'vertical',
-                start: 0,
-                stop: Math.max(...ocupacion, 1),
-                colorscale: [[0, conAlpha(p.ocupacion, 0)], [1, conAlpha(p.ocupacion, 0.22)]]
-            },
-            fillcolor: conAlpha(p.ocupacion, 0.12)
+            name: 'Ocupación', x: franjas, y: ocupacion, type: 'scatter', mode: 'lines',
+            line: { color: p.ocupacion, width: 2.5, shape: 'spline', smoothing: 0.5 }, customdata: custom,
+            hovertemplate: 'Ocupación: %{y}<br>Viajes: %{customdata.viajes}%{customdata.nota}<extra></extra>'
         }
     ];
- 
-    // El eje X aquí son horas, no nombres largos: no hace falta inclinarlas
-    const layout = _pc_layout({ tickangle: 0, marginB: 40 });
- 
-    document.getElementById('detalle-placeholder').style.display     = 'none';
-    document.getElementById('titulo-detalle-estacion').style.display = 'block';
-    document.getElementById('titulo-detalle-estacion').textContent   =
-        `${nombreEstacion} — ocupación a lo largo del día`;
-    document.getElementById('chart-detalle-estacion').style.display  = 'block';
- 
-    Plotly.newPlot('chart-detalle-estacion', trazas, layout, {
-        responsive: true,
-        displaylogo: false,
-        displayModeBar: 'hover',
-        modeBarButtonsToRemove: ['zoom2d','pan2d','select2d','lasso2d','autoScale2d']
-    });
-    document.getElementById('chart-detalle-estacion').classList.add('pc-chart');
-}
 
+    // Bandas amarillas = rangos en los que esta estación fue la maestra. En un eje categórico la
+    // categoría i ocupa [i - 0.5, i + 0.5], así la banda cubre las barras completas de cada hora.
+    const shapes = (m.rangos || []).map(r => {
+        const i0 = horas.indexOf(r.hora_inicio), i1 = horas.indexOf(r.hora_fin);
+        if (i0 < 0 || i1 < 0) return null;
+        return {
+            type: 'rect', layer: 'below', xref: 'x', yref: 'paper',
+            x0: i0 - 0.5, x1: i1 + 0.5, y0: 0, y1: 1,
+            fillcolor: p.maestraBanda, line: { width: 0 }
+        };
+    }).filter(Boolean);
+
+    const { tope, paso } = _pc_topeEje(Math.max(0, ...ocupacion, ...ascensos, ...descensos));
+    const layout = _pc_layout({ rangoY: [0, tope], tickangle: 0, marginB: 30 });
+    layout.yaxis.dtick = paso;
+    layout.xaxis.type = 'category';
+    layout.xaxis.tickmode = 'array';
+    layout.xaxis.tickvals = franjas;
+    layout.xaxis.ticktext = horas.map(_pc_hh);
+    layout.xaxis.tickfont.size = 10;
+    layout.xaxis.range = [-0.6, franjas.length - 0.4];
+    layout.showlegend = false;                // la leyenda va en HTML, junto al título (como el diseño)
+    layout.margin.t = 8;
+    layout.shapes = shapes;
+    layout.hovermode = 'x unified';           // una sola etiqueta por hora con las tres series
+    layout.hoverlabel.namelength = 0;
+    if (!sinTransicion) layout.transition = { duration: 300, easing: 'cubic-in-out' };
+
+    Plotly.react('chart-detalle-estacion', trazas, layout, _PC_PLOTLY_CONFIG);
+    document.getElementById('chart-detalle-estacion').classList.add('pc-chart');
+
+    crearExpander('chart-detalle-estacion', serie.map(s => ({
+        Franja:           s.franja,
+        'Franja maestra': s.es_maestra ? 'Sí' : 'No',
+        Ascensos:         s.ascensos,
+        Descensos:        s.descensos,
+        Ocupación:        s.ocupacion,
+        Viajes:           s.n_viajes,
+        'Pocos viajes':   s.pocos_viajes ? 'Sí' : 'No'
+    })), `estacion_maestra_${m.nombre.replace(/[^\w]+/g, '_')}`);
+}
 
 /**************************************************************************************************/
 // REPINTAR AL CAMBIAR DE TEMA
-// setTheme() (js_Dashboard.js) hace un Plotly.restyle GLOBAL que pinta line/marker/fill de TODAS
-// las gráficas con el acento único. Eso sirve para las de una sola serie (Inicio, Totales…), pero
-// aplasta las multiserie de esta sección: dejaría ascensos, descensos y ocupación del mismo color
-// y borraría el ámbar de la estación maestra. Por eso setTheme ya NO toca las gráficas de esta
-// sección (se excluyen con la clase .pc-chart en el layout), y aquí las volvemos a dibujar con
-// _pc_paleta(), que lee los colores correctos del tema recién aplicado.
+// setTheme() (js_Dashboard.js) hace un Plotly.restyle GLOBAL con el acento único, que aplastaría
+// los colores de estas gráficas multiserie; por eso se excluyen con la clase .pc-chart y aquí se
+// vuelven a dibujar con _pc_paleta(), que ya lee los colores del tema recién aplicado.
 /**************************************************************************************************/
 function _pc_repintarTema() {
-    if (_pc_graficaInicializada) {
+    if (_pc.graficaFranjaLista && _pc_tabActiva() === 'franja-horaria') {
         const slider = document.getElementById('slider-hora');
-        const h = slider ? parseInt(slider.value, 10) : null;
-        if (h !== null && !Number.isNaN(h)) {
-            const franja     = `${String(h).padStart(2, '0')}:00-${String(h + 1).padStart(2, '0')}:00`;
-            const estaciones = _pc_franjasPorHora[franja] || [];
-            renderizarPoligonoCarga({ ruta: _pc_rutaActual, franja, estaciones });
+        const h = slider ? parseInt(slider.value, 10) : NaN;
+        if (!Number.isNaN(h)) {
+            const franja = `${_pc_hh(h)}:00-${_pc_hh(h + 1)}:00`;
+            renderizarPoligonoCarga({ franja, estaciones: _pc.franjasPorHora[franja] || [], sinTransicion: true });
         }
+    } else if (_pc.graficaFranjaLista) {
+        _pc.pendiente.franja = true;          // se repinta al volver a su pestaña
     }
 
-    if (_pc_estacionActual && window._pc_maestrasData && window._pc_maestrasData.series) {
-        const serie = window._pc_maestrasData.series[_pc_estacionActual];
-        if (serie && serie.length) {
-            renderizarDetalleEstacion(_pc_estacionActual, { serie });
+    if (_pc.maestraSel >= 0) {
+        if (_pc_tabActiva() === 'estacion-maestra') {
+            renderizarDetalleEstacion(_pc.maestras[_pc.maestraSel], { sinTransicion: true });
+        } else {
+            _pc.pendiente.maestra = true;
         }
     }
 }
 
-// Enganche con setTheme SIN editar js_Dashboard.js.
-// Ojo con el orden de carga: esta sección se incluye dentro del <body>, así que este
-// script corre ANTES que js_Dashboard.js (que va al final y define setTheme). Por eso
-// no envolvemos aquí — esperamos a DOMContentLoaded, cuando setTheme ya está definido.
+// Enganche con setTheme SIN editar js_Dashboard.js. Esta sección se incluye dentro del <body>,
+// así que corre ANTES que js_Dashboard.js: se espera a DOMContentLoaded, cuando setTheme existe.
 function _pc_engancharTema() {
     if (window._pc_temaEnganchado) return;
     if (typeof window.setTheme !== 'function') return;
@@ -643,20 +640,22 @@ if (document.readyState === 'loading') {
 }
 
 /**************************************************************************************************/
-// EXPANDER DE DESCARGA CSV
+// EXPANDER DE DATOS + DESCARGA CSV (va debajo de la tarjeta de la gráfica, a todo lo ancho)
 /**************************************************************************************************/
 function crearExpander(containerId, datos, nombreArchivo) {
     const expanderId = `expander-${containerId}`;
-
     const previo = document.getElementById(expanderId);
+    const estabaAbierto = !!(previo && previo.open);   // al mover el slider no se cierra solo
     if (previo) previo.remove();
+    if (!datos || !datos.length) return;
 
     const expander = document.createElement('details');
     expander.id = expanderId;
     expander.className = 'data-expander';
+    expander.open = estabaAbierto;
     expander.innerHTML = `
         <summary>Ver datos de la gráfica</summary>
-        <button class="btn-download" onclick="exportarCSV('${expanderId}-tabla', '${nombreArchivo}')">
+        <button class="btn-download" onclick="exportarCSV('${expanderId}-tabla', '${_pc_escHtml(nombreArchivo)}')" aria-label="Descargar datos en CSV">
             <svg class="download-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
@@ -673,31 +672,30 @@ function crearExpander(containerId, datos, nombreArchivo) {
         </div>
     `;
 
-    const thead = expander.querySelector('thead');
-    const tbody = expander.querySelector('tbody');
-
     const headers = Object.keys(datos[0]);
-    thead.innerHTML = `<tr><th>#</th>${headers.map(k => `<th>${k}</th>`).join('')}</tr>`;
-    tbody.innerHTML = datos.map((fila, i) => `
+    expander.querySelector('thead').innerHTML =
+        `<tr><th>#</th>${headers.map(k => `<th>${_pc_escHtml(k)}</th>`).join('')}</tr>`;
+    expander.querySelector('tbody').innerHTML = datos.map((fila, i) => `
         <tr>
-            <td>${i + 1}</td>
-            ${Object.values(fila).map(v => `<td>${v}</td>`).join('')}
-        </tr>
-    `).join('');
+            <td class="row-index">${i + 1}</td>
+            ${Object.values(fila).map(v => `<td>${_pc_escHtml(v)}</td>`).join('')}
+        </tr>`).join('');
 
     const chart = document.getElementById(containerId);
-    chart.parentElement.appendChild(expander);
+    const caja  = chart.closest('.chart-box');
+    if (caja) caja.after(expander);
+    else chart.parentElement.appendChild(expander);
 }
 
 function exportarCSV(tablaId, nombreArchivo) {
     const tabla = document.getElementById(tablaId);
     if (!tabla) return;
-    let csv = [];
+    const csv = [];
     tabla.querySelectorAll('tr').forEach(row => {
         const cols = row.querySelectorAll('td, th');
         csv.push(Array.from(cols).map(c => `"${c.innerText.replace(/"/g, '""')}"`).join(','));
     });
-    const blob = new Blob(["\uFEFF" + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(["﻿" + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url  = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -707,35 +705,46 @@ function exportarCSV(tablaId, nombreArchivo) {
 }
 
 /**************************************************************************************************/
-// INICIALIZAR
+// LISTENERS (una sola vez)
+/**************************************************************************************************/
+function _pc_engancharListeners() {
+    if (_pc.listo) return;
+    _pc.listo = true;
+
+    inicializarTabs();
+
+    // Selector estilizado compartido (js_SelectEstilizado.js)
+    if (typeof mejorarSelect === 'function') {
+        mejorarSelect(document.getElementById('ruta-franja'),
+            { buscador: 'auto', placeholder: 'Buscar ruta…', ocultarVacio: true });
+    }
+
+    // El corredor se lee al hacer clic (antes se "congelaba" el de la primera carga en un closure)
+    document.getElementById('btn-consultar-franja').addEventListener('click', () => {
+        const sel = document.getElementById('select-corredor');
+        consultarPoligono(sel ? sel.value : null);
+    });
+
+    document.getElementById('grid-estaciones-maestras').addEventListener('click', (e) => {
+        const card = e.target.closest('.pc-maestra-card');
+        if (card) _pc_seleccionarMaestra(Number(card.dataset.i));
+    });
+}
+
+/**************************************************************************************************/
+// PUNTO DE ENTRADA — js_Dashboard.js lo llama al cargar y en cada cambio de corredor
 /**************************************************************************************************/
 async function actualizarDashboardPoligonoCarga(groupId) {
     setMaxFechaAyer();
-    inicializarTabs();
-
+    _pc_engancharListeners();
     if (!groupId) return;
 
+    // Cambio de corredor: los resultados en pantalla eran del corredor anterior
+    if (_pc.ctrl) _pc.ctrl.abort();
+    _pc.token++;
+    _pc_toggleLoader(false);
+    _pc_banner('');
+    _pc_limpiarResultados();
+
     await cargarRutasPoligono(groupId);
-
-    const btnFranja   = document.getElementById('btn-consultar-franja');
-    const btnEstacion = document.getElementById('btn-consultar-estacion');
-
-    if (btnFranja) {
-        btnFranja.replaceWith(btnFranja.cloneNode(true));
-        document.getElementById('btn-consultar-franja')
-                .addEventListener('click', () => consultarFranja(groupId));
-    }
-
-    if (btnEstacion) {
-        btnEstacion.replaceWith(btnEstacion.cloneNode(true));
-        document.getElementById('btn-consultar-estacion').addEventListener('click', () => {
-            const fecha = document.getElementById('fecha-estacion').value;
-            const ruta  = document.getElementById('ruta-estacion').value;
-            if (!fecha || !ruta) {
-                alert('Selecciona una fecha y una ruta para continuar.');
-                return;
-            }
-            consultarEstacionesMaestras(groupId, fecha, ruta);
-        });
-    }
 }
