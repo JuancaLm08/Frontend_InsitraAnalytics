@@ -44,6 +44,18 @@ function temaGrafica() {
     };
 }
 
+// Series adicionales que manda el back en data.series_extra: el back manda
+// una clave semántica (estilo) y aquí se resuelve color y trazo con el tema,
+// igual que la serie principal usa --accent y no config.color.
+const ESTILOS_SERIE_EXTRA = {
+    estimado: { token: '--serie-estimado', fallback: '#E2B04A', dash: 'dash' }
+};
+
+function estiloSerieExtra(estilo) {
+    const e = ESTILOS_SERIE_EXTRA[estilo] || { token: '--texto-suave', fallback: '#8C959F', dash: 'dot' };
+    return { color: cssVar(e.token, e.fallback), dash: e.dash };
+}
+
 /**********************************************************************************************************************************************************/
 // FUNCION PARA OBTENER Y ESTABLECER EL COLOR DE LA CUADRICULA (se conserva por compatibilidad)
 function getGridColor() {
@@ -114,8 +126,17 @@ function setTheme(theme) {
         // Rejilla/tipografía/hover a todas (incluidas las multiserie)
         todasLasGraficas.forEach(chart => Plotly.relayout(chart, relayout));
 
-        // Color de línea/marcador/relleno solo a las de una serie
-        graficasUnaSerie.forEach(chart => Plotly.restyle(chart, restyle));
+        // Color de línea/marcador/relleno solo a las de una serie. Solo a la
+        // traza 0 (la principal): las series extra (p. ej. Estimado) llevan su
+        // propio color y se repintan aparte según su estilo (trace.meta).
+        graficasUnaSerie.forEach(chart => {
+            Plotly.restyle(chart, restyle, [0]);
+            (chart.data || []).forEach((tr, i) => {
+                if (i === 0 || !tr.meta || !tr.meta.estilo) return;
+                const e = estiloSerieExtra(tr.meta.estilo);
+                Plotly.restyle(chart, { 'line.color': e.color, 'marker.color': e.color }, [i]);
+            });
+        });
     }
 }
 
@@ -327,8 +348,16 @@ function renderizarGraficaMaster(data, containerId) {
         });
     }
 
-    // Rango vertical del relleno, para anclar el degradado
-    const numeros = data.values.map(Number).filter(Number.isFinite);
+    // Series adicionales (p. ej. Estimado en Totales). El back manda valores,
+    // hover y estilo; null = hueco. Sin series_extra todo queda como antes.
+    const seriesExtra = Array.isArray(data.series_extra) ? data.series_extra : [];
+
+    // Rango vertical: incluye las series extra para que no se corten arriba.
+    // El degradado del relleno se ancla con este mismo rango.
+    const numeros = data.values
+        .concat(...seriesExtra.map(s => s.values || []))
+        .filter(v => v !== null && v !== undefined)
+        .map(Number).filter(Number.isFinite);
     const yMax = numeros.length ? Math.max(...numeros) : 1;
     const yMin = Math.min(0, ...(numeros.length ? numeros : [0]));
 
@@ -356,13 +385,39 @@ function renderizarGraficaMaster(data, containerId) {
         name: config.label || 'Datos'
     };
 
+    const trazasExtra = seriesExtra.map(serie => {
+        const e = estiloSerieExtra(serie.estilo);
+        return {
+            x: data.labels,
+            y: serie.values,
+            text: serie.hovertext || [],
+            hoverinfo: 'text',
+            type: 'scatter',
+            mode: 'lines+markers',
+            line: { color: e.color, width: 2, dash: e.dash, shape: 'spline', smoothing: 0.5 },
+            marker: { color: e.color, size: 7, symbol: 'circle-open', line: { width: 2 } },
+            connectgaps: false,
+            name: serie.nombre || 'Serie',
+            meta: { estilo: serie.estilo }
+        };
+    });
+    const conLeyenda = trazasExtra.length > 0;
+
     const layout = {
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
         autosize: true,
         font: { color: t.suave, family: "'Orbitron', sans-serif", size: 11 },
-        margin: { t: 10, r: 14, b: 34, l: MINIMAL_AXES ? 14 : 52 },
-        showlegend: false,
+        margin: { t: conLeyenda ? 34 : 10, r: 14, b: 34, l: MINIMAL_AXES ? 14 : 52 },
+        // Leyenda solo cuando hay series extra (Real / Estimado), centrada arriba
+        showlegend: conLeyenda,
+        legend: {
+            orientation: 'h',
+            x: 0.5, xanchor: 'center',
+            y: 1.02, yanchor: 'bottom',
+            font: { size: 11 },
+            bgcolor: 'rgba(0,0,0,0)'
+        },
 
         hovermode: 'closest',
         hoverlabel: {
@@ -399,7 +454,7 @@ function renderizarGraficaMaster(data, containerId) {
         }
     };
 
-    Plotly.newPlot(chartDiv, [trace], layout, {
+    Plotly.newPlot(chartDiv, [trace, ...trazasExtra], layout, {
         responsive: true,
         displaylogo: false,
         displayModeBar: 'hover',

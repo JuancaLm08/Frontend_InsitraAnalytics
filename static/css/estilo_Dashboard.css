@@ -46,6 +46,7 @@
     /* Series de gráfica y categorías de tarifa */
     --serie-descensos:  #5B8FD6;
     --serie-ocupacion:  #4CC27A;   /* línea de ocupación (Polígono de Carga) */
+    --serie-estimado:   #E2B04A;   /* línea punteada de estimado (Totales) */
     --maestra:          #F4C542;
     --maestra-banda:    rgba(244, 197, 66, 0.13);   /* bandas de "franja maestra" (Polígono) */
     --tarifa-normal:    #4A90E2;
@@ -135,6 +136,7 @@ body.light-mode {
 
     --serie-descensos:  #5B8FD6;
     --serie-ocupacion:  #3A9A5B;
+    --serie-estimado:   #B8862B;
     --maestra:          #C48A10;
     --maestra-banda:    rgba(240, 196, 70, 0.28);
     --tarifa-normal:    #2B6CB0;
