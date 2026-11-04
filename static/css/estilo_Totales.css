@@ -15,8 +15,35 @@
     opacity: 0.6;
 }
 
+/* ------------------ PESTAÑA: CONSULTA POR DÍA ------------------ */
+/* Título a la izquierda y fecha a la derecha, como el diseño */
+#section-totales .dia-encabezado {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+#section-totales .dia-encabezado .section-subtitle { margin: 0; }
+#section-totales .dia-fecha { flex: 0 0 240px; }
+
+/* Tres indicadores (las tarjetas son las de Inicio, estilo_Inicio.css) */
+#section-totales .dia-metricas { grid-template-columns: repeat(3, 1fr); }
+
+/* Kilometraje e IPK lado a lado */
+#section-totales .dia-graficas-par {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
+    #section-totales .dia-encabezado { flex-direction: column; align-items: stretch; }
+    #section-totales .dia-fecha { flex: none; }
+    #section-totales .dia-metricas,
+    #section-totales .dia-graficas-par { grid-template-columns: 1fr; }
+
     #section-totales .date-filter-container {
         flex-direction: column;
         gap: 12px;

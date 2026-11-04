@@ -7,6 +7,21 @@
         <div class="lottie-anim-canvas"></div>
     </div>
 
+    <!-- PESTAÑAS -->
+    <div class="tabs-seccion">
+        <button class="tab-btn active" data-tab="totales-rango">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+            Por rango de fechas
+        </button>
+        <button class="tab-btn" data-tab="totales-dia">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+            Consulta por día
+        </button>
+    </div>
+
+    <!-- TAB 1: POR RANGO DE FECHAS -->
+    <div id="tab-totales-rango" class="tab-content">
+
     <!-- APARTADO DE CONTEO DE PASAJEROS -->
     <p class="section-subtitle">Conteo de pasajeros</p>
 
@@ -96,6 +111,90 @@
             </div>
         </details>
     </div>
+    </div>
+    <!-- FIN TAB 1 -->
+
+    <!-- TAB 2: CONSULTA POR DÍA
+         Las tres gráficas de Inicio para un día ya cerrado (por defecto ayer).
+         Misma lógica de cálculo que Inicio (back: procesar_dia_por_hora). -->
+    <div id="tab-totales-dia" class="tab-content" style="display:none;">
+
+        <div class="dia-encabezado">
+            <p class="section-subtitle">Consulta por día</p>
+            <div class="date-group dia-fecha">
+                <label for="fecha-dia-totales">Fecha</label>
+                <input type="date" id="fecha-dia-totales">
+            </div>
+        </div>
+
+        <div id="no-data-banner-totales-dia" class="status-banner" style="display:none;">No hay datos para el día seleccionado.</div>
+        <div id="totales-dia-content" style="display: none;">
+
+            <!----- INDICADORES DEL DÍA ----->
+            <div class="metrics-grid dia-metricas">
+                <div class="metric-card">
+                    <p class="metric-label">
+                        <span>Ascensos del día</span>
+                        <span class="help-icon" tabindex="0" data-help="Suma de todas las horas del día, incluidas las de baja actividad que las gráficas no muestran.">?</span>
+                    </p>
+                    <h2 id="dia-kpi-ascensos">--</h2>
+                </div>
+                <div class="metric-card">
+                    <p class="metric-label">
+                        <span>Kilómetros recorridos</span>
+                        <span class="help-icon" tabindex="0" data-help="Distancia calculada con el GPS de las unidades con contadores de pasajeros (igual que en Inicio), sumando todas las horas del día. El kilometraje de la pestaña Por rango de fechas incluye toda la flota, por eso es mayor.">?</span>
+                    </p>
+                    <h2 id="dia-kpi-km">--</h2>
+                </div>
+                <div class="metric-card">
+                    <p class="metric-label">
+                        <span>IPK promedio</span>
+                        <span class="help-icon help-left" tabindex="0" data-help="Ascensos del día entre kilómetros recorridos del día (todas las horas, solo unidades con contadores).">?</span>
+                    </p>
+                    <h2 id="dia-kpi-ipk">--</h2>
+                </div>
+            </div>
+
+            <!----- ASCENSOS POR HORA ----->
+            <div class="chart-box">
+                <h2>Ascensos por hora</h2>
+                <div id="chart-dia-ascensos" style="height: 260px;"></div>
+                <div class="chart-disclaimer">
+                    <span id="help-umbrales-dia" class="help-icon" tabindex="0" data-help="Las gráficas y la tabla no muestran las horas de baja actividad.">?</span>
+                </div>
+            </div>
+
+            <!----- KM E IPK POR HORA ----->
+            <div class="dia-graficas-par">
+                <div class="chart-box">
+                    <h2>Kilometraje por hora</h2>
+                    <div id="chart-dia-km" style="height: 200px;"></div>
+                </div>
+                <div class="chart-box">
+                    <h2>IPK por hora</h2>
+                    <div id="chart-dia-ipk" style="height: 200px;"></div>
+                </div>
+            </div>
+
+            <details class="data-expander">
+                <summary>Ver datos mostrados en la gráfica</summary>
+                <button class="btn-download" onclick="exportTableToCSV('tabla-dia-totales')" aria-label="Descargar datos en CSV">
+                    <svg class="download-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </button>
+                <div class="table-container">
+                    <table id="tabla-dia-totales">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </details>
+        </div>
+    </div>
+    <!-- FIN TAB 2 -->
 </div>
 
 <!-- JavaScript de la Seccion Totales -->

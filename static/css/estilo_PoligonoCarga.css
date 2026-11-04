@@ -6,55 +6,8 @@
    se carga la última. Ahora todo va acotado a #section-poligono-carga.
    ========================================================================== */
 
-/* ── Tabs ──────────────────────────────────────────────────── */
-.tabs-poligono {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--borde-principal);
-}
-
-.tab-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    border: 1px solid transparent;
-    border-bottom: 2px solid transparent;
-    background: none;
-    font-family: var(--font-ui);
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--texto-tenue);
-    cursor: pointer;
-    margin-bottom: -1px;
-    border-radius: var(--radio-sm) var(--radio-sm) 0 0;
-    transition: color 0.2s ease, background-color 0.2s ease;
-}
-
-.tab-btn svg {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.tab-btn:hover {
-    color: var(--texto);
-    background: var(--borde-suave);
-}
-
-.tab-btn.active {
-    color: var(--texto);
-    background: var(--superficie);
-    border-color: var(--borde-principal);
-    border-bottom-color: var(--accent-solido);
-}
-
-.tab-btn.active svg { color: var(--accent); }
+/* Las pestañas (.tabs-poligono / .tab-btn) viven en estilo_Dashboard.css:
+   las comparten Polígono de Carga y Totales. */
 
 /* ── Filtros superiores ────────────────────────────────────── */
 .filtros-poligono {
@@ -520,8 +473,6 @@
     .filtros-poligono { align-items: stretch; }
     .filtro-grupo, .filtro-input { width: 100%; }
     .btn-consultar { width: 100%; }
-    .tabs-poligono { overflow-x: auto; }
-    .tab-btn { white-space: nowrap; }
 }
 
 @media (max-width: 600px) {

@@ -87,6 +87,7 @@ function dispararActualizacionGlobal() {
         document.getElementById('select-corredor'),
         document.getElementById('fecha-inicio-totales'),
         document.getElementById('fecha-final-totales'),
+        document.getElementById('fecha-dia-totales'),
         document.getElementById('select-all-bus'),
         document.querySelector('.custom-select'),
         document.getElementById('fecha-inicio-unidades'),
@@ -121,7 +122,7 @@ function dispararActualizacionGlobal() {
             contenedoresActivos = [document.getElementById('inicio-content')];
             activeLoaderId = 'loader-inicio';
         } else if (view === 'Totales') {
-            contenedoresActivos = [document.getElementById('totales-pasajeros-content'), document.getElementById('totales-kilometraje-content')];
+            contenedoresActivos = [document.getElementById('totales-pasajeros-content'), document.getElementById('totales-kilometraje-content'), document.getElementById('totales-dia-content')];
             activeLoaderId = 'loader-totales';
         } else if (view === 'Unidades') {
             contenedoresActivos = [document.getElementById('unidades-pasajeros-content'), document.getElementById('unidades-kilometraje-content')];

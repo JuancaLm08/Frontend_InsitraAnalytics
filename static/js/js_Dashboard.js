@@ -44,16 +44,23 @@ function temaGrafica() {
     };
 }
 
-// Series adicionales que manda el back en data.series_extra: el back manda
-// una clave semántica (estilo) y aquí se resuelve color y trazo con el tema,
-// igual que la serie principal usa --accent y no config.color.
-const ESTILOS_SERIE_EXTRA = {
-    estimado: { token: '--serie-estimado', fallback: '#E2B04A', dash: 'dash' }
+// Estilos de serie que manda el back como clave semántica: en la serie
+// principal (config.estilo) o en data.series_extra[].estilo. Aquí se resuelve
+// color y trazo con el tema. Sin estilo, la serie principal usa --accent.
+const ESTILOS_SERIE = {
+    estimado:   { token: '--serie-estimado', fallback: '#E2B04A', dash: 'dash' },
+    kilometros: { token: '--serie-km',       fallback: '#5B8FD6', dash: 'solid' },
+    ipk:        { token: '--serie-ipk',      fallback: '#4CC27A', dash: 'solid' }
 };
 
-function estiloSerieExtra(estilo) {
-    const e = ESTILOS_SERIE_EXTRA[estilo] || { token: '--texto-suave', fallback: '#8C959F', dash: 'dot' };
+function estiloSerie(estilo) {
+    const e = ESTILOS_SERIE[estilo] || { token: '--texto-suave', fallback: '#8C959F', dash: 'dot' };
     return { color: cssVar(e.token, e.fallback), dash: e.dash };
+}
+
+// Color de una traza ya dibujada según su estilo (trace.meta.estilo)
+function colorTraza(traza, t) {
+    return traza && traza.meta && traza.meta.estilo ? estiloSerie(traza.meta.estilo).color : t.accent;
 }
 
 /**********************************************************************************************************************************************************/
@@ -113,28 +120,28 @@ function setTheme(theme) {
             'hoverlabel.font.color': t.texto
         };
 
-        const restyle = {
-            'line.color': t.accent,
-            'marker.color': t.accent,
-            'fillcolor': conAlpha(t.accent, 0.10),
-            'fillgradient.colorscale': [[
-                [0, conAlpha(t.accent, 0.00)],
-                [1, conAlpha(t.accent, 0.10)]
-            ]]
-        };
-
         // Rejilla/tipografía/hover a todas (incluidas las multiserie)
         todasLasGraficas.forEach(chart => Plotly.relayout(chart, relayout));
 
-        // Color de línea/marcador/relleno solo a las de una serie. Solo a la
-        // traza 0 (la principal): las series extra (p. ej. Estimado) llevan su
-        // propio color y se repintan aparte según su estilo (trace.meta).
+        // Color de línea/marcador/relleno solo a las de una serie. Cada traza
+        // con su estilo (trace.meta.estilo): la principal usa --accent salvo que
+        // el back le haya dado estilo (km, IPK); las extra (Estimado) el suyo.
         graficasUnaSerie.forEach(chart => {
-            Plotly.restyle(chart, restyle, [0]);
             (chart.data || []).forEach((tr, i) => {
-                if (i === 0 || !tr.meta || !tr.meta.estilo) return;
-                const e = estiloSerieExtra(tr.meta.estilo);
-                Plotly.restyle(chart, { 'line.color': e.color, 'marker.color': e.color }, [i]);
+                const col = colorTraza(tr, t);
+                if (i === 0) {
+                    Plotly.restyle(chart, {
+                        'line.color': col,
+                        'marker.color': col,
+                        'fillcolor': conAlpha(col, 0.10),
+                        'fillgradient.colorscale': [[
+                            [0, conAlpha(col, 0.00)],
+                            [1, conAlpha(col, 0.10)]
+                        ]]
+                    }, [0]);
+                } else {
+                    Plotly.restyle(chart, { 'line.color': col, 'marker.color': col }, [i]);
+                }
             });
         });
     }
@@ -333,7 +340,8 @@ function renderizarGraficaMaster(data, containerId) {
 
     const config = data.config || {};
     const t = temaGrafica();
-    const color = t.accent;
+    // Sin estilo -> acento (Inicio y el resto); con estilo -> token del tema
+    const color = config.estilo ? estiloSerie(config.estilo).color : t.accent;
 
     let hoverMessages = data.hovertext || [];
     if (hoverMessages.length === 0) {
@@ -382,11 +390,12 @@ function renderizarGraficaMaster(data, containerId) {
                 [1, conAlpha(color, 0.10)]
             ]
         },
-        name: config.label || 'Datos'
+        name: config.label || 'Datos',
+        meta: { estilo: config.estilo || null }
     };
 
     const trazasExtra = seriesExtra.map(serie => {
-        const e = estiloSerieExtra(serie.estilo);
+        const e = estiloSerie(serie.estilo);
         return {
             x: data.labels,
             y: serie.values,

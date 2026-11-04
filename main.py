@@ -290,6 +290,26 @@ def get_totales_data():
         return jsonify({"success": False, "error": str(e)})
 
 
+# CONSULTA POR DÍA DE TOTALES (pestaña): ascensos, km e IPK por hora de un día cerrado
+@app.route('/api/totales-dia-data')
+def get_totales_dia_data():
+    if 'user_key' not in session:
+        return jsonify({"error": "No autenticado"}), 401
+
+    group_id = request.args.get('groupid')
+    fecha = request.args.get('fecha')
+
+    if not group_id or not fecha:
+        return jsonify({"success": False, "error": "Faltan parámetros: groupid, fecha"})
+
+    try:
+        response = bck("get", "/api/totales-dia-data", params={"groupid": group_id, "fecha": fecha})
+        return jsonify(response.json())
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
 """ ##################################################################################################################################################### """
 """ ################################################################ SECCION DE UNIDADES ################################################################ """
 # ENDPOINT PARA LLENAR EL MULTISELECT SEGUN EL GRUPO SELECCIONADO
