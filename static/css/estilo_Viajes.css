@@ -209,11 +209,20 @@ body.light-mode #section-viajes {
     min-width: 96px;
 }
 
+/* Columna TOTAL pegada a la derecha (igual que la fila de totales abajo): con muchas rutas
+   la tabla se desplaza en horizontal y el total de cada unidad siempre queda a la vista. */
 #section-viajes .vj-matriz .vj-col-total {
-    text-align: right;
+    text-align: center;
     font-weight: 600;
     white-space: nowrap;
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background-color: var(--superficie);
+    box-shadow: inset 1px 0 0 var(--borde-principal);
 }
+
+#section-viajes .vj-matriz th.vj-col-total { z-index: 3; }
 
 /* El hover global pinta TODAS las celdas; la de unidad es sticky y debe seguirlo */
 #section-viajes .vj-matriz tbody tr:hover td { background-color: var(--borde-suave); }
@@ -239,7 +248,7 @@ body.light-mode #section-viajes {
     z-index: 2;
 }
 
-#section-viajes .vj-matriz tfoot .vj-gran-total { color: var(--accent); }
+#section-viajes .vj-matriz tfoot .vj-gran-total { color: var(--accent); z-index: 2; }
 
 /* ── Viajes por ruta ───────────────────────────────────────── */
 #section-viajes .vj-rutas {

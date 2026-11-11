@@ -273,15 +273,17 @@ function _vj_renderMatriz() {
         return r * dir;
     });
 
+    // La escala de color va en el TOTAL de cada unidad (cuántos viajes hizo en el día);
+    // las celdas por ruta quedan como número simple.
     tabla.querySelector('tbody').innerHTML = filas.map(f => '<tr>' +
         `<td class="vj-col-unidad">${_vj_esc(f.unidad)}</td>` +
         columnas.map(c => {
             const n = f.por_ruta[String(c.ruta_id)] || 0;
             return n > 0
-                ? `<td class="vj-col-ruta"><span class="vj-heat ${_vj_claseHeat(n)}">${_vj_num(n)}</span></td>`
+                ? `<td class="vj-col-ruta">${_vj_num(n)}</td>`
                 : '<td class="vj-col-ruta"><span class="vj-vacio">–</span></td>';
         }).join('') +
-        `<td class="vj-col-total">${_vj_num(f.total)}</td>` +
+        `<td class="vj-col-total"><span class="vj-heat ${_vj_claseHeat(f.total)}">${_vj_num(f.total)}</span></td>` +
         '</tr>').join('');
 
     const tot = m.totales || {};
