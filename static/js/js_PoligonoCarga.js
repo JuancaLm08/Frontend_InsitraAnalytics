@@ -27,6 +27,7 @@ const _pc = {
     variaciones: {},         // variacion_id -> {descripcion, es_principal, n_viajes, n_poligonos}
     maestras: [],            // estaciones_maestras[]
     maestraSel: -1,          // índice de la tarjeta elegida
+    puntoMax: null,          // estación maestra con es_punto_maximo (se resalta en la pestaña 1)
     graficaFranjaLista: false,
     pendiente: { franja: false, maestra: false },
     listo: false
@@ -253,6 +254,7 @@ function _pc_limpiarResultados() {
     });
     _pc.maestras = [];
     _pc.maestraSel = -1;
+    _pc.puntoMax = null;
     _pc.pendiente = { franja: false, maestra: false };
 }
 
@@ -307,6 +309,11 @@ async function consultarPoligono(groupId) {
         // Nombre legible para títulos: el del back o, si no viene, el de la opción elegida
         const opt = document.querySelector(`#ruta-franja option[value="${CSS.escape(ruta)}"]`);
         _pc.rutaNombre = data.ruta_nombre || (opt && opt.textContent) || ruta;
+
+        // Punto máximo del día: se resalta en la gráfica por franja cuando el slider llega a su
+        // franja pico. Va antes del primer dibujo, que puede caer justo en esa franja.
+        const maestrasDia = data.estaciones_maestras || [];
+        _pc.puntoMax = maestrasDia.find(m => m.es_punto_maximo) || null;
 
         const rango = data.rango || { hora_inicio: 6, hora_fin: 22 };
         _pc.graficaFranjaLista = false;
@@ -423,10 +430,28 @@ function renderizarPoligonoCarga(data) {
         }
     ];
 
-    // Escala por franja: el eje se ajusta a la franja visible y se anima al mover el slider
-    const { tope, paso } = _pc_topeEje(Math.max(0, ...ocupacion, ...ascensos, ...descensos));
+    // ¿Esta franja es la del punto máximo del día? Se busca la estación por poligono_id
+    // (el nombre puede repetirse entre ramales) y, si no viene, por nombre.
+    const pm = _pc.puntoMax;
+    let iMax = -1;
+    if (pm && pm.franja_pico === data.franja) {
+        iMax = est.findIndex(e => pm.poligono_id != null ? e.poligono_id === pm.poligono_id : e.nombre === pm.nombre);
+    }
+
+    // Escala por franja: el eje se ajusta a la franja visible y se anima al mover el slider.
+    // Con la etiqueta del punto máximo se deja ~15 % más de aire para que quepa dentro del área.
+    const maxY = Math.max(0, ...ocupacion, ...ascensos, ...descensos);
+    const { tope, paso } = _pc_topeEje(iMax >= 0 ? maxY * 1.15 : maxY);
     const layout = _pc_layout({ rangoY: [0, tope], marginB: 120 });
     layout.yaxis.dtick = paso;
+    layout.annotations = iMax >= 0 ? [{
+        x: nombres[iMax], y: ocupacion[iMax], xref: 'x', yref: 'y',
+        text: `<b>★ Punto máximo del día · ${_pc_fmt(ocupacion[iMax], 1)}</b>`,
+        showarrow: true, arrowhead: 0, arrowwidth: 1.4, arrowcolor: p.maestra,
+        ax: 0, ay: -34,
+        font: { size: 10, color: temaGrafica().texto, family: "'Orbitron', sans-serif" },
+        bgcolor: temaGrafica().superficie, bordercolor: p.maestra, borderwidth: 1.5, borderpad: 5
+    }] : [];
     // Solo se anima al moverse DENTRO de una consulta; ni la primera gráfica ni el repintado por
     // tema (setTheme() hace un relayout sobre la misma gráfica y una transición en curso choca).
     if (_pc.graficaFranjaLista && !data.sinTransicion) {
@@ -457,6 +482,27 @@ function renderizarPoligonoCarga(data) {
 /**************************************************************************************************/
 const _PC_ICONO_BANDERA = '<svg viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="22" x2="5" y2="3"/><path d="M5 4h12l-2.5 4L17 12H5z"/></svg>';
 
+// "14:00-15:00" -> "14:00–15:00" (mismo guion que las etiquetas del back)
+const _pc_franjaTxt = (f) => String(f || '').replace('-', '–');
+
+/* Datos del pico de una estación maestra: ocupación (promedio a bordo por viaje) en su franja
+   pico. El back ordena las tarjetas por ocupacion_pico, de mayor a menor. */
+function _pc_picoDe(m) {
+    const s = (m.serie || []).find(x => x.franja === m.franja_pico);
+    return {
+        ocupacion: m.ocupacion_pico,
+        viajes: s ? s.n_viajes : null,
+        franja: m.franja_pico
+    };
+}
+
+// ¿Es la estación del punto máximo del día? La marca el back (es_punto_maximo); si no marcara
+// ninguna, se toma la primera, que por el orden del back es la de mayor ocupación.
+function _pc_esPuntoMax(m) {
+    const lista = _pc.maestras || [];
+    return lista.some(x => x.es_punto_maximo) ? !!m.es_punto_maximo : lista[0] === m;
+}
+
 function renderizarEstacionesMaestras() {
     const lista  = _pc.maestras;
     const grid   = document.getElementById('grid-estaciones-maestras');
@@ -472,15 +518,23 @@ function renderizarEstacionesMaestras() {
     vacio.style.display = 'none';
     layout.style.display = 'block';
 
-    // Orden del back (de la que fue maestra más horas a la que menos)
+    // Orden del back: de mayor a menor ocupación en su franja pico (ocupacion_pico).
+    // El indicador de pico solo va en la tarjeta del punto máximo del día; si el back no marcara
+    // ninguna, se usa la primera (que por el orden es la de mayor ocupación).
     grid.innerHTML = lista.map((m, i) => {
+        const esMax = _pc_esPuntoMax(m);
         const horas = m.n_franjas === 1 ? '1 hora' : `${m.n_franjas} horas`;
+        const pk = _pc_picoDe(m);
+        const viajesTxt = pk.viajes == null ? '' : `Promedio de ${pk.viajes} ${pk.viajes === 1 ? 'viaje' : 'viajes'}`;
+        const maximo = esMax
+            ? `<span class="pc-maestra-max"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 3 14.8 8.7 21 9.6 16.5 14 17.6 20.2 12 17.3 6.4 20.2 7.5 14 3 9.6 9.2 8.7"/></svg>Punto máximo del día</span>`
+            : '';
         const pocos = (m.horas_pocos_viajes || []).length
             ? `<span class="pc-maestra-aviso" title="Franjas con pocos viajes: el promedio es menos confiable">Pocos viajes en ${m.horas_pocos_viajes.map(h => `${_pc_hh(h)}:00`).join(', ')}</span>`
             : '';
         return `
-            <button type="button" class="pc-maestra-card" role="option" aria-selected="false" data-i="${i}"
-                    title="Pico de ${_pc_fmt(m.ocupacion_pico)} a bordo en ${_pc_escHtml(m.franja_pico)}">
+            <button type="button" class="pc-maestra-card${esMax ? ' es-maximo' : ''}" role="option" aria-selected="false" data-i="${i}">
+                ${maximo}
                 <span class="pc-maestra-cabeza">
                     <span class="pc-maestra-id">
                         <span class="pc-maestra-icono">${_PC_ICONO_BANDERA}</span>
@@ -488,7 +542,15 @@ function renderizarEstacionesMaestras() {
                     </span>
                     <span class="pc-maestra-chip">${horas}</span>
                 </span>
-                <span class="pc-maestra-rangos">${_pc_escHtml(m.etiqueta)}</span>
+                ${esMax ? `
+                <span class="pc-maestra-pico-lbl">Franja pico</span>
+                <span class="pc-maestra-pico">
+                    <span class="pc-maestra-pico-num">${_pc_fmt(pk.ocupacion, 1)}</span>
+                    <span class="pc-maestra-pico-txt">ocupación</span>
+                    <span class="pc-maestra-pico-franja">${_pc_escHtml(_pc_franjaTxt(pk.franja))}</span>
+                </span>
+                ${viajesTxt ? `<span class="pc-maestra-pico-meta">${viajesTxt}</span>` : ''}` : ''}
+                <span class="pc-maestra-rangos"><span class="pc-maestra-rangos-lbl">Maestra en</span> ${_pc_escHtml(m.etiqueta)}</span>
                 ${pocos}
             </button>`;
     }).join('');
@@ -506,8 +568,10 @@ function _pc_seleccionarMaestra(i) {
 
     const m = _pc.maestras[i];
     document.getElementById('titulo-detalle-estacion').textContent = m.nombre;
-    document.getElementById('subtitulo-detalle-estacion').textContent =
-        `Comportamiento durante el día · Estación maestra en ${m.etiqueta}`;
+    const pk = _pc_picoDe(m);
+    document.getElementById('subtitulo-detalle-estacion').textContent = _pc_esPuntoMax(m)
+        ? `Ocupación pico de ${_pc_fmt(pk.ocupacion, 1)} en ${_pc_franjaTxt(pk.franja)} · Estación maestra en ${m.etiqueta}`
+        : `Comportamiento durante el día · Estación maestra en ${m.etiqueta}`;
 
     if (_pc_tabActiva() !== 'estacion-maestra') { _pc.pendiente.maestra = true; return; }
     renderizarDetalleEstacion(m);
@@ -518,6 +582,7 @@ function renderizarDetalleEstacion(m, { sinTransicion = false } = {}) {
     _pc.pendiente.maestra = false;
     const p = _pc_paleta();
     const serie = m.serie || [];
+    const esMax = _pc_esPuntoMax(m);       // el pico solo se marca en la del punto máximo del día
 
     const horas     = serie.map(s => s.hora);
     // Eje X categórico con la franja completa ("08:00-09:00"): así la etiqueta del hover dice la
@@ -529,8 +594,8 @@ function renderizarDetalleEstacion(m, { sinTransicion = false } = {}) {
     // Franjas con pocos viajes: barras más tenues (el promedio sale de muy pocos recorridos)
     const opac = serie.map(s => s.pocos_viajes ? 0.4 : 0.9);
     const custom = serie.map(s => ({
-        viajes: s.n_viajes,
-        nota: (s.es_maestra ? '<br>⭐ Franja maestra' : '') + (s.pocos_viajes ? '<br>⚠ Pocos viajes' : '')
+        // La franja maestra ya se ve con la banda amarilla; aquí solo se avisa de pocos viajes
+        nota: s.pocos_viajes ? '<br>⚠ Pocos viajes' : ''
     }));
 
     const trazas = [
@@ -545,9 +610,12 @@ function renderizarDetalleEstacion(m, { sinTransicion = false } = {}) {
             hovertemplate: 'Descensos: %{y}<extra></extra>'
         },
         {
-            name: 'Ocupación', x: franjas, y: ocupacion, type: 'scatter', mode: 'lines',
+            name: 'Ocupación', x: franjas, y: ocupacion, type: 'scatter', mode: 'lines+markers',
+            // Solo se marca el punto de la franja pico
+            marker: { size: franjas.map(f => (esMax && f === m.franja_pico) ? 9 : 0), color: p.ocupacion,
+                      line: { width: 2, color: temaGrafica().superficie } },
             line: { color: p.ocupacion, width: 2.5, shape: 'spline', smoothing: 0.5 }, customdata: custom,
-            hovertemplate: 'Ocupación: %{y}<br>Viajes: %{customdata.viajes}%{customdata.nota}<extra></extra>'
+            hovertemplate: 'Ocupación: %{y}%{customdata.nota}<extra></extra>'
         }
     ];
 
@@ -575,6 +643,24 @@ function renderizarDetalleEstacion(m, { sinTransicion = false } = {}) {
     layout.showlegend = false;                // la leyenda va en HTML, junto al título (como el diseño)
     layout.margin.t = 8;
     layout.shapes = shapes;
+
+    // Franja pico: flecha sobre la línea de ocupación con la ocupación de esa hora
+    const pk = _pc_picoDe(m);
+    const iPico = esMax ? franjas.indexOf(pk.franja) : -1;
+    layout.annotations = [];
+    if (iPico >= 0) {
+        const t = temaGrafica();
+        layout.annotations = [{
+            x: pk.franja, y: ocupacion[iPico], xref: 'x', yref: 'y',
+            text: `<b>Pico · ${_pc_fmt(pk.ocupacion, 1)} ocupación</b>`,
+            showarrow: true, arrowhead: 0, arrowwidth: 1.2, arrowcolor: p.ocupacion,
+            ax: 0, ay: -30,
+            font: { size: 10, color: t.texto, family: "'Orbitron', sans-serif" },
+            bgcolor: t.superficie, bordercolor: p.ocupacion, borderwidth: 1, borderpad: 4
+        }];
+        // Deja aire arriba para que la etiqueta no se corte con el borde
+        layout.margin.t = 30;
+    }
     layout.hovermode = 'x unified';           // una sola etiqueta por hora con las tres series
     layout.hoverlabel.namelength = 0;
     if (!sinTransicion) layout.transition = { duration: 300, easing: 'cubic-in-out' };

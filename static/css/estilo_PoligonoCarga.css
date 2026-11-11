@@ -387,6 +387,84 @@
     white-space: nowrap;
 }
 
+/* ── Pico de la estación: el dato principal de la tarjeta ── */
+#section-poligono-carga .pc-maestra-pico-lbl {
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--texto-tenue);
+    margin: 2px 0 -6px;
+}
+
+#section-poligono-carga .pc-maestra-pico {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    width: 100%;
+}
+
+#section-poligono-carga .pc-maestra-pico-num {
+    font-family: var(--font-display);
+    font-size: 1.65rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+}
+
+#section-poligono-carga .pc-maestra-pico-txt {
+    font-size: 0.72rem;
+    color: var(--texto-suave);
+    white-space: nowrap;
+}
+
+/* Franja pico: chip ámbar, el mismo color que las bandas de "franja maestra" */
+#section-poligono-carga .pc-maestra-pico-franja {
+    margin-left: auto;
+    align-self: center;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background-color: var(--maestra-banda);
+    box-shadow: inset 0 0 0 1px var(--maestra);
+    color: var(--texto);
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+#section-poligono-carga .pc-maestra-pico-meta {
+    font-size: 0.68rem;
+    color: var(--texto-suave);
+    margin-top: -4px;
+}
+
+#section-poligono-carga .pc-maestra-rangos-lbl { color: var(--texto-suave); }
+
+/* Punto máximo del día (la primera tarjeta) */
+#section-poligono-carga .pc-maestra-max {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px 2px 7px;
+    border-radius: var(--radio-pill);
+    background-color: var(--accent-suave);
+    color: var(--accent);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+#section-poligono-carga .pc-maestra-max svg {
+    width: 11px;
+    height: 11px;
+    fill: currentColor;
+    stroke: none;
+}
+
 #section-poligono-carga .pc-maestra-rangos {
     font-size: 0.7rem;
     color: var(--texto-tenue);
