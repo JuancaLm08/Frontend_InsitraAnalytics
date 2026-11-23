@@ -172,7 +172,7 @@ except:
         locale.setlocale(locale.LC_TIME, '') 
 #############################################################################################################################################################
 # INICIAR SESION
-@app.route('/')
+@app.route('/analytics')
 def index():
     return redirect(URL_LOGIN_MATRIZ)
 
@@ -191,7 +191,7 @@ def access():
 
 ############################################################################################################################################################
 # ENDPONT PRINCIPAL DEL DASHBOARD, SE ENCARGA DE CARGAR EL DASHBOARD Y LOS PERMISOS DEL USUARIO
-@app.route('/Dashboard')
+@app.route('/analytics/Dashboard')
 def dashboard():
     if 'user_key' not in session:
         return salir_a_matriz()
