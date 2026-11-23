@@ -179,7 +179,7 @@ def index():
 
 ##############################################################################################################################################################
 # ENDPOINT  PARA VERIFICAR EL TOKEN JWT DEL USUARIO Y DAR ACCESO A LA SECCION DE DASHBOARD
-@app.route('/access')
+@app.route('/analytics/access')
 def access():
     token = request.args.get('token')
     try:
